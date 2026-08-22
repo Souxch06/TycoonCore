@@ -1,0 +1,110 @@
+shop:
+  size: 27
+  title: '<dark_gray>Boutique des générateurs</dark_gray>'
+
+control:
+  size: 27
+  title: '<dark_gray>Générateur — <machine></dark_gray>'
+  status-slot: 10
+  output-slot: 12
+  collect-slot: 14
+  autosell-slot: 16
+  speed-upgrade-slot: 20
+  sell-upgrade-slot: 24
+
+limits:
+  max-machines-per-island: 50
+
+engine:
+  maximum-cycles-per-tick: 100
+
+# Les améliorations utilisent uniquement l'argent normal.
+upgrades:
+  speed:
+    max-level: 10
+    reduction-per-level: '0.05'
+    minimum-interval-multiplier: '0.50'
+    base-cost: '500000.00'
+    cost-per-level: '500000.00'
+  sell-price:
+    max-level: 10
+    bonus-per-level: '0.05'
+    base-cost: '750000.00'
+    cost-per-level: '750000.00'
+
+machines:
+  miner:
+    block: IRON_BLOCK
+    icon: IRON_PICKAXE
+    shop-slot: 10
+    name: '<aqua>Générateur minier</aqua>'
+    lore:
+      - '<gray>Produit du fer brut.</gray>'
+      - '<gray>Stockage ou vente automatique au choix.</gray>'
+    price:
+      money: '250000.00'
+      coin-type: PICKAXE
+      coins: 500
+    production:
+      interval-seconds: 10
+      output-material: RAW_IRON
+      output-amount: 2
+      sell-price: '5.00'
+      storage-capacity: 1000
+
+  farmer:
+    block: HAY_BLOCK
+    icon: DIAMOND_HOE
+    shop-slot: 12
+    name: '<green>Générateur agricole</green>'
+    lore:
+      - '<gray>Produit du blé.</gray>'
+      - '<gray>Stockage ou vente automatique au choix.</gray>'
+    price:
+      money: '250000.00'
+      coin-type: HOE
+      coins: 500
+    production:
+      interval-seconds: 8
+      output-material: WHEAT
+      output-amount: 3
+      sell-price: '1.25'
+      storage-capacity: 1500
+
+  lumber:
+    block: STRIPPED_OAK_WOOD
+    icon: DIAMOND_AXE
+    shop-slot: 14
+    name: '<dark_green>Générateur forestier</dark_green>'
+    lore:
+      - '<gray>Produit des bûches.</gray>'
+      - '<gray>Stockage ou vente automatique au choix.</gray>'
+    price:
+      money: '250000.00'
+      coin-type: AXE
+      coins: 500
+    production:
+      interval-seconds: 9
+      output-material: OAK_LOG
+      output-amount: 2
+      sell-price: '2.00'
+      storage-capacity: 1200
+
+  fisher:
+    block: PRISMARINE
+    icon: FISHING_ROD
+    shop-slot: 16
+    name: '<blue>Générateur de pêche</blue>'
+    lore:
+      - '<gray>Produit du saumon.</gray>'
+      - '<gray>Stockage ou vente automatique au choix.</gray>'
+    price:
+      money: '300000.00'
+      coin-type: FISHING_ROD
+      coins: 600
+    production:
+      interval-seconds: 12
+      output-material: SALMON
+      output-amount: 1
+      sell-price: '6.00'
+      storage-capacity: 800

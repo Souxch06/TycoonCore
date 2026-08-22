@@ -1,0 +1,48 @@
+# Monde d'accueil médiéval généré par ValoriaTycoon.
+world: valoria_spawn
+seed: 2602001
+ground-y: 80
+island-radius: 120
+border-size: 320.0
+protection-radius: 140
+teleport-on-first-join: true
+
+spawn:
+  x: 0
+  z: 26
+  yaw: 180.0
+
+# Les arches sont décoratives et ouvrent directement le monde/les zones de /farm.
+portals:
+  mine:
+    farm-id: mine
+    display-name: Mine
+    center-x: -72
+    center-z: 18
+    axis: Z
+    frame-material: DEEPSLATE_BRICKS
+    accent-material: GOLD_BLOCK
+  fields:
+    farm-id: fields
+    display-name: Champs
+    center-x: 72
+    center-z: 18
+    axis: Z
+    frame-material: MUD_BRICKS
+    accent-material: HAY_BLOCK
+  forest:
+    farm-id: forest
+    display-name: Forêt
+    center-x: -38
+    center-z: 78
+    axis: X
+    frame-material: MOSSY_STONE_BRICKS
+    accent-material: OAK_LOG
+  fishing:
+    farm-id: fishing
+    display-name: Pêche
+    center-x: 38
+    center-z: 78
+    axis: X
+    frame-material: PRISMARINE_BRICKS
+    accent-material: SEA_LANTERN

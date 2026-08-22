@@ -1,0 +1,19 @@
+enabled: true
+# 1 200 ticks = une minute. Les requêtes sont toujours exécutées sur le worker SQLite.
+refresh-interval-ticks: 1200
+# Le cache conserve davantage d’entrées que le menu afin de préparer les futurs hologrammes/placeholders.
+query-limit: 100
+display-limit: 10
+
+menu:
+  size: 54
+  title: '<dark_gray>Classements de Valoria</dark_gray>'
+  detail-title: '<dark_gray>Classement — <category></dark_gray>'
+  filler: BLACK_STAINED_GLASS_PANE
+  back-slot: 49
+  category-slots:
+    money: 11
+    island-level: 13
+    rank: 15
+    production: 29
+    playtime: 33

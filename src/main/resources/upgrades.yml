@@ -1,0 +1,61 @@
+# Améliorations propres à chaque parcelle Skyblock. Les prix restent configurables.
+menu:
+  size: 27
+  title: '<dark_gray>Améliorations du Skyblock</dark_gray>'
+
+plot-upgrades:
+  plot-size:
+    slot: 11
+    icon: GRASS_BLOCK
+    name: '<green>Taille constructible</green>'
+    max-level: 5
+    lore:
+      - '<gray>Niveau : <yellow><level>/<max_level></yellow></gray>'
+      - '<gray>Taille actuelle : <aqua><value>x<value></aqua></gray>'
+      - '<gray>Taille suivante : <aqua><next_value>x<next_value></aqua></gray>'
+      - '<gray>Prix : <red><cost></red></gray>'
+      - '<yellow>Shift + clic pour améliorer.</yellow>'
+    levels:
+      1: { value: 28, cost: '0.00' }
+      2: { value: 29, cost: '250000.00' }
+      3: { value: 30, cost: '750000.00' }
+      4: { value: 31, cost: '1500000.00' }
+      5: { value: 32, cost: '3000000.00' }
+
+  hopper-limit:
+    slot: 13
+    icon: HOPPER
+    name: '<gold>Limite de hoppers</gold>'
+    max-level: 6
+    lore:
+      - '<gray>Niveau : <yellow><level>/<max_level></yellow></gray>'
+      - '<gray>Limite actuelle : <aqua><value></aqua></gray>'
+      - '<gray>Limite suivante : <aqua><next_value></aqua></gray>'
+      - '<gray>Prix : <red><cost></red></gray>'
+      - '<yellow>Shift + clic pour améliorer.</yellow>'
+    levels:
+      1: { value: 8, cost: '0.00' }
+      2: { value: 16, cost: '250000.00' }
+      3: { value: 24, cost: '600000.00' }
+      4: { value: 32, cost: '1200000.00' }
+      5: { value: 48, cost: '3000000.00' }
+      6: { value: 64, cost: '6000000.00' }
+
+  member-limit:
+    slot: 15
+    icon: PLAYER_HEAD
+    name: '<light_purple>Limite de membres</light_purple>'
+    max-level: 6
+    lore:
+      - '<gray>Niveau : <yellow><level>/<max_level></yellow></gray>'
+      - '<gray>Membres actuels max : <aqua><value></aqua></gray>'
+      - '<gray>Limite suivante : <aqua><next_value></aqua></gray>'
+      - '<gray>Prix : <red><cost></red></gray>'
+      - '<yellow>Shift + clic pour améliorer.</yellow>'
+    levels:
+      1: { value: 3, cost: '0.00' }
+      2: { value: 4, cost: '300000.00' }
+      3: { value: 5, cost: '750000.00' }
+      4: { value: 6, cost: '1500000.00' }
+      5: { value: 8, cost: '4000000.00' }
+      6: { value: 10, cost: '10000000.00' }

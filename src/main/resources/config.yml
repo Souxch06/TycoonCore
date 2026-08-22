@@ -1,0 +1,20 @@
+# ValoriaTycoon - stage 1 configuration
+# Database type support is intentionally limited to SQLITE in this stage.
+database:
+  type: SQLITE
+  sqlite:
+    file: valoriatycoon.db
+    busy-timeout-ms: 5000
+
+# All monetary values are exact decimal values; floating-point arithmetic is not used.
+economy:
+  starting-balance: '1000.00'
+  minimum-payment: '0.01'
+  maximum-payment: '1000000000.00'
+  pay-cooldown-seconds: 3
+  display:
+    decimals: 2
+    suffix: ' $'
+
+logging:
+  debug: false

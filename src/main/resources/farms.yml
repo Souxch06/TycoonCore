@@ -1,0 +1,451 @@
+# ValoriaTycoon - mondes publics de ressources à quatre zones classées.
+menu:
+  size: 27
+  title: '<dark_gray>Choisir un monde de farm</dark_gray>'
+
+zone-menu:
+  size: 27
+  title: '<dark_gray><farm> — choisir une zone</dark_gray>'
+  locked-icon: BARRIER
+  locked-name: '<red>Zone verrouillée — <zone></red>'
+  locked-lore:
+    - '<gray>Rang actuel : <yellow><current_rank></yellow></gray>'
+    - '<gray>Rang requis : <red><required_rank></red></gray>'
+    - '<red>Progressez avec /rank pour débloquer cette zone.</red>'
+
+autosell-menu:
+  size: 27
+  title: '<dark_gray>Gestion de la vente automatique</dark_gray>'
+  slot: 12
+  enabled-icon: LIME_DYE
+  disabled-icon: GRAY_DYE
+  locked-icon: BARRIER
+  enabled-name: '<green>Vente automatique activée</green>'
+  disabled-name: '<yellow>Vente automatique désactivée</yellow>'
+  locked-name: '<red>Vente automatique verrouillée</red>'
+  lore:
+    - '<gray>Niveau : <yellow><level>/<max_level></yellow></gray>'
+    - '<gray>Multiplicateur : <gold>x<multiplier></gold></gray>'
+    - '<gray>Niveau 0 : Shift + clic droit avec un outil.</gray>'
+    - '<gray>Une fois débloquée, cliquez pour basculer.</gray>'
+
+teleport:
+  cooldown-seconds: 3
+
+rank-barrier:
+  horizontal-knockback: 1.45
+  vertical-knockback: 0.42
+
+regeneration:
+  check-interval-ticks: 10
+  maximum-blocks-per-run: 250
+  unloaded-retry-seconds: 15
+
+autosell:
+  max-level: 5
+  levels:
+    1: { cost: '100000.00', multiplier: '1.00' }
+    2: { cost: '500000.00', multiplier: '2.00' }
+    3: { cost: '2000000.00', multiplier: '3.00' }
+    4: { cost: '10000000.00', multiplier: '4.00' }
+    5: { cost: '50000000.00', multiplier: '5.00' }
+  flush-interval-ticks: 20
+
+# Les zones 1, 2, 3 et 4 se débloquent aux rangs 0, Artisan (2), Chevalier (5) et Comte (8).
+# Les cavernes, champs et forêts sont reliés par de longs ponts protégés par des portails de rang serveur.
+farms:
+  mine:
+    enabled: true
+    type: MINE
+    world: valoria_farm_mine
+    seed: 741852963
+    border-size: 24000
+    spawn-protection-radius: 7
+    spawn-yaw: 0
+    menu:
+      icon: IRON_PICKAXE
+      slot: 10
+      name: '<gold>Mine publique</gold>'
+      lore:
+        - '<gray>4 cavernes gigantesques classées par rang</gray>'
+        - '<yellow>Cliquez pour entrer dans la première grotte</yellow>'
+    breakable-blocks:
+      - STONE
+      - DEEPSLATE
+      - ANDESITE
+      - GRANITE
+      - DIORITE
+      - TUFF
+      - CALCITE
+      - DRIPSTONE_BLOCK
+      - COAL_ORE
+      - DEEPSLATE_COAL_ORE
+      - COPPER_ORE
+      - DEEPSLATE_COPPER_ORE
+      - IRON_ORE
+      - DEEPSLATE_IRON_ORE
+      - GOLD_ORE
+      - DEEPSLATE_GOLD_ORE
+      - REDSTONE_ORE
+      - DEEPSLATE_REDSTONE_ORE
+      - LAPIS_ORE
+      - DEEPSLATE_LAPIS_ORE
+      - DIAMOND_ORE
+      - DEEPSLATE_DIAMOND_ORE
+      - EMERALD_ORE
+      - DEEPSLATE_EMERALD_ORE
+    regeneration:
+      default-delay-seconds: 20
+      delays:
+        COAL_ORE: 30
+        DEEPSLATE_COAL_ORE: 30
+        COPPER_ORE: 35
+        DEEPSLATE_COPPER_ORE: 35
+        IRON_ORE: 45
+        DEEPSLATE_IRON_ORE: 45
+        GOLD_ORE: 60
+        DEEPSLATE_GOLD_ORE: 60
+        REDSTONE_ORE: 55
+        DEEPSLATE_REDSTONE_ORE: 55
+        LAPIS_ORE: 70
+        DEEPSLATE_LAPIS_ORE: 70
+        DIAMOND_ORE: 120
+        DEEPSLATE_DIAMOND_ORE: 120
+        EMERALD_ORE: 150
+        DEEPSLATE_EMERALD_ORE: 150
+    sell-prices:
+      STONE: '0.75'
+      DEEPSLATE: '0.75'
+      ANDESITE: '0.60'
+      GRANITE: '0.60'
+      DIORITE: '0.60'
+      TUFF: '0.60'
+      CALCITE: '0.80'
+      DRIPSTONE_BLOCK: '0.80'
+      COAL: '3.00'
+      RAW_COPPER: '2.50'
+      COPPER_INGOT: '2.50'
+      RAW_IRON: '5.00'
+      IRON_INGOT: '5.00'
+      RAW_GOLD: '8.00'
+      GOLD_INGOT: '8.00'
+      REDSTONE: '2.00'
+      LAPIS_LAZULI: '2.50'
+      DIAMOND: '35.00'
+      EMERALD: '45.00'
+    generation:
+      bottom-y: -48
+      quarry-floor-y: 12
+      floor-variation: 18
+      bridge-y: 48
+      ceiling-y: 160
+      ceiling-variation: 24
+      wall-thickness: 48
+      bridge-width: 15
+    zones:
+      1:
+        id: charbon
+        required-rank: 0
+        center-x: 0
+        center-z: 0
+        size: 2048
+        shape: SQUARE
+        menu:
+          slot: 10
+          icon: COAL
+          name: '<gray>Grotte I — Charbon</gray>'
+          lore: ['<gray>Pierre et charbon uniquement.</gray>', '<green>Accessible dès le départ.</green>']
+        generation:
+          filler: STONE
+          ores:
+            COAL_ORE: { chance: 0.055, min-y: 1, max-y: 30 }
+            DEEPSLATE_COAL_ORE: { chance: 0.025, min-y: -40, max-y: 0 }
+      2:
+        id: fer-cuivre
+        required-rank: 2
+        center-x: 3072
+        center-z: 0
+        size: 2048
+        shape: SQUARE
+        menu:
+          slot: 12
+          icon: RAW_IRON
+          name: '<white>Grotte II — Fer et cuivre</white>'
+          lore: ['<gray>Minerais de fer et de cuivre.</gray>', '<yellow>Requiert Artisan.</yellow>']
+        generation:
+          filler: STONE
+          ores:
+            COPPER_ORE: { chance: 0.025, min-y: 1, max-y: 30 }
+            DEEPSLATE_COPPER_ORE: { chance: 0.015, min-y: -40, max-y: 0 }
+            IRON_ORE: { chance: 0.025, min-y: 1, max-y: 30 }
+            DEEPSLATE_IRON_ORE: { chance: 0.015, min-y: -40, max-y: 0 }
+      3:
+        id: or-redstone-lapis
+        required-rank: 5
+        center-x: 6144
+        center-z: 0
+        size: 2048
+        shape: SQUARE
+        menu:
+          slot: 14
+          icon: GOLD_INGOT
+          name: '<gold>Grotte III — Or, redstone et lapis</gold>'
+          lore: ['<gray>Ressources minières avancées.</gray>', '<yellow>Requiert Chevalier.</yellow>']
+        generation:
+          filler: STONE
+          ores:
+            GOLD_ORE: { chance: 0.015, min-y: 1, max-y: 30 }
+            DEEPSLATE_GOLD_ORE: { chance: 0.010, min-y: -40, max-y: 0 }
+            REDSTONE_ORE: { chance: 0.010, min-y: 1, max-y: 30 }
+            DEEPSLATE_REDSTONE_ORE: { chance: 0.020, min-y: -40, max-y: 0 }
+            LAPIS_ORE: { chance: 0.015, min-y: 1, max-y: 30 }
+            DEEPSLATE_LAPIS_ORE: { chance: 0.010, min-y: -40, max-y: 0 }
+      4:
+        id: diamant-emeraude
+        required-rank: 8
+        center-x: 9216
+        center-z: 0
+        size: 2048
+        shape: SQUARE
+        menu:
+          slot: 16
+          icon: DIAMOND
+          name: '<aqua>Grotte IV — Diamant et émeraude</aqua>'
+          lore: ['<gray>Ressources minières suprêmes.</gray>', '<yellow>Requiert Comte.</yellow>']
+        generation:
+          filler: STONE
+          ores:
+            DIAMOND_ORE: { chance: 0.005, min-y: 1, max-y: 30 }
+            DEEPSLATE_DIAMOND_ORE: { chance: 0.010, min-y: -40, max-y: 0 }
+            EMERALD_ORE: { chance: 0.0025, min-y: 1, max-y: 30 }
+            DEEPSLATE_EMERALD_ORE: { chance: 0.005, min-y: -40, max-y: 0 }
+  fields:
+    enabled: true
+    type: FIELDS
+    world: valoria_farm_fields
+    seed: 159753486
+    border-size: 45000
+    spawn-protection-radius: 7
+    spawn-yaw: 0
+    menu:
+      icon: WHEAT
+      slot: 12
+      name: '<green>Champs publics</green>'
+      lore:
+        - '<gray>4 cultures réparties par rang</gray>'
+        - '<yellow>Cliquez pour entrer sur l’île centrale</yellow>'
+    breakable-blocks: [WHEAT, CARROTS, POTATOES, BEETROOTS]
+    regeneration:
+      default-delay-seconds: 12
+      delays: { WHEAT: 10, CARROTS: 12, POTATOES: 12, BEETROOTS: 15 }
+    sell-prices:
+      WHEAT: '1.25'
+      CARROT: '1.00'
+      POTATO: '1.00'
+      BEETROOT: '1.50'
+    generation:
+      bottom-y: 0
+      soil-y: 63
+      path-spacing: 256
+      path-material: OAK_PLANKS
+    zones:
+      1:
+        id: ble
+        required-rank: 0
+        center-x: 0
+        center-z: 0
+        size: 5120
+        shape: CIRCLE
+        menu:
+          slot: 10
+          icon: WHEAT
+          name: '<yellow>Zone I — Blé</yellow>'
+          lore: ['<gray>Champs de blé mature.</gray>', '<green>Accessible dès le départ.</green>']
+        generation: { crop: WHEAT }
+      2:
+        id: carottes
+        required-rank: 2
+        center-x: 6144
+        center-z: 0
+        size: 5120
+        shape: CIRCLE
+        menu:
+          slot: 12
+          icon: CARROT
+          name: '<gold>Zone II — Carottes</gold>'
+          lore: ['<gray>Champs de carottes matures.</gray>', '<yellow>Requiert Artisan.</yellow>']
+        generation: { crop: CARROTS }
+      3:
+        id: pommes-de-terre
+        required-rank: 5
+        center-x: 12288
+        center-z: 0
+        size: 5120
+        shape: CIRCLE
+        menu:
+          slot: 14
+          icon: POTATO
+          name: '<yellow>Zone III — Pommes de terre</yellow>'
+          lore: ['<gray>Champs de pommes de terre.</gray>', '<yellow>Requiert Chevalier.</yellow>']
+        generation: { crop: POTATOES }
+      4:
+        id: betteraves
+        required-rank: 8
+        center-x: 18432
+        center-z: 0
+        size: 5120
+        shape: CIRCLE
+        menu:
+          slot: 16
+          icon: BEETROOT
+          name: '<red>Zone IV — Betteraves</red>'
+          lore: ['<gray>Champs de betteraves matures.</gray>', '<yellow>Requiert Comte.</yellow>']
+        generation: { crop: BEETROOTS }
+  fishing:
+    enabled: true
+    type: FISHING
+    world: valoria_farm_fishing
+    seed: 951357246
+    border-size: 8000
+    spawn-protection-radius: 7
+    spawn-yaw: 180
+    menu:
+      icon: FISHING_ROD
+      slot: 14
+      name: '<aqua>Océan de pêche commun</aqua>'
+      lore:
+        - '<gray>Accessible à tous les rangs</gray>'
+        - '<yellow>Cliquez pour vous téléporter</yellow>'
+    breakable-blocks: []
+    regeneration:
+      default-delay-seconds: 20
+      delays: {}
+    sell-prices:
+      COD: '4.00'
+      SALMON: '6.00'
+      TROPICAL_FISH: '12.00'
+      PUFFERFISH: '10.00'
+      BOW: '8.00'
+      FISHING_ROD: '8.00'
+      NAME_TAG: '25.00'
+      NAUTILUS_SHELL: '40.00'
+      SADDLE: '15.00'
+    generation:
+      bottom-y: 0
+      seabed-y: 48
+      water-y: 62
+      platform-radius: 40
+      seabed-material: SAND
+      platform-material: OAK_PLANKS
+
+  forest:
+    enabled: true
+    type: FOREST
+    world: valoria_farm_forest
+    seed: 357159852
+    border-size: 24000
+    spawn-protection-radius: 7
+    spawn-yaw: 0
+    menu:
+      icon: OAK_SAPLING
+      slot: 16
+      name: '<dark_green>Forêt publique</dark_green>'
+      lore:
+        - '<gray>4 forêts gigantesques classées par rang</gray>'
+        - '<yellow>Cliquez pour entrer dans la forêt de chênes</yellow>'
+    breakable-blocks:
+      - OAK_LOG
+      - OAK_LEAVES
+      - BIRCH_LOG
+      - BIRCH_LEAVES
+      - SPRUCE_LOG
+      - SPRUCE_LEAVES
+      - DARK_OAK_LOG
+      - DARK_OAK_LEAVES
+    regeneration:
+      default-delay-seconds: 25
+      delays:
+        OAK_LOG: 20
+        OAK_LEAVES: 30
+        BIRCH_LOG: 22
+        BIRCH_LEAVES: 30
+        SPRUCE_LOG: 25
+        SPRUCE_LEAVES: 35
+        DARK_OAK_LOG: 30
+        DARK_OAK_LEAVES: 40
+    sell-prices:
+      OAK_LOG: '2.00'
+      BIRCH_LOG: '2.50'
+      SPRUCE_LOG: '3.50'
+      DARK_OAK_LOG: '5.00'
+      OAK_SAPLING: '1.00'
+      BIRCH_SAPLING: '1.25'
+      SPRUCE_SAPLING: '1.50'
+      DARK_OAK_SAPLING: '2.00'
+      APPLE: '3.00'
+      STICK: '0.25'
+    generation:
+      bottom-y: 0
+      ground-y: 72
+      terrain-variation: 12
+      island-depth: 28
+      tree-spacing: 30
+      minimum-trunk-height: 10
+      maximum-trunk-height: 28
+      path-spacing: 256
+      platform-radius: 24
+      platform-material: STONE_BRICKS
+      bridge-width: 13
+    zones:
+      1:
+        id: chene
+        required-rank: 0
+        center-x: 0
+        center-z: 0
+        size: 2048
+        shape: SQUARE
+        menu:
+          slot: 10
+          icon: OAK_LOG
+          name: '<green>Zone I — Chêne</green>'
+          lore: ['<gray>Forêt de chênes.</gray>', '<green>Accessible dès le départ.</green>']
+        generation: { log-material: OAK_LOG, leaves-material: OAK_LEAVES }
+      2:
+        id: bouleau
+        required-rank: 2
+        center-x: 3072
+        center-z: 0
+        size: 2048
+        shape: SQUARE
+        menu:
+          slot: 12
+          icon: BIRCH_LOG
+          name: '<white>Zone II — Bouleau</white>'
+          lore: ['<gray>Forêt de bouleaux.</gray>', '<yellow>Requiert Artisan.</yellow>']
+        generation: { log-material: BIRCH_LOG, leaves-material: BIRCH_LEAVES }
+      3:
+        id: sapin
+        required-rank: 5
+        center-x: 6144
+        center-z: 0
+        size: 2048
+        shape: SQUARE
+        menu:
+          slot: 14
+          icon: SPRUCE_LOG
+          name: '<dark_green>Zone III — Sapin</dark_green>'
+          lore: ['<gray>Forêt de sapins.</gray>', '<yellow>Requiert Chevalier.</yellow>']
+        generation: { log-material: SPRUCE_LOG, leaves-material: SPRUCE_LEAVES }
+      4:
+        id: chene-noir
+        required-rank: 8
+        center-x: 9216
+        center-z: 0
+        size: 2048
+        shape: SQUARE
+        menu:
+          slot: 16
+          icon: DARK_OAK_LOG
+          name: '<dark_purple>Zone IV — Chêne noir</dark_purple>'
+          lore: ['<gray>Forêt de chênes noirs.</gray>', '<yellow>Requiert Comte.</yellow>']
+        generation: { log-material: DARK_OAK_LOG, leaves-material: DARK_OAK_LEAVES }
