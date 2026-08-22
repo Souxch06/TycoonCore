@@ -1,0 +1,47 @@
+# Compactage récursif : 9 objets identiques produisent un objet du niveau suivant.
+# Cultures/bûches : I=9, II=81, III=729. Minerais via blocs vanilla : I=81, II=729, III=6561.
+maximum-level: 3
+
+levels:
+  1:
+    name: '<gold>Ressource compacte — <name></gold>'
+  2:
+    name: '<light_purple>Ressource super compacte — <name></light_purple>'
+  3:
+    name: '<aqua><bold>Ressource ultime — <name></bold></aqua>'
+
+item-lore:
+  - '<gray>Niveau de compactage : <yellow><level>/3</yellow></gray>'
+  - '<gray>Équivaut à <gold><units> ressources normales</gold>.</gray>'
+  - '<dark_gray>Décompactable uniquement auprès du PNJ du spawn.</dark_gray>'
+
+# Les minerais utilisent d’abord leur bloc vanilla : 9 blocs donnent un compact I.
+# Les cultures et les bûches restent directement en recette 3×3.
+# Les poissons ne sont volontairement pas compactables.
+resources:
+  COAL: Charbon
+  COPPER_INGOT: Lingot de cuivre
+  IRON_INGOT: Lingot de fer
+  GOLD_INGOT: Lingot d’or
+  REDSTONE: Redstone
+  LAPIS_LAZULI: Lapis-lazuli
+  DIAMOND: Diamant
+  EMERALD: Émeraude
+  WHEAT: Blé
+  CARROT: Carotte
+  POTATO: Pomme de terre
+  BEETROOT: Betterave
+  OAK_LOG: Bûche de chêne
+  BIRCH_LOG: Bûche de bouleau
+  SPRUCE_LOG: Bûche de sapin
+  DARK_OAK_LOG: Bûche de chêne noir
+
+decompactor-npc:
+  enabled: true
+  # Le PNJ apparaît à cet offset du spawn médiéval généré.
+  world: valoria_spawn
+  offset-x: 2.5
+  offset-y: 0.0
+  offset-z: 0.5
+  yaw: 180.0
+  name: '<gold><bold>Maître Décompacteur</bold></gold>'

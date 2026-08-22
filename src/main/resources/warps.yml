@@ -1,0 +1,45 @@
+teleport-cooldown-seconds: 3
+
+menu:
+  size: 27
+  title: '<dark_gray>Warps de Valoria</dark_gray>'
+  filler: BLACK_STAINED_GLASS_PANE
+
+# Ajouter un futur warp ici suffit pour les commandes et le menu.
+# relative-to-spawn=true interprète x/y/z comme des offsets du point /spawn.
+warps:
+  tutorial:
+    aliases: [tuto, tutoriel, guide, aide]
+    world: valoria_spawn
+    relative-to-spawn: true
+    # Cour intérieure du château : destination finale ≈ 0.5 / 82 / -84.5.
+    x: 0.0
+    y: 0.0
+    z: -111.0
+    yaw: 180.0
+    pitch: 0.0
+    slot: 11
+    icon: WRITABLE_BOOK
+    item-model: ui/warp/tutorial
+    name: '<gold><bold>Académie — Tutoriel</bold></gold>'
+    lore:
+      - '<gray>Guide complet des systèmes importants de Valoria.</gray>'
+      - '<yellow>Cliquez ou utilisez /warp tuto.</yellow>'
+
+  crates:
+    aliases: [caisse, caisses, crate]
+    world: valoria_spawn
+    relative-to-spawn: true
+    # Stand bleu du marché : destination finale ≈ 39.5 / 82 / 30.5 avec la config spawn par défaut.
+    x: 39.0
+    y: 0.0
+    z: 4.0
+    yaw: 180.0
+    pitch: 0.0
+    slot: 13
+    icon: ENDER_CHEST
+    item-model: ui/warp/crates
+    name: '<light_purple><bold>Caisses</bold></light_purple>'
+    lore:
+      - '<gray>Clés Vote, Quêtes, Farm et raretés.</gray>'
+      - '<yellow>Cliquez ou utilisez /warp caisse.</yellow>'

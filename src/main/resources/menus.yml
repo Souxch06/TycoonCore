@@ -1,0 +1,77 @@
+menu:
+  size: 54
+  title: '<dark_gray>Mon Skyblock</dark_gray>'
+  filler: BLACK_STAINED_GLASS_PANE
+  items:
+    balance:
+      slot: 10
+      material: SUNFLOWER
+      name: '<gold>Argent</gold>'
+      lore: ['<gray>Consulter votre solde.</gray>']
+      action: BALANCE
+    stats:
+      slot: 12
+      material: BOOK
+      name: '<aqua>Statistiques</aqua>'
+      lore: ['<gray>Niveau, rang médiéval et production.</gray>']
+      action: STATS
+    farms:
+      slot: 14
+      material: WHEAT
+      name: '<green>Mondes de farm</green>'
+      lore: ['<gray>Mine, champs, forêt et pêche.</gray>']
+      action: FARM
+    machines:
+      slot: 16
+      material: PISTON
+      name: '<yellow>Générateurs</yellow>'
+      lore: ['<gray>Ouvrir la boutique des générateurs.</gray>']
+      action: MACHINES
+    upgrades:
+      slot: 28
+      material: BEACON
+      name: '<light_purple>Améliorations du Skyblock</light_purple>'
+      lore: ['<gray>Taille, hoppers et membres.</gray>']
+      action: UPGRADES
+    tools:
+      slot: 30
+      material: NETHERITE_PICKAXE
+      name: '<aqua>Améliorations du multi-tool</aqua>'
+      lore: ['<gray>Tenez le multi-tool puis Shift + clic droit.</gray>']
+      action: TOOL_UPGRADES
+    autosell:
+      slot: 32
+      material: HOPPER
+      name: '<gold>Auto-sell</gold>'
+      lore: ['<gray>Activer ou désactiver la vente.</gray>']
+      action: AUTOSELL
+    settings:
+      slot: 34
+      material: COMPARATOR
+      name: '<gray>Paramètres</gray>'
+      lore: ['<gray>Afficher les paramètres actuels.</gray>']
+      action: SETTINGS
+    leaderboards:
+      slot: 38
+      material: CLOCK
+      name: '<gold>Classements</gold>'
+      lore: ['<gray>Fortunes, rangs, production et temps de jeu.</gray>']
+      action: LEADERBOARDS
+    pets:
+      slot: 40
+      material: BONE
+      name: '<light_purple>Pets</light_purple>'
+      lore: ['<gray>Collection, niveaux et bonus spéciaux.</gray>']
+      action: PETS
+    quests:
+      slot: 42
+      material: TARGET
+      name: '<red>Quêtes</red>'
+      lore: ['<gray>Quêtes répétables et récompenses.</gray>']
+      action: QUESTS
+    ranks:
+      slot: 44
+      material: NETHER_STAR
+      name: '<gold>Rangs médiévaux</gold>'
+      lore: ['<gray>Citoyen, Chevalier, Baron, Duc...</gray>']
+      action: RANKS

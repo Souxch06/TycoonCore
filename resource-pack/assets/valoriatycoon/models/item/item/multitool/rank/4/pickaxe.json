@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "valoriatycoon:item/item/multitool/rank/4/pickaxe"
+  }
+}
