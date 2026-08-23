@@ -1,4 +1,4 @@
-# Test local ValoriaTycoon 0.37.0
+# Test local ValoriaTycoon 0.38.0
 
 ## 1. Prérequis
 
@@ -17,8 +17,8 @@ python3 scripts/verify-release.py --full
 Artefacts attendus :
 
 ```text
-target/ValoriaTycoon-0.37.0-SNAPSHOT.jar
-target/ValoriaTycoon-0.37.0-SNAPSHOT-resource-pack.zip
+target/ValoriaTycoon-0.38.0-SNAPSHOT.jar
+target/ValoriaTycoon-0.38.0-SNAPSHOT-resource-pack.zip
 ```
 
 Copier le JAR dans `plugins/`, héberger le ZIP du pack sur une URL HTTPS puis configurer son URL/SHA-1 côté Paper. Ne jamais tester une migration sans sauvegarder la base SQLite.

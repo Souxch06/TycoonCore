@@ -47,7 +47,7 @@ public final class QuestPanel implements Listener {
         Inventory inventory = Bukkit.createInventory(
                 holder,
                 54,
-                messages.render("<dark_gray>Quêtes répétables</dark_gray>")
+                messages.render("<gold><bold>QUÊTES</bold></gold>")
         );
         holder.bind(inventory);
         visuals.fillMenu(inventory);

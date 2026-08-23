@@ -1,6 +1,6 @@
 menu:
   size: 54
-  title: '<dark_gray>Mes Pets</dark_gray>'
+  title: '<gold><bold>MES PETS</bold></gold>'
   filler: BLACK_STAINED_GLASS_PANE
 
 # Les Clés Pets physiques proviennent de l'administration et des tables de caisses génériques.
@@ -40,7 +40,7 @@ reclaim:
   offset-z: 0.5
   yaw: 180.0
   name: '<aqua><bold>Gardien des Œufs</bold></aqua>'
-  menu-title: '<dark_gray>Remettre un pet en œuf</dark_gray>'
+  menu-title: '<gold><bold>GARDIEN DES ŒUFS</bold></gold>'
   money-cost: '5000000.00'
   vanilla-xp-levels: 30
 

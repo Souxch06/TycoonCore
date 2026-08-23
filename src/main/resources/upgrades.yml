@@ -1,7 +1,7 @@
 # Améliorations propres à chaque parcelle Skyblock. Les prix restent configurables.
 menu:
   size: 27
-  title: '<dark_gray>Améliorations du Skyblock</dark_gray>'
+  title: '<gold><bold>AMÉLIORATIONS</bold></gold>'
 
 plot-upgrades:
   plot-size:

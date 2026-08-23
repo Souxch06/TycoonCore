@@ -183,7 +183,19 @@ def verify_resource_pack() -> None:
     for path in (namespace / "textures/item").rglob("*.png"):
         data = path.read_bytes()
         require(data.startswith(b"\x89PNG\r\n\x1a\n"), f"Invalid PNG: {path}")
-        require(struct.unpack(">II", data[16:24]) == (16, 16), f"Texture is not 16x16: {path}")
+        require(struct.unpack(">II", data[16:24]) == (32, 32), f"Texture is not premium 32x32: {path}")
+
+    gui = pack / "assets/minecraft/textures/gui"
+    expected_gui = {
+        gui / "container/generic_54.png": (256, 256),
+        gui / "sprites/container/slot.png": (18, 18),
+        gui / "sprites/container/slot_highlight_front.png": (18, 18),
+    }
+    for path, dimensions in expected_gui.items():
+        require(path.is_file(), f"Missing premium GUI texture: {path}")
+        data = path.read_bytes()
+        require(data.startswith(b"\x89PNG\r\n\x1a\n"), f"Invalid GUI PNG: {path}")
+        require(struct.unpack(">II", data[16:24]) == dimensions, f"Invalid GUI dimensions: {path}")
 
     before = hash_tree(pack)
     subprocess.run([sys.executable, "scripts/generate-resource-pack.py"], cwd=ROOT, check=True,

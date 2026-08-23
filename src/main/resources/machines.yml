@@ -1,10 +1,10 @@
 shop:
   size: 27
-  title: '<dark_gray>Boutique des générateurs</dark_gray>'
+  title: '<gold><bold>GÉNÉRATEURS</bold></gold>'
 
 control:
   size: 27
-  title: '<dark_gray>Générateur — <machine></dark_gray>'
+  title: '<gold><bold><machine></bold></gold>'
   status-slot: 10
   output-slot: 12
   collect-slot: 14

@@ -49,7 +49,7 @@ menu:
 
 purchase-menu:
   size: 9
-  title: '<dark_gray>Choisir la monnaie — <tool></dark_gray>'
+  title: '<gold><bold>PAIEMENT • <tool></bold></gold>'
   money:
     slot: 3
     icon: SUNFLOWER

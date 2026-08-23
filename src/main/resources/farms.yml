@@ -15,7 +15,7 @@ zone-menu:
 
 autosell-menu:
   size: 27
-  title: '<dark_gray>Gestion de la vente automatique</dark_gray>'
+  title: '<gold><bold>VENTE AUTOMATIQUE</bold></gold>'
   slot: 12
   enabled-icon: LIME_DYE
   disabled-icon: GRAY_DYE

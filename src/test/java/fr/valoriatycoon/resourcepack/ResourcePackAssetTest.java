@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
@@ -92,12 +93,41 @@ class ResourcePackAssetTest {
     }
 
     @Test
+    void usesPremiumThirtyTwoPixelItemsAndAnOrnateContainerInterface() throws IOException {
+        Path pack = Path.of(System.getProperty("user.dir"), "resource-pack");
+        Path textures = pack.resolve("assets/valoriatycoon/textures/item");
+        try (var paths = Files.walk(textures)) {
+            for (Path texture : paths.filter(Files::isRegularFile)
+                    .filter(path -> path.toString().endsWith(".png"))
+                    .toList()) {
+                assertEquals(32, pngWidth(texture), texture.toString());
+                assertEquals(32, pngHeight(texture), texture.toString());
+            }
+        }
+        Path container = pack.resolve("assets/minecraft/textures/gui/container/generic_54.png");
+        assertTrue(Files.isRegularFile(container));
+        assertEquals(256, pngWidth(container));
+        assertEquals(256, pngHeight(container));
+        Path slot = pack.resolve("assets/minecraft/textures/gui/sprites/container/slot.png");
+        assertEquals(18, pngWidth(slot));
+        assertEquals(18, pngHeight(slot));
+    }
+
+    @Test
     void targetsMinecraftTwentySixPointTwoPackFormat() throws IOException {
         Path metadata = Path.of(System.getProperty("user.dir"), "resource-pack", "pack.mcmeta");
         String content = Files.readString(metadata).replaceAll("\\s+", "");
 
         assertTrue(content.contains("\"min_format\":[88,0]"));
         assertTrue(content.contains("\"max_format\":[88,0]"));
+    }
+
+    private int pngWidth(Path path) throws IOException {
+        return ByteBuffer.wrap(Files.readAllBytes(path), 16, 4).getInt();
+    }
+
+    private int pngHeight(Path path) throws IOException {
+        return ByteBuffer.wrap(Files.readAllBytes(path), 20, 4).getInt();
     }
 
     private Set<String> relativeFiles(Path root, String suffix) throws IOException {

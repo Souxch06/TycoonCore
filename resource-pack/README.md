@@ -1,12 +1,14 @@
 # Pack de ressources complet ValoriaTycoon 26.2
 
-Ce pack donne une identité médiévale violet/or à tous les systèmes actuellement
-fonctionnels de ValoriaTycoon. Il utilise exclusivement le composant moderne
-`minecraft:item_model` de Minecraft 26.2 : aucun matériau vanilla n'est
-remplacé globalement.
+Ce pack donne une identité fantasy royale violet/or à tous les systèmes de
+ValoriaTycoon. Les objets utilisent le composant moderne `minecraft:item_model`
+de Minecraft 26.2, tandis que les inventaires emploient un cadre complet
+Valoria compatible avec les conteneurs vanilla de 1 à 6 rangées.
 
 ## Contenu
 
+- interface intégrale violet impérial, or, colonnes, bandeau rouge et slots
+  différenciés entre contenu serveur et inventaire joueur ;
 - menu principal `/is` : argent, statistiques, farms, générateurs, upgrades,
   multi-tool, auto-sell, paramètres, pets, quêtes et rangs ;
 - menus secondaires : zones de farm, états verrouillés, achats, générateurs,
@@ -31,7 +33,7 @@ remplacé globalement.
   netherite couronnée et runes cyan du Duc ;
 - icône de pack Valoria.
 
-Le pack contient **259 modèles d'items** et autant de textures 16×16. Les
+Le pack contient **259 modèles d'items** et autant de textures premium 32×32, avec une interface de conteneur Valoria complète. Les
 sources sont générées de façon déterministe, sans outil propriétaire :
 
 ```bash
@@ -41,7 +43,7 @@ python3 scripts/generate-resource-pack.py
 Le build Maven crée automatiquement :
 
 ```text
-target/ValoriaTycoon-0.37.0-SNAPSHOT-resource-pack.zip
+target/ValoriaTycoon-0.38.0-SNAPSHOT-resource-pack.zip
 ```
 
 Hébergez ce ZIP sur une URL HTTPS publique, puis configurez cette URL et son

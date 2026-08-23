@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate ValoriaTycoon's deterministic 16x16 item-model resource pack."""
+"""Generate ValoriaTycoon's deterministic premium 32x32 medieval-fantasy resource pack."""
 
 from __future__ import annotations
 
@@ -66,12 +66,14 @@ FONT = {
 
 
 class Canvas:
-    def __init__(self) -> None:
-        self.pixels = [TRANSPARENT] * 256
+    def __init__(self, width: int = 16, height: int | None = None) -> None:
+        self.width = width
+        self.height = width if height is None else height
+        self.pixels = [TRANSPARENT] * (self.width * self.height)
 
     def set(self, x: int, y: int, color: tuple[int, int, int, int]) -> None:
-        if 0 <= x < 16 and 0 <= y < 16:
-            self.pixels[y * 16 + x] = color
+        if 0 <= x < self.width and 0 <= y < self.height:
+            self.pixels[y * self.width + x] = color
 
     def rect(self, x1: int, y1: int, x2: int, y2: int, color: tuple[int, int, int, int]) -> None:
         for y in range(y1, y2 + 1):
@@ -95,63 +97,275 @@ class Canvas:
                 y1 += sy
 
 
-def png(path: Path, pixels: list[tuple[int, int, int, int]]) -> None:
+def tint(
+    color: tuple[int, int, int, int],
+    amount: int,
+) -> tuple[int, int, int, int]:
+    """Move an opaque pixel toward white/black without changing its alpha."""
+    red, green, blue, alpha = color
+    if amount >= 0:
+        return (
+            red + (255 - red) * amount // 100,
+            green + (255 - green) * amount // 100,
+            blue + (255 - blue) * amount // 100,
+            alpha,
+        )
+    factor = 100 + amount
+    return (red * factor // 100, green * factor // 100, blue * factor // 100, alpha)
+
+
+def logical(pixels: list[tuple[int, int, int, int]], x: int, y: int) -> tuple[int, int, int, int]:
+    return pixels[y * 16 + x] if 0 <= x < 16 and 0 <= y < 16 else TRANSPARENT
+
+
+def premium_pixels(
+    pixels: list[tuple[int, int, int, int]],
+) -> list[tuple[int, int, int, int]]:
+    """Scale logical 16px art to detailed 32px RPG pixel art with bevels and cast shadows."""
+    if len(pixels) != 256:
+        raise ValueError("Premium source textures must use the 16x16 logical canvas")
+    output = [TRANSPARENT] * (32 * 32)
+    for y in range(16):
+        for x in range(16):
+            center = logical(pixels, x, y)
+            if center[3] == 0:
+                continue
+            north = logical(pixels, x, y - 1)
+            west = logical(pixels, x - 1, y)
+            east = logical(pixels, x + 1, y)
+            south = logical(pixels, x, y + 1)
+            # Scale2x preserves sharp corners while rounding only intentional diagonals.
+            quadrants = (
+                west if west == north and west != south and north != east else center,
+                east if north == east and north != west and east != south else center,
+                west if west == south and west != north and south != east else center,
+                east if south == east and west != south and north != east else center,
+            )
+            for sy in range(2):
+                for sx in range(2):
+                    ox, oy = x * 2 + sx, y * 2 + sy
+                    source = quadrants[sy * 2 + sx]
+                    light = (8, 3, -3, -10)[sy * 2 + sx]
+                    if north[3] == 0 and sy == 0:
+                        light += 9
+                    if west[3] == 0 and sx == 0:
+                        light += 5
+                    if south[3] == 0 and sy == 1:
+                        light -= 7
+                    if east[3] == 0 and sx == 1:
+                        light -= 5
+                    # Deterministic restrained grain prevents large surfaces looking plastic.
+                    grain = ((x * 13 + y * 7 + sx * 3 + sy * 5) % 5) - 2
+                    output[oy * 32 + ox] = tint(source, light + grain)
+
+    # One sub-pixel cast shadow anchors item sprites without blurring their silhouette.
+    shadow = (5, 7, 13, 145)
+    original = list(output)
+    for y in range(31, -1, -1):
+        for x in range(31, -1, -1):
+            if original[y * 32 + x][3] != 0:
+                continue
+            neighbours = ((x - 1, y - 1), (x, y - 1), (x - 1, y))
+            if any(0 <= nx < 32 and 0 <= ny < 32 and original[ny * 32 + nx][3] > 220
+                   for nx, ny in neighbours):
+                output[y * 32 + x] = shadow
+    return output
+
+
+def write_png(
+    path: Path,
+    width: int,
+    height: int,
+    pixels: list[tuple[int, int, int, int]],
+) -> None:
     def chunk(kind: bytes, data: bytes) -> bytes:
         checksum = zlib.crc32(kind + data) & 0xFFFFFFFF
         return struct.pack(">I", len(data)) + kind + data + struct.pack(">I", checksum)
 
+    if len(pixels) != width * height:
+        raise ValueError("PNG pixel count does not match its dimensions")
     rows = []
-    for y in range(16):
+    for y in range(height):
         row = bytearray()
-        for x in range(16):
-            row.extend(pixels[y * 16 + x])
+        for x in range(width):
+            row.extend(pixels[y * width + x])
         rows.append(b"\x00" + bytes(row))
     data = b"\x89PNG\r\n\x1a\n"
-    data += chunk(b"IHDR", struct.pack(">IIBBBBB", 16, 16, 8, 6, 0, 0, 0))
+    data += chunk(b"IHDR", struct.pack(">IIBBBBB", width, height, 8, 6, 0, 0, 0))
     data += chunk(b"IDAT", zlib.compress(b"".join(rows), 9))
     data += chunk(b"IEND", b"")
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_bytes(data)
 
 
+def png(path: Path, pixels: list[tuple[int, int, int, int]]) -> None:
+    write_png(path, 32, 32, premium_pixels(pixels))
+
+
 def pack_icon(pixels: list[tuple[int, int, int, int]]) -> None:
-    width = height = 64
+    source = premium_pixels(pixels)
     output = []
-    for y in range(height):
-        for x in range(width):
-            source = pixels[(y // 4) * 16 + x // 4]
-            background = DARK if (x // 8 + y // 8) % 2 == 0 else VIOLET
-            output.append(source if source[3] else background)
+    for y in range(64):
+        for x in range(64):
+            pixel = source[(y // 2) * 32 + x // 2]
+            distance = abs(x - 31.5) + abs(y - 31.5)
+            background = tint(VIOLET if (x // 8 + y // 8) % 2 else DARK, int(max(-8, 10 - distance / 3)))
+            output.append(pixel if pixel[3] else background)
+    write_png(ROOT.parents[1] / "pack.png", 64, 64, output)
 
-    def chunk(kind: bytes, data: bytes) -> bytes:
-        checksum = zlib.crc32(kind + data) & 0xFFFFFFFF
-        return struct.pack(">I", len(data)) + kind + data + struct.pack(">I", checksum)
 
-    rows = []
-    for y in range(height):
-        row = bytearray()
-        for x in range(width):
-            row.extend(output[y * width + x])
-        rows.append(b"\x00" + bytes(row))
-    data = b"\x89PNG\r\n\x1a\n"
-    data += chunk(b"IHDR", struct.pack(">IIBBBBB", width, height, 8, 6, 0, 0, 0))
-    data += chunk(b"IDAT", zlib.compress(b"".join(rows), 9))
-    data += chunk(b"IEND", b"")
-    (ROOT.parents[1] / "pack.png").write_bytes(data)
+def gui_slot_pixels(theme: str = "player") -> list[tuple[int, int, int, int]]:
+    c = Canvas(18)
+    if theme == "storage":
+        rim, inner, high, corner = (
+            (105, 48, 66, 255), (43, 20, 30, 255), (173, 79, 87, 255), (190, 118, 46, 255)
+        )
+    else:
+        rim, inner, high, corner = (
+            (82, 42, 111, 255), (24, 20, 45, 255), (139, 72, 162, 255), (113, 68, 137, 255)
+        )
+    c.rect(0, 0, 17, 17, (7, 5, 12, 255))
+    c.rect(1, 1, 16, 16, rim)
+    c.rect(2, 2, 15, 15, inner)
+    c.line(2, 2, 15, 2, high); c.line(2, 2, 2, 15, tint(high, -18))
+    c.line(2, 15, 15, 15, (8, 6, 13, 255)); c.line(15, 2, 15, 15, tint(rim, -45))
+    c.set(3, 3, tint(GOLD, -12) if theme == "storage" else tint(PURPLE, 28))
+    c.set(14, 14, corner)
+    return c.pixels
+
+
+def gui_container_pixels() -> list[tuple[int, int, int, int]]:
+    """Full vanilla-compatible 6-row container atlas with a Hyping-scale Valoria facade."""
+    c = Canvas(256)
+    plum = (72, 27, 91, 255)
+    violet = (132, 53, 154, 255)
+    bright = (200, 93, 203, 255)
+    recess = (37, 15, 42, 255)
+    lower = (26, 25, 54, 255)
+    bronze = (190, 120, 39, 255)
+    red_banner = (169, 30, 44, 255)
+
+    # Main panel and heavy drop shadow.
+    c.rect(3, 3, 178, 224, (5, 4, 9, 210))
+    c.rect(0, 0, 175, 221, INK)
+    c.rect(2, 2, 173, 219, plum)
+    c.rect(6, 5, 169, 216, recess)
+
+    # Architectural gold/violet columns, segmented like a fantasy palace facade.
+    for left in (0, 165):
+        c.rect(left, 13, left + 10, 212, (39, 16, 52, 255))
+        c.rect(left + 1, 16, left + 4, 208, violet)
+        c.line(left + 5, 16, left + 5, 208, bright)
+        c.rect(left + 6, 16, left + 8, 208, tint(plum, -18))
+        c.line(left + 9, 16, left + 9, 208, INK)
+        for y in range(21, 207, 18):
+            c.line(left + 2, y, left + 7, y + 5, tint(GOLD, -8))
+            c.set(left + 2, y + 1, LIGHT)
+        for y in (13, 122, 126, 207):
+            c.rect(left, y, left + 10, y + 4, bronze)
+            c.line(left + 1, y, left + 9, y, tint(GOLD, 24))
+            c.set(left + 2, y + 1, LIGHT); c.set(left + 8, y + 3, tint(bronze, -32))
+    c.rect(0, 215, 12, 221, bronze); c.rect(163, 215, 175, 221, bronze)
+    c.rect(2, 214, 9, 218, violet); c.rect(166, 214, 173, 218, violet)
+    c.set(1, 217, LIGHT); c.set(173, 217, LIGHT)
+
+    # Layered pediment and broad red title ribbon behind the actual inventory title.
+    c.rect(8, 0, 167, 16, (50, 18, 65, 255))
+    c.rect(14, 0, 161, 3, violet)
+    c.line(16, 0, 159, 0, bright); c.line(9, 15, 166, 15, bronze)
+    c.rect(7, 3, 168, 14, bronze)
+    c.rect(10, 4, 165, 13, red_banner)
+    c.line(11, 4, 164, 4, (244, 91, 84, 255)); c.line(11, 13, 164, 13, (76, 9, 27, 255))
+    c.rect(2, 5, 10, 11, bronze); c.rect(165, 5, 173, 11, bronze)
+    c.set(4, 6, LIGHT); c.set(171, 6, LIGHT)
+    # Crown finial.
+    c.set(84, 1, GOLD); c.set(87, 0, LIGHT); c.set(90, 1, GOLD)
+
+    # Upper storage recess. The vanilla renderer crops this area for 1–6 rows.
+    c.rect(7, 17, 168, 124, (91, 31, 51, 255))
+    c.rect(9, 19, 166, 122, (57, 23, 37, 255))
+    c.line(9, 19, 166, 19, (181, 72, 83, 255))
+    c.line(9, 122, 166, 122, (25, 9, 19, 255))
+    storage_slot = gui_slot_pixels("storage")
+    for row in range(6):
+        for column in range(9):
+            ox, oy = 7 + column * 18, 17 + row * 18
+            for sy in range(18):
+                for sx in range(18):
+                    c.set(ox + sx, oy + sy, storage_slot[sy * 18 + sx])
+
+    # Player inventory is sampled by vanilla from y=126 regardless of container row count.
+    c.rect(0, 126, 175, 221, lower)
+    c.rect(6, 126, 169, 216, (35, 31, 67, 255))
+    c.line(8, 127, 167, 127, bright); c.line(8, 215, 167, 215, (10, 8, 19, 255))
+    # Discreet central royal crest between storage and player inventory.
+    c.rect(75, 126, 100, 137, (47, 22, 65, 255))
+    c.line(77, 127, 98, 127, tint(GOLD, -4)); c.set(87, 130, GOLD); c.set(88, 129, LIGHT)
+    player_slot = gui_slot_pixels("player")
+    for row in range(3):
+        for column in range(9):
+            ox, oy = 7 + column * 18, 139 + row * 18
+            for sy in range(18):
+                for sx in range(18):
+                    c.set(ox + sx, oy + sy, player_slot[sy * 18 + sx])
+    for column in range(9):
+        ox, oy = 7 + column * 18, 197
+        for sy in range(18):
+            for sx in range(18):
+                c.set(ox + sx, oy + sy, player_slot[sy * 18 + sx])
+
+    # Small gems and filigree stop the frame looking like a flat rectangle.
+    for x, y, color in ((5, 8, CYAN), (170, 8, RED), (4, 213, PURPLE), (171, 213, CYAN)):
+        c.set(x, y, LIGHT); c.set(x + 1, y, color); c.set(x, y + 1, tint(color, -20))
+    for y in range(24, 119, 16):
+        c.set(4, y, GOLD); c.set(171, y + 7, tint(GOLD, -12))
+    return c.pixels
+
+
+def generate_gui_textures() -> None:
+    minecraft = ROOT.parent / "minecraft" / "textures" / "gui"
+    write_png(minecraft / "container" / "generic_54.png", 256, 256, gui_container_pixels())
+    slot = gui_slot_pixels()
+    write_png(minecraft / "sprites" / "container" / "slot.png", 18, 18, slot)
+    # Gold focus ring used by modern container screens where supported.
+    focus = Canvas(18)
+    for inset, color in ((0, (255, 226, 119, 210)), (1, (218, 157, 51, 180))):
+        focus.line(inset, inset, 17 - inset, inset, color)
+        focus.line(inset, 17 - inset, 17 - inset, 17 - inset, color)
+        focus.line(inset, inset, inset, 17 - inset, color)
+        focus.line(17 - inset, inset, 17 - inset, 17 - inset, color)
+    write_png(minecraft / "sprites" / "container" / "slot_highlight_front.png", 18, 18, focus.pixels)
 
 
 def medallion(base: tuple[int, int, int, int], border: tuple[int, int, int, int] = GOLD) -> Canvas:
+    """Valoria guild crest: obsidian backing, aged-metal rim and faceted colored enamel."""
     c = Canvas()
-    shape = {
-        1: (5, 10), 2: (3, 12), 3: (2, 13), 4: (2, 13), 5: (1, 14), 6: (1, 14),
-        7: (1, 14), 8: (1, 14), 9: (1, 14), 10: (1, 14), 11: (2, 13), 12: (2, 13),
-        13: (3, 12), 14: (5, 10),
+    outer = {
+        1: (5, 10), 2: (3, 12), 3: (2, 13), 4: (1, 14), 5: (1, 14),
+        6: (1, 14), 7: (1, 14), 8: (1, 14), 9: (2, 13), 10: (2, 13),
+        11: (3, 12), 12: (4, 11), 13: (5, 10), 14: (7, 8),
     }
-    mask = {(x, y) for y, bounds in shape.items() for x in range(bounds[0], bounds[1] + 1)}
+    mask = {(x, y) for y, bounds in outer.items() for x in range(bounds[0], bounds[1] + 1)}
     for x, y in mask:
-        boundary = any((x + dx, y + dy) not in mask for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)))
-        c.set(x, y, INK if boundary else border if x in (2, 13) or y in (2, 13) else base)
-    c.set(4, 4, tuple(min(255, channel + 45) for channel in base[:3]) + (255,))
+        adjacent_void = any(
+            (x + dx, y + dy) not in mask
+            for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1))
+        )
+        near_edge = any(
+            (x + dx * 2, y + dy * 2) not in mask
+            for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1))
+        )
+        if adjacent_void:
+            color = INK
+        elif near_edge:
+            color = border if x + y < 17 else tint(border, -24)
+        else:
+            # Diagonal enamel facets and a dark lower recess create material depth.
+            color = tint(base, 12 if x + y < 14 else -13 if x + y > 19 else 0)
+        c.set(x, y, color)
+    c.line(4, 3, 11, 3, tint(border, 22))
+    c.set(3, 5, LIGHT); c.set(12, 5, tint(border, -20))
+    c.set(5, 12, tint(border, -10)); c.set(10, 12, tint(border, -28))
     return c
 
 
@@ -224,6 +438,49 @@ def symbol(c: Canvas, name: str, color: tuple[int, int, int, int] = LIGHT) -> No
     elif name == "clock":
         c.rect(5, 4, 10, 11, color); c.rect(4, 6, 11, 9, color)
         c.rect(6, 5, 9, 10, DARK); c.line(8, 6, 8, 8, LIGHT); c.line(8, 8, 10, 9, GOLD)
+    elif name == "check":
+        c.rect(4, 4, 11, 11, WHITE); c.rect(5, 5, 10, 10, tint(CYAN, -35))
+        c.line(5, 8, 7, 10, color); c.line(7, 10, 11, 5, color); c.set(10, 5, LIGHT)
+    elif name == "gem":
+        c.line(8, 3, 12, 7, color); c.line(12, 7, 8, 12, tint(color, -20))
+        c.line(8, 12, 4, 7, tint(color, -35)); c.line(4, 7, 8, 3, tint(color, 30))
+        c.line(4, 7, 12, 7, LIGHT); c.line(8, 3, 8, 12, tint(color, 15))
+        c.set(7, 5, WHITE)
+    elif name == "flame":
+        c.line(8, 3, 5, 9, GOLD); c.line(8, 3, 11, 9, color)
+        c.line(5, 9, 8, 12, tint(ORANGE, -15)); c.line(11, 9, 8, 12, RED)
+        c.line(8, 6, 7, 10, LIGHT); c.line(8, 6, 9, 10, GOLD); c.set(8, 11, WHITE)
+    elif name == "shield":
+        c.line(4, 4, 11, 4, color); c.line(4, 4, 5, 10, color); c.line(11, 4, 10, 10, tint(color, -25))
+        c.line(5, 10, 8, 13, tint(color, -20)); c.line(10, 10, 8, 13, tint(color, -35))
+        c.line(8, 4, 8, 12, LIGHT); c.set(6, 6, GOLD); c.set(10, 6, GOLD)
+    elif name == "key":
+        c.rect(4, 4, 8, 8, GOLD); c.rect(5, 5, 7, 7, INK)
+        c.line(8, 8, 12, 12, color); c.set(10, 11, color); c.set(12, 10, color)
+        c.set(4, 4, LIGHT)
+    elif name == "apple":
+        c.rect(5, 6, 10, 11, RED); c.rect(4, 7, 11, 10, RED)
+        c.set(5, 6, LIGHT); c.set(8, 5, (105, 65, 34, 255)); c.set(9, 4, GREEN); c.set(10, 4, GREEN)
+    elif name == "seed":
+        c.line(5, 11, 10, 5, GREEN); c.rect(4, 8, 6, 10, GOLD); c.rect(9, 4, 11, 6, tint(GREEN, 20))
+        c.set(8, 8, LIGHT)
+    elif name == "ufo":
+        c.rect(6, 4, 9, 6, CYAN); c.rect(4, 6, 11, 8, color); c.line(3, 8, 12, 8, GOLD)
+        c.set(5, 9, CYAN); c.set(8, 10, CYAN); c.set(11, 9, CYAN)
+    elif name == "replant":
+        c.line(8, 5, 8, 12, GREEN); c.line(8, 7, 5, 5, GREEN); c.line(8, 9, 11, 7, GREEN)
+        c.rect(4, 12, 12, 13, (101, 62, 33, 255)); c.set(8, 4, LIGHT)
+    elif name == "grid":
+        for x in (4, 8, 12): c.line(x, 4, x, 12, color)
+        for y in (4, 8, 12): c.line(4, y, 12, y, color)
+        c.set(8, 8, GOLD); c.set(5, 5, LIGHT); c.set(11, 11, tint(color, -30))
+    elif name == "medal":
+        c.line(6, 3, 8, 7, BLUE); c.line(10, 3, 8, 7, RED)
+        c.rect(5, 7, 11, 12, INK); c.rect(6, 7, 10, 11, color)
+        c.set(8, 8, LIGHT); c.set(7, 9, GOLD); c.set(9, 9, GOLD)
+    elif name == "info":
+        c.rect(5, 3, 10, 12, (228, 216, 179, 255)); c.line(6, 5, 9, 5, BLUE)
+        c.line(6, 7, 9, 7, BLUE); c.line(6, 9, 8, 9, BLUE); c.set(10, 11, GOLD)
     elif name == "back":
         c.line(4, 8, 12, 8, color); c.line(4, 8, 8, 4, color); c.line(4, 8, 8, 12, color)
     else:
@@ -236,13 +493,117 @@ def ui_icon(symbol_name: str, base: tuple[int, int, int, int] = VIOLET, accent: 
     return c.pixels
 
 
+def zone_icon(name: str, base: tuple[int, int, int, int]) -> list[tuple[int, int, int, int]]:
+    c = medallion(base, tint(GOLD, -18))
+    if name == "charbon":
+        for x, y in ((5, 7), (8, 5), (10, 9)):
+            c.rect(x, y, x + 2, y + 2, (44, 48, 57, 255)); c.set(x, y, GRAY)
+    elif name == "fer_cuivre":
+        c.rect(4, 5, 9, 8, (205, 213, 219, 255)); c.line(4, 5, 9, 5, WHITE)
+        c.rect(7, 9, 12, 12, (195, 103, 64, 255)); c.line(7, 9, 12, 9, (244, 157, 108, 255))
+    elif name == "or_redstone_lapis":
+        for x, color in ((4, GOLD), (8, RED), (11, BLUE)):
+            c.rect(x, 6, x + 2, 10, tint(color, -15)); c.set(x + 1, 6, LIGHT)
+    elif name == "diamant_emeraude":
+        symbol(c, "gem", CYAN); c.set(11, 6, GREEN); c.set(12, 7, tint(GREEN, 30))
+    elif name == "ble":
+        symbol(c, "wheat", GOLD)
+    elif name == "carottes":
+        c.line(6, 5, 8, 12, ORANGE); c.line(10, 5, 8, 12, tint(ORANGE, -20))
+        c.line(8, 5, 6, 3, GREEN); c.line(8, 5, 10, 3, tint(GREEN, 20))
+    elif name == "pommes_de_terre":
+        c.rect(5, 5, 11, 11, (166, 124, 63, 255)); c.rect(4, 7, 12, 10, (166, 124, 63, 255))
+        c.set(6, 6, LIGHT); c.set(10, 9, (91, 66, 38, 255)); c.set(7, 11, (91, 66, 38, 255))
+    elif name == "betteraves":
+        c.rect(5, 6, 11, 11, (164, 31, 62, 255)); c.line(6, 7, 9, 11, tint(RED, 18))
+        c.line(8, 6, 5, 3, GREEN); c.line(8, 6, 11, 3, tint(GREEN, 16))
+    else:
+        woods = {
+            "chene": ((131, 91, 48, 255), GREEN),
+            "bouleau": ((219, 207, 157, 255), WHITE),
+            "sapin": ((87, 57, 34, 255), (42, 115, 62, 255)),
+            "chene_noir": ((57, 36, 26, 255), PURPLE),
+        }
+        wood, leaf = woods[name]
+        c.rect(4, 5, 11, 11, tint(wood, -25)); c.rect(5, 5, 10, 10, wood)
+        c.rect(6, 6, 9, 9, tint(wood, 25)); c.rect(7, 7, 8, 8, tint(wood, -20))
+        c.set(4, 4, leaf); c.set(11, 4, tint(leaf, 18)); c.set(12, 6, leaf)
+    return c.pixels
+
+
+def capability_icon(name: str, base: tuple[int, int, int, int]) -> list[tuple[int, int, int, int]]:
+    symbols = {
+        "efficiency": "speed", "level_boost": "arrow", "money_boost": "coin",
+        "coin_boost": "coin", "speed_burst": "speed", "area_mining": "grid",
+        "ore_fortune": "gem", "auto_smelt": "flame", "gem_finder": "gem",
+        "mine_coin_finder": "coin", "area_harvest": "grid", "harvest_fortune": "spark",
+        "auto_replant": "replant", "seed_finder": "seed", "farm_coin_finder": "coin",
+        "ufo_harvest": "ufo", "timber": "tree", "wood_fortune": "spark",
+        "apple_finder": "apple", "wood_coin_finder": "coin", "double_catch": "fish",
+        "treasure_luck": "chest", "rare_catch": "gem", "fish_coin_finder": "coin",
+        "farm_key_finder": "key", "crate_key_finder": "key",
+    }
+    c = medallion(base, GOLD if "key" in name or "fortune" in name else tint(base, 35))
+    symbol(c, symbols[name], LIGHT if symbols[name] not in {"coin", "gem", "flame"} else base)
+    if name.startswith("area_"):
+        c.set(4, 4, GOLD); c.set(12, 4, GOLD); c.set(8, 12, GOLD)
+    if name.startswith("double_"):
+        c.set(4, 5, CYAN); c.set(11, 10, CYAN)
+    if name.endswith("_finder"):
+        c.set(12, 4, LIGHT); c.set(11, 5, GOLD)
+    return c.pixels
+
+
+def crate_key_icon(
+    kind: str,
+    base: tuple[int, int, int, int],
+    edge: tuple[int, int, int, int],
+) -> list[tuple[int, int, int, int]]:
+    marks = {
+        "vote": "check", "quest": "scroll", "farm": "wheat", "common": "shield",
+        "rare": "gem", "epic": "flame", "legendary": "crown", "valoria": "crown",
+        "pets": "paw",
+    }
+    c = medallion(base, edge)
+    symbol(c, marks[kind], edge)
+    # Key teeth at the bottom make these visually distinct from menu badges.
+    c.line(7, 11, 10, 14, GOLD); c.set(9, 13, LIGHT); c.set(11, 13, GOLD)
+    return c.pixels
+
+
+def pet_egg_icon(chromatic: bool) -> list[tuple[int, int, int, int]]:
+    c = Canvas()
+    outline = (30, 19, 43, 255)
+    shell = (221, 211, 230, 255) if not chromatic else (109, 66, 161, 255)
+    glow = (137, 235, 240, 255) if not chromatic else (255, 104, 186, 255)
+    for y, bounds in {2: (7, 8), 3: (5, 10), 4: (4, 11), 5: (3, 12), 6: (3, 12),
+                      7: (2, 13), 8: (2, 13), 9: (2, 13), 10: (3, 12), 11: (4, 11),
+                      12: (5, 10), 13: (7, 8)}.items():
+        for x in range(bounds[0], bounds[1] + 1):
+            boundary = x in bounds or y in (2, 13)
+            c.set(x, y, outline if boundary else tint(shell, 13 if x + y < 15 else -12))
+    c.line(5, 6, 8, 9, glow); c.line(8, 9, 11, 5, tint(glow, 22))
+    c.set(6, 4, WHITE); c.set(5, 5, LIGHT)
+    if chromatic:
+        for x, y, color in ((4, 8, CYAN), (11, 9, GOLD), (7, 11, RED), (10, 6, WHITE)):
+            c.set(x, y, color)
+    else:
+        c.set(10, 10, PURPLE); c.set(11, 11, PURPLE)
+    return c.pixels
+
+
 def filler_tile() -> list[tuple[int, int, int, int]]:
     c = Canvas()
-    c.rect(0, 0, 15, 15, (19, 12, 35, 255))
-    c.line(0, 0, 15, 0, VIOLET); c.line(0, 15, 15, 15, DARK)
-    c.line(0, 0, 0, 15, VIOLET); c.line(15, 0, 15, 15, DARK)
-    for x, y in ((1, 1), (14, 1), (1, 14), (14, 14)): c.set(x, y, GOLD)
-    c.set(7, 7, (34, 21, 61, 255)); c.set(8, 8, (34, 21, 61, 255))
+    c.rect(0, 0, 15, 15, (16, 12, 26, 255))
+    c.rect(1, 1, 14, 14, (31, 19, 48, 255))
+    c.line(1, 1, 14, 1, (94, 53, 116, 255)); c.line(1, 14, 14, 14, (8, 7, 14, 255))
+    c.line(1, 1, 1, 14, (74, 42, 93, 255)); c.line(14, 1, 14, 14, INK)
+    # Subtle royal damask rather than an empty black pane.
+    c.line(4, 8, 8, 4, (45, 27, 66, 255)); c.line(8, 4, 12, 8, (45, 27, 66, 255))
+    c.line(4, 8, 8, 12, (38, 23, 57, 255)); c.line(12, 8, 8, 12, (38, 23, 57, 255))
+    for x, y in ((2, 2), (13, 2), (2, 13), (13, 13)):
+        c.set(x, y, tint(GOLD, -22))
+    c.set(8, 7, tint(PURPLE, 20)); c.set(7, 8, tint(PURPLE, -8))
     return c.pixels
 
 
@@ -453,7 +814,7 @@ def crate_texture(
         # Emerald steel with a simple silver civic shield.
         c.rect(5, 3, 10, 11, DARK); c.rect(6, 4, 9, 10, accent)
         c.set(6, 10, TRANSPARENT); c.set(9, 10, TRANSPARENT)
-        glyph(c, "C", trim)
+        symbol(c, "shield", trim)
     elif kind == "rare":
         # Sapphire facets and an icy central gem.
         c.line(3, 8, 8, 2, accent); c.line(8, 2, 13, 8, accent)
@@ -669,6 +1030,10 @@ def clean_generated_assets() -> None:
 
 def main() -> None:
     clean_generated_assets()
+    generate_gui_textures()
+    # Root pet-egg definitions are hand-authored, but their premium textures are deterministic too.
+    png(ROOT / "textures" / "item" / "pet_egg.png", pet_egg_icon(False))
+    png(ROOT / "textures" / "item" / "pet_egg_chromatic.png", pet_egg_icon(True))
     write_model("ui/filler", filler_tile())
     icons: dict[str, tuple[str, tuple[int, int, int, int]]] = {
         "balance": ("coin", VIOLET), "stats": ("bars", BLUE), "farm": ("wheat", (41, 104, 62, 255)),
@@ -683,12 +1048,13 @@ def main() -> None:
         ("mine", "pick", BLUE), ("fields", "wheat", GREEN), ("fishing", "fish", BLUE), ("forest", "tree", GREEN)
     ): write_model(f"ui/farm/{name}", ui_icon(mark, base))
     zone_data = {
-        "charbon": ("C", GRAY), "fer_cuivre": ("FC", ORANGE), "or_redstone_lapis": ("OR", RED),
-        "diamant_emeraude": ("DE", CYAN), "ble": ("B", GREEN), "carottes": ("CA", ORANGE),
-        "pommes_de_terre": ("PT", ORANGE), "betteraves": ("BE", RED), "chene": ("C", GREEN),
-        "bouleau": ("BO", WHITE), "sapin": ("S", GREEN), "chene_noir": ("CN", VIOLET),
+        "charbon": GRAY, "fer_cuivre": ORANGE, "or_redstone_lapis": RED,
+        "diamant_emeraude": CYAN, "ble": GREEN, "carottes": ORANGE,
+        "pommes_de_terre": (161, 117, 63, 255), "betteraves": RED, "chene": GREEN,
+        "bouleau": WHITE, "sapin": (44, 108, 60, 255), "chene_noir": VIOLET,
     }
-    for name, (mark, base) in zone_data.items(): write_model(f"ui/farm/zone/{name}", ui_icon(mark, base))
+    for name, base in zone_data.items():
+        write_model(f"ui/farm/zone/{name}", zone_icon(name, base))
     write_model("ui/status/locked", ui_icon("lock", DARK, RED))
 
     for name, mark, base in (
@@ -714,11 +1080,11 @@ def main() -> None:
     ):
         write_model(f"ui/leaderboard/{name}", ui_icon(mark, base))
     for name, mark, base in (
-        ("gold", "1", (194, 132, 34, 255)), ("silver", "2", GRAY),
-        ("bronze", "3", (152, 83, 48, 255)), ("standard", "T", VIOLET),
+        ("gold", "medal", (194, 132, 34, 255)), ("silver", "medal", GRAY),
+        ("bronze", "medal", (152, 83, 48, 255)), ("standard", "bars", VIOLET),
     ):
         write_model(f"ui/leaderboard/entry/{name}", ui_icon(mark, base))
-    write_model("ui/leaderboard/me", ui_icon("M", CYAN))
+    write_model("ui/leaderboard/me", ui_icon("members", CYAN))
     write_model("ui/leaderboard/updated", ui_icon("clock", BLUE))
     write_model("ui/leaderboard/back", ui_icon("back", VIOLET))
     write_model("ui/warp/tutorial", ui_icon("scroll", (46, 112, 150, 255), GOLD))
@@ -743,7 +1109,7 @@ def main() -> None:
 
     tool_colors = {"pickaxe": BLUE, "hoe": GREEN, "axe": ORANGE, "fishing_rod": CYAN}
     for tool, base in tool_colors.items(): write_model(f"ui/tool/{tool}", tool_icon(tool, base))
-    write_model("ui/tool/info", ui_icon("I", BLUE))
+    write_model("ui/tool/info", ui_icon("info", BLUE))
     capabilities = [
         "efficiency", "level_boost", "money_boost", "coin_boost", "speed_burst", "area_mining",
         "ore_fortune", "auto_smelt", "gem_finder", "mine_coin_finder", "area_harvest",
@@ -752,26 +1118,31 @@ def main() -> None:
         "treasure_luck", "rare_catch", "fish_coin_finder", "farm_key_finder", "crate_key_finder",
     ]
     for index, capability in enumerate(capabilities):
-        abbreviation = "".join(part[0] for part in capability.split("_"))[:2]
         palette = (BLUE, GREEN, ORANGE, PURPLE)[index % 4]
-        write_model(f"ui/tool/capability/{capability}", ui_icon(abbreviation, palette))
+        write_model(
+            f"ui/tool/capability/{capability}",
+            capability_icon(capability, palette),
+        )
 
     for tool, base in tool_colors.items(): write_model(f"ui/quest/tool/{tool}", tool_icon(tool, base))
-    for rarity, base in (("common", GRAY), ("rare", BLUE), ("epic", PURPLE), ("legendary", ORANGE)):
-        write_model(f"ui/quest/summary/{rarity}", ui_icon(rarity[0].upper(), base))
-
-    write_model("item/key/pet_crate", ui_icon("K", (151, 65, 171, 255), CYAN))
-    for crate, mark, base, edge in (
-        ("vote", "V", (30, 170, 185, 255), WHITE),
-        ("quest", "Q", (48, 118, 168, 255), CYAN),
-        ("farm", "F", (142, 92, 34, 255), GREEN),
-        ("common", "C", (39, 145, 72, 255), WHITE),
-        ("rare", "R", BLUE, CYAN),
-        ("epic", "E", (222, 91, 20, 255), GOLD),
-        ("legendary", "L", (228, 178, 26, 255), WHITE),
-        ("valoria", "crown", (158, 17, 38, 255), GOLD),
+    for rarity, mark, base in (
+        ("common", "shield", GREEN), ("rare", "gem", BLUE),
+        ("epic", "flame", ORANGE), ("legendary", "crown", GOLD),
     ):
-        write_model(f"item/key/crate_{crate}", ui_icon(mark, base, edge))
+        write_model(f"ui/quest/summary/{rarity}", ui_icon(mark, base))
+
+    write_model("item/key/pet_crate", crate_key_icon("pets", (151, 65, 171, 255), CYAN))
+    for crate, base, edge in (
+        ("vote", (30, 170, 185, 255), WHITE),
+        ("quest", (48, 118, 168, 255), CYAN),
+        ("farm", (142, 92, 34, 255), GREEN),
+        ("common", (39, 145, 72, 255), WHITE),
+        ("rare", BLUE, CYAN),
+        ("epic", (222, 91, 20, 255), GOLD),
+        ("legendary", (228, 178, 26, 255), WHITE),
+        ("valoria", (158, 17, 38, 255), GOLD),
+    ):
+        write_model(f"item/key/crate_{crate}", crate_key_icon(crate, base, edge))
     for crate, base, trim, accent in (
         ("vote", (19, 119, 139, 255), (69, 231, 239, 255), WHITE),
         ("quest", (31, 83, 128, 255), CYAN, (248, 218, 132, 255)),
@@ -808,7 +1179,7 @@ def main() -> None:
     for voucher, mark, base in (
         ("item", "chest", ORANGE),
         ("generator", "gear", BLUE),
-        ("key", "K", GOLD),
+        ("key", "key", GOLD),
         ("pet_key", "paw", PURPLE),
     ):
         write_model(f"item/reward/voucher/{voucher}", reward_voucher_icon(mark, base))

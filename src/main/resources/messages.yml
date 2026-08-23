@@ -172,7 +172,7 @@ compaction:
   decompacted: '<green><resource> décompacté. Niveau obtenu : <level>.</green>'
 
 machines:
-  purchase-title: '<dark_gray>Acheter <machine></dark_gray>'
+  purchase-title: '<gold><bold>ACHAT • <machine></bold></gold>'
   purchased: '<green>Machine <machine> achetée. Placez le bloc sur votre Skyblock.</green>'
   insufficient-money: '<red>Vous n’avez pas assez d’argent.</red>'
   insufficient-coins: '<red>Vous n’avez pas assez de coins pour cet outil.</red>'

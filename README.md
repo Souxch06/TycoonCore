@@ -192,7 +192,7 @@ La progression est persistée dans SQLite, les actions sont regroupées avant é
 
 ### Pack de ressources Valoria complet
 
-Le dossier `resource-pack/` contient le pack officiel Minecraft 26.2 de ValoriaTycoon. Il fournit **259 modèles et 259 textures 16×16** sans remplacer globalement les objets vanilla : chaque apparence est activée uniquement par le composant serveur `minecraft:item_model`. L’identité visuelle commune est médiévale, violet Valoria et or.
+Le dossier `resource-pack/` contient le pack officiel Minecraft 26.2 de ValoriaTycoon. Il fournit **259 modèles et 259 textures premium 32×32** sans remplacer globalement les objets vanilla : chaque objet serveur est activé uniquement par `minecraft:item_model`. Les inventaires partagent désormais une façade fantasy complète — colonnes violettes, or, bandeau rouge, slots bordeaux et inventaire joueur indigo — au lieu du coffre gris vanilla.
 
 Le pack couvre le menu principal `/is`, les farms et leurs zones, l’auto-sell, les améliorations de parcelle, les dix rangs, les quêtes, les huit pets, la boutique et le contrôle des générateurs, toutes les capacités du multi-tool et les écrans de paiement. Les objets physiques possèdent également leur apparence propre : clés, œufs normal/chromatique, quatre générateurs, sacs d’argent/coins, fioles XP, paquets de ressources, bons de récompense, seize ressources compactées sur trois niveaux et les quarante-quatre combinaisons rang/forme du multi-tool.
 
@@ -384,8 +384,8 @@ mvn clean verify
 Le plugin ombré et le pack de ressources client sont générés dans :
 
 ```text
-target/ValoriaTycoon-0.37.0-SNAPSHOT.jar
-target/ValoriaTycoon-0.37.0-SNAPSHOT-resource-pack.zip
+target/ValoriaTycoon-0.38.0-SNAPSHOT.jar
+target/ValoriaTycoon-0.38.0-SNAPSHOT-resource-pack.zip
 ```
 
 Pour afficher l’identité visuelle complète, héberger le ZIP du pack sur une URL HTTPS publique puis renseigner cette URL et son SHA-1 dans la configuration du pack de ressources du serveur. Le ZIP contient directement `pack.mcmeta`, `pack.png` et `assets/` à sa racine. Sur un serveur public, le pack doit être proposé ou rendu obligatoire. Pour conserver volontairement les apparences vanilla sans pack client, définir `item-models.enabled: false` dans `resource-pack.yml` puis redémarrer.

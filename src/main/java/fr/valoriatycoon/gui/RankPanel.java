@@ -75,7 +75,7 @@ public final class RankPanel implements Listener {
         Inventory inventory = Bukkit.createInventory(
                 holder,
                 27,
-                messages.render("<dark_gray>Rangs médiévaux</dark_gray>")
+                messages.render("<gold><bold>RANGS MÉDIÉVAUX</bold></gold>")
         );
         holder.bind(inventory);
         visuals.fillMenu(inventory);
