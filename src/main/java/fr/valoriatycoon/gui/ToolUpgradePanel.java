@@ -2,6 +2,7 @@ package fr.valoriatycoon.gui;
 
 import fr.valoriatycoon.config.MessageService;
 import fr.valoriatycoon.economy.CurrencyFormatter;
+import fr.valoriatycoon.farm.FarmSettings;
 import fr.valoriatycoon.farm.autosell.AutoSellProfile;
 import fr.valoriatycoon.farm.autosell.AutoSellPurchaseResult;
 import fr.valoriatycoon.farm.autosell.AutoSellPurchaseStatus;

@@ -214,7 +214,7 @@ final class MineCavernGenerator {
         if (relativeZ == 0 && Math.floorMod(relativeX, 96) == 0) {
             int lanternY = settings.bridgeY() + 9;
             for (int y = roofY - 1; y > lanternY; y--) {
-                data.setBlock(localX, y, localZ, Material.CHAIN);
+                data.setBlock(localX, y, localZ, Material.IRON_CHAIN);
             }
             data.setBlock(localX, lanternY, localZ, Material.LANTERN);
         }

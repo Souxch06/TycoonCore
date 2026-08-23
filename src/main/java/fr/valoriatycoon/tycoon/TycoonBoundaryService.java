@@ -57,7 +57,7 @@ public final class TycoonBoundaryService implements Listener {
         );
         border.setSize(size);
         border.setWarningDistance(0);
-        border.setWarningTime(0);
+        border.setWarningTimeTicks(0);
         border.setDamageAmount(0.0);
         player.setWorldBorder(border);
         displayed.put(player.getUniqueId(), key);

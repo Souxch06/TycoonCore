@@ -69,7 +69,7 @@ public final class ToolEffectService implements Listener {
             return;
         }
         synchronizeHeldMultiTool(player);
-        AttributeInstance attribute = player.getAttribute(Attribute.PLAYER_BLOCK_BREAK_SPEED);
+        AttributeInstance attribute = player.getAttribute(Attribute.BLOCK_BREAK_SPEED);
         if (attribute == null) {
             return;
         }
@@ -172,7 +172,7 @@ public final class ToolEffectService implements Listener {
     }
 
     private void removeModifier(Player player) {
-        AttributeInstance attribute = player.getAttribute(Attribute.PLAYER_BLOCK_BREAK_SPEED);
+        AttributeInstance attribute = player.getAttribute(Attribute.BLOCK_BREAK_SPEED);
         if (attribute == null) {
             return;
         }

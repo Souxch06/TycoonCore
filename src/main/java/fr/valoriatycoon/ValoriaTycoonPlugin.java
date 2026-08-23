@@ -682,6 +682,7 @@ public final class ValoriaTycoonPlugin extends JavaPlugin {
         );
         registerListeners(
                 messages,
+                farmSettings,
                 paymentRateLimiter,
                 farmMenu,
                 autoSellPanel,
@@ -831,6 +832,7 @@ public final class ValoriaTycoonPlugin extends JavaPlugin {
 
     private void registerListeners(
             MessageService messages,
+            FarmSettings farmSettings,
             PaymentRateLimiter paymentRateLimiter,
             FarmMenu farmMenu,
             AutoSellPanel autoSellPanel,
