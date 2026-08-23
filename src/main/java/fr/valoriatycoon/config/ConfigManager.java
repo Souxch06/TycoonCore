@@ -298,7 +298,71 @@ public final class ConfigManager {
     }
 
     private YamlConfiguration load(String resourceName) {
-        return YamlConfiguration.loadConfiguration(new File(plugin.getDataFolder(), resourceName));
+        YamlConfiguration loaded = YamlConfiguration.loadConfiguration(
+                new File(plugin.getDataFolder(), resourceName)
+        );
+        migratePremiumTitles(resourceName, loaded);
+        return loaded;
+    }
+
+    /** Applies the v0.38 visual title upgrade only when an administrator kept the exact old default. */
+    private void migratePremiumTitles(String resourceName, YamlConfiguration config) {
+        switch (resourceName) {
+            case "farms.yml" -> {
+                replaceDefault(config, "menu.title", "<dark_gray>Choisir un monde de farm</dark_gray>",
+                        "<gold><bold>FARMS DE VALORIA</bold></gold>");
+                replaceDefault(config, "zone-menu.title", "<dark_gray><farm> — choisir une zone</dark_gray>",
+                        "<gold><bold><farm></bold></gold>");
+                replaceDefault(config, "autosell-menu.title", "<dark_gray>Gestion de la vente automatique</dark_gray>",
+                        "<gold><bold>VENTE AUTOMATIQUE</bold></gold>");
+            }
+            case "leaderboards.yml" -> {
+                replaceDefault(config, "menu.title", "<dark_gray>Classements de Valoria</dark_gray>",
+                        "<gold><bold>CLASSEMENTS</bold></gold>");
+                replaceDefault(config, "menu.detail-title", "<dark_gray>Classement — <category></dark_gray>",
+                        "<gold><bold>TOP • <category></bold></gold>");
+            }
+            case "machines.yml" -> {
+                replaceDefault(config, "shop.title", "<dark_gray>Boutique des générateurs</dark_gray>",
+                        "<gold><bold>GÉNÉRATEURS</bold></gold>");
+                replaceDefault(config, "control.title", "<dark_gray>Générateur — <machine></dark_gray>",
+                        "<gold><bold><machine></bold></gold>");
+            }
+            case "menus.yml" -> replaceDefault(config, "menu.title", "<dark_gray>Mon Skyblock</dark_gray>",
+                    "<gold><bold>MON SKYBLOCK</bold></gold>");
+            case "pets.yml" -> {
+                replaceDefault(config, "menu.title", "<dark_gray>Mes Pets</dark_gray>",
+                        "<gold><bold>MES PETS</bold></gold>");
+                replaceDefault(config, "reclaim.menu-title", "<dark_gray>Remettre un pet en œuf</dark_gray>",
+                        "<gold><bold>GARDIEN DES ŒUFS</bold></gold>");
+            }
+            case "tools.yml" -> {
+                replaceDefault(config, "menu.title", "<dark_gray>Améliorations — <tool></dark_gray>",
+                        "<gold><bold>OUTIL • <tool></bold></gold>");
+                replaceDefault(config, "purchase-menu.title", "<dark_gray>Choisir la monnaie — <tool></dark_gray>",
+                        "<gold><bold>PAIEMENT • <tool></bold></gold>");
+            }
+            case "upgrades.yml" -> replaceDefault(config, "menu.title",
+                    "<dark_gray>Améliorations du Skyblock</dark_gray>", "<gold><bold>AMÉLIORATIONS</bold></gold>");
+            case "warps.yml" -> replaceDefault(config, "menu.title", "<dark_gray>Warps de Valoria</dark_gray>",
+                    "<gold><bold>WARPS DE VALORIA</bold></gold>");
+            case "messages.yml" -> replaceDefault(config, "machines.purchase-title",
+                    "<dark_gray>Acheter <machine></dark_gray>", "<gold><bold>ACHAT • <machine></bold></gold>");
+            default -> {
+                // This migration intentionally leaves every unrelated setting untouched.
+            }
+        }
+    }
+
+    private void replaceDefault(
+            YamlConfiguration config,
+            String path,
+            String oldDefault,
+            String premiumDefault
+    ) {
+        if (oldDefault.equals(config.getString(path))) {
+            config.set(path, premiumDefault);
+        }
     }
 
     private void saveResourceIfMissing(String resourceName) {

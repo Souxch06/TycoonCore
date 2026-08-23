@@ -20,7 +20,7 @@ multitool:
 
 menu:
   size: 27
-  title: '<dark_gray>Améliorations — <tool></dark_gray>'
+  title: '<gold><bold>OUTIL • <tool></bold></gold>'
   info:
     slot: 4
     name: '<gold><tool></gold>'

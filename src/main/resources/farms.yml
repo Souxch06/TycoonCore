@@ -1,11 +1,11 @@
 # ValoriaTycoon - mondes publics de ressources à quatre zones classées.
 menu:
   size: 27
-  title: '<dark_gray>Choisir un monde de farm</dark_gray>'
+  title: '<gold><bold>FARMS DE VALORIA</bold></gold>'
 
 zone-menu:
   size: 27
-  title: '<dark_gray><farm> — choisir une zone</dark_gray>'
+  title: '<gold><bold><farm></bold></gold>
   locked-icon: BARRIER
   locked-name: '<red>Zone verrouillée — <zone></red>'
   locked-lore:
