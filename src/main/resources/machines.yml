@@ -1,10 +1,10 @@
 shop:
   size: 27
-  title: '<gold><bold>GÉNÉRATEURS</bold></gold>'
+  title: '<font:valoriatycoon:gui></font><gold><bold>GÉNÉRATEURS</bold></gold>'
 
 control:
   size: 27
-  title: '<gold><bold><machine></bold></gold>'
+  title: '<font:valoriatycoon:gui></font><gold><bold><machine></bold></gold>'
   status-slot: 10
   output-slot: 12
   collect-slot: 14

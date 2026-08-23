@@ -9,6 +9,11 @@ Valoria compatible avec les conteneurs vanilla de 1 à 6 rangées.
 
 - interface intégrale violet impérial, or, colonnes, bandeau rouge et slots
   différenciés entre contenu serveur et inventaire joueur ;
+- logo VALORIA flottant, tours et ruban héraldique via une police GUI privée ;
+- interfaces dédiées : inventaire, établi, fourneau, haut-fourneau, fumoir,
+  hopper, Shulker et conteneurs serveur de 1 à 6 rangées ;
+- textures 32×32 du monde Tycoon : roches, minerais, briques médiévales,
+  bois, feuillages, cultures, établis, fourneaux, blocs de machines et ressources ;
 - menu principal `/is` : argent, statistiques, farms, générateurs, upgrades,
   multi-tool, auto-sell, paramètres, pets, quêtes et rangs ;
 - menus secondaires : zones de farm, états verrouillés, achats, générateurs,

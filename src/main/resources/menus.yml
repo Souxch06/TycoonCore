@@ -1,6 +1,6 @@
 menu:
   size: 54
-  title: '<gold><bold>MON SKYBLOCK</bold></gold>'
+  title: '<font:valoriatycoon:gui></font><gold><bold>MON SKYBLOCK</bold></gold>'
   filler: BLACK_STAINED_GLASS_PANE
   items:
     balance:

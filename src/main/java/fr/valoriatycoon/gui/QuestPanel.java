@@ -47,7 +47,7 @@ public final class QuestPanel implements Listener {
         Inventory inventory = Bukkit.createInventory(
                 holder,
                 54,
-                messages.render("<gold><bold>QUÊTES</bold></gold>")
+                messages.render("<font:valoriatycoon:gui>\uE000\uE001</font><gold><bold>QUÊTES</bold></gold>")
         );
         holder.bind(inventory);
         visuals.fillMenu(inventory);

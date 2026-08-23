@@ -1,11 +1,11 @@
 # ValoriaTycoon - mondes publics de ressources à quatre zones classées.
 menu:
   size: 27
-  title: '<gold><bold>FARMS DE VALORIA</bold></gold>'
+  title: '<font:valoriatycoon:gui></font><gold><bold>FARMS DE VALORIA</bold></gold>'
 
 zone-menu:
   size: 27
-  title: '<gold><bold><farm></bold></gold>
+  title: '<font:valoriatycoon:gui></font><gold><bold><farm></bold></gold>
   locked-icon: BARRIER
   locked-name: '<red>Zone verrouillée — <zone></red>'
   locked-lore:
@@ -15,7 +15,7 @@ zone-menu:
 
 autosell-menu:
   size: 27
-  title: '<gold><bold>VENTE AUTOMATIQUE</bold></gold>'
+  title: '<font:valoriatycoon:gui></font><gold><bold>VENTE AUTOMATIQUE</bold></gold>'
   slot: 12
   enabled-icon: LIME_DYE
   disabled-icon: GRAY_DYE

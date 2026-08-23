@@ -49,6 +49,9 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 /** Owns configuration files and publishes validated immutable settings snapshots. */
 public final class ConfigManager {
+    private static final String PREMIUM_GUI_PREFIX =
+            "<font:valoriatycoon:gui>\uE000\uE001</font>";
+
     private final JavaPlugin plugin;
     private volatile CoreSettings settings;
     private volatile CompactionSettings compactionSettings;
@@ -361,7 +364,7 @@ public final class ConfigManager {
             String premiumDefault
     ) {
         if (oldDefault.equals(config.getString(path))) {
-            config.set(path, premiumDefault);
+            config.set(path, PREMIUM_GUI_PREFIX + premiumDefault);
         }
     }
 

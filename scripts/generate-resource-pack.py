@@ -322,6 +322,77 @@ def gui_container_pixels() -> list[tuple[int, int, int, int]]:
     return c.pixels
 
 
+def draw_pixel_text(
+    canvas: Canvas,
+    text: str,
+    x: int,
+    y: int,
+    scale: int,
+    color: tuple[int, int, int, int],
+    shadow: tuple[int, int, int, int],
+) -> None:
+    cursor = x
+    for character in text.upper():
+        pattern = FONT.get(character)
+        if pattern is None:
+            cursor += 4 * scale
+            continue
+        for py, row in enumerate(pattern):
+            for px, value in enumerate(row):
+                if value != "1":
+                    continue
+                sx, sy = cursor + px * scale, y + py * scale
+                canvas.rect(sx + scale // 2, sy + scale // 2, sx + scale - 1 + scale // 2,
+                            sy + scale - 1 + scale // 2, shadow)
+                canvas.rect(sx, sy, sx + scale - 1, sy + scale - 1, color)
+                canvas.line(sx, sy, sx + scale - 1, sy, tint(color, 24))
+        cursor += 6 * scale
+
+
+def gui_header_pixels() -> list[tuple[int, int, int, int]]:
+    """Floating castle header rendered by a private font glyph above every Valoria menu."""
+    c = Canvas(176, 64)
+    purple = (112, 42, 141, 255)
+    bright = (184, 76, 194, 255)
+    bronze = (190, 113, 34, 255)
+    red = (164, 25, 41, 255)
+
+    # Original server wordmark with a red extruded shadow, not Hyping artwork.
+    text = "VALORIA"
+    logo_width = len(text) * 18 - 3
+    draw_pixel_text(c, text, (176 - logo_width) // 2, 0, 3, GOLD, (105, 21, 33, 255))
+
+    # Two medieval towers and battlements framing the menu title.
+    for left in (2, 156):
+        c.rect(left, 27, left + 17, 63, INK)
+        c.rect(left + 2, 28, left + 15, 62, purple)
+        c.rect(left, 24, left + 5, 31, bronze); c.rect(left + 12, 24, left + 17, 31, bronze)
+        c.rect(left + 5, 27, left + 12, 33, bright)
+        c.line(left + 3, 35, left + 14, 35, tint(GOLD, 12))
+        c.line(left + 4, 39, left + 13, 48, tint(bronze, -10))
+        c.line(left + 13, 39, left + 4, 48, tint(GOLD, 12))
+        c.rect(left + 5, 51, left + 12, 62, (51, 19, 66, 255))
+        c.set(left + 7, 53, CYAN); c.set(left + 10, 53, RED)
+
+    # Central palace plaque.
+    c.rect(17, 28, 158, 55, INK)
+    c.rect(20, 29, 155, 53, bronze)
+    c.rect(23, 31, 152, 51, (60, 21, 76, 255))
+    c.rect(27, 33, 148, 49, purple)
+    c.line(28, 33, 147, 33, bright); c.line(28, 49, 147, 49, (42, 13, 55, 255))
+    for x in (23, 34, 141, 152):
+        c.set(x, 31, LIGHT); c.set(x, 51, tint(GOLD, -20))
+
+    # Red heraldic ribbon sits precisely behind the normal inventory title baseline.
+    c.rect(12, 50, 163, 62, bronze)
+    c.rect(16, 51, 159, 61, red)
+    c.line(17, 51, 158, 51, (242, 79, 78, 255))
+    c.line(17, 61, 158, 61, (71, 8, 24, 255))
+    c.line(6, 54, 16, 54, bronze); c.line(159, 54, 169, 54, bronze)
+    c.set(8, 53, LIGHT); c.set(167, 53, LIGHT)
+    return c.pixels
+
+
 def generate_gui_textures() -> None:
     minecraft = ROOT.parent / "minecraft" / "textures" / "gui"
     write_png(minecraft / "container" / "generic_54.png", 256, 256, gui_container_pixels())
@@ -335,6 +406,379 @@ def generate_gui_textures() -> None:
         focus.line(inset, inset, inset, 17 - inset, color)
         focus.line(17 - inset, inset, 17 - inset, 17 - inset, color)
     write_png(minecraft / "sprites" / "container" / "slot_highlight_front.png", 18, 18, focus.pixels)
+
+    write_png(ROOT / "textures" / "font" / "gui_header.png", 176, 64, gui_header_pixels())
+    font_path = ROOT / "font" / "gui.json"
+    font_path.parent.mkdir(parents=True, exist_ok=True)
+    font_path.write_text(json.dumps({
+        "providers": [
+            {
+                "type": "bitmap",
+                "file": "valoriatycoon:font/gui_header.png",
+                "height": 64,
+                "ascent": 60,
+                "chars": ["\ue000"],
+            },
+            {
+                "type": "space",
+                "advances": {"\ue001": -177},
+            },
+        ],
+    }, indent=2) + "\n")
+
+
+def small_container_base(height: int, storage: tuple[int, int, int, int]) -> Canvas:
+    c = Canvas(256)
+    c.rect(2, 2, 178, height + 3, (4, 3, 8, 180))
+    c.rect(0, 0, 175, height - 1, INK)
+    c.rect(2, 2, 173, height - 3, (74, 29, 92, 255))
+    c.rect(6, 6, 169, height - 7, storage)
+    c.line(3, 2, 172, 2, tint(GOLD, 12)); c.line(3, height - 3, 172, height - 3, (76, 40, 98, 255))
+    for x in (1, 169):
+        c.rect(x, 3, x + 5, height - 4, (101, 39, 124, 255))
+        c.line(x + 1, 4, x + 1, height - 5, (196, 81, 199, 255))
+        for y in range(10, height - 7, 18): c.set(x + 3, y, GOLD)
+    return c
+
+
+def paste_slot(canvas: Canvas, x: int, y: int, theme: str = "player") -> None:
+    slot = gui_slot_pixels(theme)
+    for sy in range(18):
+        for sx in range(18):
+            canvas.set(x + sx, y + sy, slot[sy * 18 + sx])
+
+
+def draw_player_inventory(canvas: Canvas, first_y: int) -> None:
+    for row in range(3):
+        for column in range(9):
+            paste_slot(canvas, 7 + column * 18, first_y + row * 18)
+    for column in range(9):
+        paste_slot(canvas, 7 + column * 18, first_y + 58)
+
+
+def crafting_gui_pixels() -> list[tuple[int, int, int, int]]:
+    c = small_container_base(166, (35, 19, 48, 255))
+    c.rect(8, 16, 167, 77, (55, 23, 40, 255))
+    for row in range(3):
+        for column in range(3): paste_slot(c, 29 + column * 18, 16 + row * 18, "storage")
+    paste_slot(c, 123, 34, "storage")
+    # Forged-gold crafting arrow and small anvil crest.
+    c.line(87, 41, 113, 41, tint(GOLD, -10)); c.line(108, 36, 113, 41, GOLD); c.line(108, 46, 113, 41, GOLD)
+    c.set(92, 39, LIGHT); c.set(98, 43, (217, 75, 61, 255))
+    draw_player_inventory(c, 83)
+    return c.pixels
+
+
+def inventory_gui_pixels() -> list[tuple[int, int, int, int]]:
+    c = small_container_base(166, (31, 23, 48, 255))
+    # Character preview alcove with armor columns.
+    c.rect(25, 7, 79, 78, (12, 10, 20, 255)); c.rect(27, 9, 77, 76, (37, 28, 58, 255))
+    c.line(27, 9, 77, 9, (127, 63, 149, 255)); c.line(27, 76, 77, 76, (9, 7, 15, 255))
+    for row in range(4): paste_slot(c, 7, 7 + row * 18, "storage")
+    paste_slot(c, 79, 61, "storage")
+    # Personal 2x2 crafting altar and output.
+    for row in range(2):
+        for column in range(2): paste_slot(c, 97 + column * 18, 17 + row * 18, "storage")
+    paste_slot(c, 151, 26, "storage")
+    c.line(134, 34, 146, 34, GOLD); c.line(142, 30, 146, 34, LIGHT); c.line(142, 38, 146, 34, GOLD)
+    draw_player_inventory(c, 83)
+    return c.pixels
+
+
+def furnace_gui_pixels() -> list[tuple[int, int, int, int]]:
+    c = small_container_base(166, (33, 20, 43, 255))
+    c.rect(8, 16, 167, 77, (47, 23, 35, 255))
+    paste_slot(c, 55, 16, "storage"); paste_slot(c, 55, 52, "storage"); paste_slot(c, 115, 34, "storage")
+    symbol_fire = ((77, 50), (74, 46), (80, 45), (76, 42), (84, 48))
+    for x, y in symbol_fire: c.set(x, y, ORANGE)
+    c.line(78, 34, 105, 34, GOLD); c.line(100, 30, 105, 34, LIGHT); c.line(100, 38, 105, 34, GOLD)
+    draw_player_inventory(c, 83)
+    return c.pixels
+
+
+def hopper_gui_pixels() -> list[tuple[int, int, int, int]]:
+    c = small_container_base(133, (31, 23, 48, 255))
+    c.rect(25, 17, 151, 42, (48, 22, 58, 255))
+    for column in range(5): paste_slot(c, 43 + column * 18, 19, "storage")
+    draw_player_inventory(c, 50)
+    return c.pixels
+
+
+def shulker_gui_pixels() -> list[tuple[int, int, int, int]]:
+    c = small_container_base(166, (47, 21, 55, 255))
+    for row in range(3):
+        for column in range(9): paste_slot(c, 7 + column * 18, 17 + row * 18, "storage")
+    draw_player_inventory(c, 83)
+    return c.pixels
+
+
+def generate_secondary_gui_textures() -> None:
+    minecraft = ROOT.parent / "minecraft" / "textures" / "gui" / "container"
+    for name, pixels in (
+        ("inventory", inventory_gui_pixels()),
+        ("crafting_table", crafting_gui_pixels()),
+        ("furnace", furnace_gui_pixels()),
+        ("blast_furnace", furnace_gui_pixels()),
+        ("smoker", furnace_gui_pixels()),
+        ("hopper", hopper_gui_pixels()),
+        ("shulker_box", shulker_gui_pixels()),
+    ):
+        write_png(minecraft / f"{name}.png", 256, 256, pixels)
+
+
+def pixel_noise(seed: int, x: int, y: int) -> int:
+    value = (seed * 1_103_515_245 + x * 73_856_093 + y * 19_349_663 + x * y * 83_492_791)
+    return (value ^ value >> 13) & 0xFF
+
+
+def natural_surface(base: tuple[int, int, int, int], seed: int, strength: int = 14) -> list[tuple[int, int, int, int]]:
+    result = []
+    for y in range(32):
+        for x in range(32):
+            amount = (pixel_noise(seed, x, y) % (strength * 2 + 1)) - strength
+            # Broad 4px forms plus fine grain produce a detailed but seamless material.
+            amount += (pixel_noise(seed + 31, x // 4, y // 4) % 13) - 6
+            result.append(tint(base, amount))
+    return result
+
+
+def brick_surface(
+    brick: tuple[int, int, int, int],
+    mortar: tuple[int, int, int, int],
+    seed: int,
+    width: int = 8,
+    height: int = 6,
+) -> list[tuple[int, int, int, int]]:
+    c = Canvas(32)
+    c.rect(0, 0, 31, 31, mortar)
+    for row, y in enumerate(range(0, 32, height)):
+        offset = -(width // 2) if row % 2 else 0
+        for x in range(offset, 32, width):
+            x1, x2 = max(0, x + 1), min(31, x + width - 2)
+            y1, y2 = y + 1, min(31, y + height - 2)
+            shade = (pixel_noise(seed, x, y) % 21) - 10
+            c.rect(x1, y1, x2, y2, tint(brick, shade))
+            c.line(x1, y1, x2, y1, tint(brick, 18))
+            c.line(x1, y2, x2, y2, tint(brick, -22))
+            if x2 - x1 > 3: c.set(x1 + 2, y1 + 2, tint(brick, 28))
+    return c.pixels
+
+
+def plank_surface(base: tuple[int, int, int, int], seed: int) -> list[tuple[int, int, int, int]]:
+    c = Canvas(32)
+    for y in range(0, 32, 8):
+        c.rect(0, y, 31, y + 7, tint(base, (pixel_noise(seed, 0, y) % 15) - 7))
+        c.line(0, y, 31, y, tint(base, 24)); c.line(0, y + 7, 31, y + 7, tint(base, -30))
+        split = (seed * 7 + y * 3) % 21 + 5
+        c.line(split, y + 1, split, y + 6, tint(base, -23))
+        for x in range(3 + y % 5, 32, 9): c.set(x, y + 3, tint(base, 14))
+    return c.pixels
+
+
+def log_surface(base: tuple[int, int, int, int], seed: int, top: bool) -> list[tuple[int, int, int, int]]:
+    c = Canvas(32)
+    if top:
+        c.rect(0, 0, 31, 31, tint(base, -28)); c.rect(2, 2, 29, 29, base)
+        for inset in (5, 9, 13):
+            color = tint(base, 17 if inset % 2 else -17)
+            c.line(inset, inset, 31 - inset, inset, color); c.line(inset, 31 - inset, 31 - inset, 31 - inset, color)
+            c.line(inset, inset, inset, 31 - inset, color); c.line(31 - inset, inset, 31 - inset, 31 - inset, color)
+        c.set(16, 16, tint(base, -35)); c.line(16, 16, 22, 12, tint(base, -24))
+    else:
+        for x in range(32):
+            stripe = (x // 4 + seed) % 3
+            c.line(x, 0, x, 31, tint(base, 18 - stripe * 17))
+        for y in range(4, 32, 9): c.line(3, y, 12, y + 2, tint(base, -25))
+    return c.pixels
+
+
+def ore_surface(
+    stone: tuple[int, int, int, int],
+    ore: tuple[int, int, int, int],
+    seed: int,
+) -> list[tuple[int, int, int, int]]:
+    pixels = natural_surface(stone, seed, 11)
+    clusters = ((5, 5), (19, 4), (12, 14), (25, 18), (5, 25), (18, 27))
+    for index, (cx, cy) in enumerate(clusters):
+        for dx, dy in ((0, 0), (1, 0), (0, 1), (-1, 1), (1, 2), (2, 1)):
+            x, y = cx + dx, cy + dy
+            color = tint(ore, 28 if dx + dy <= 0 else -18 if dx + dy >= 2 else 5)
+            pixels[y * 32 + x] = color
+        if index % 2 == 0: pixels[cy * 32 + cx] = tint(ore, 52)
+    return pixels
+
+
+def leaf_surface(base: tuple[int, int, int, int], seed: int) -> list[tuple[int, int, int, int]]:
+    result = natural_surface(base, seed, 20)
+    for y in range(32):
+        for x in range(32):
+            value = pixel_noise(seed, x, y)
+            if value % 17 == 0:
+                result[y * 32 + x] = TRANSPARENT
+            elif value % 11 == 0:
+                result[y * 32 + x] = tint(base, 28)
+    return result
+
+
+def crop_stage_pixels(kind: str, stage: int, maximum: int) -> list[tuple[int, int, int, int]]:
+    c = Canvas(32)
+    height = 6 + stage * 23 // maximum
+    green = (51, 139, 65, 255)
+    ripe = {"wheat": GOLD, "carrots": ORANGE, "potatoes": (178, 137, 68, 255), "beetroots": RED}[kind]
+    for stem_x in (5, 11, 17, 23, 28):
+        top = 31 - height + (stem_x * 3 % 4)
+        c.line(stem_x, 31, stem_x, top, tint(green, (stem_x % 3) * 8))
+        for y in range(30, top, -5):
+            c.set(stem_x - 1, y, green); c.set(stem_x + 1, y - 2, tint(green, 16))
+        if stage == maximum:
+            c.rect(stem_x - 1, top, stem_x + 1, top + 3, ripe); c.set(stem_x, top, LIGHT)
+    return c.pixels
+
+
+def resource_item_pixels(name: str, color: tuple[int, int, int, int]) -> list[tuple[int, int, int, int]]:
+    c = Canvas()
+    if name in {"diamond", "emerald", "lapis_lazuli", "redstone"}:
+        symbol(c, "gem", color)
+    elif name in {"coal", "raw_iron", "raw_copper", "raw_gold"}:
+        for x, y in ((5, 5), (8, 4), (10, 8), (6, 10)):
+            c.rect(x, y, x + 2, y + 2, tint(color, (x + y) % 24 - 8)); c.set(x, y, LIGHT)
+    elif name.endswith("_ingot"):
+        c.rect(3, 6, 12, 11, INK); c.rect(4, 5, 11, 10, color)
+        c.line(4, 5, 11, 5, tint(color, 35)); c.line(5, 9, 10, 9, tint(color, -30))
+    elif name == "wheat": symbol(c, "wheat", color)
+    elif name == "carrot":
+        c.line(6, 5, 8, 13, color); c.line(10, 5, 8, 13, tint(color, -20)); c.line(8, 5, 6, 2, GREEN); c.line(8, 5, 11, 3, GREEN)
+    elif name == "potato":
+        c.rect(4, 5, 11, 12, color); c.set(6, 6, LIGHT); c.set(10, 9, tint(color, -35))
+    elif name == "beetroot":
+        c.rect(4, 6, 11, 11, color); c.line(8, 6, 5, 2, GREEN); c.line(8, 6, 11, 3, GREEN)
+    else:
+        symbol(c, "fish", color)
+    return c.pixels
+
+
+def generate_world_textures() -> None:
+    minecraft = ROOT.parent / "minecraft" / "textures"
+    blocks = minecraft / "block"
+    surfaces = {
+        "stone": natural_surface((110, 111, 116, 255), 1),
+        "deepslate": natural_surface((50, 52, 59, 255), 2),
+        "andesite": natural_surface((125, 128, 130, 255), 3),
+        "granite": natural_surface((145, 96, 79, 255), 4),
+        "diorite": natural_surface((190, 187, 179, 255), 5),
+        "tuff": natural_surface((93, 105, 96, 255), 6),
+        "calcite": natural_surface((218, 214, 199, 255), 7, 8),
+        "dripstone_block": natural_surface((127, 91, 70, 255), 8),
+        "dirt": natural_surface((116, 78, 46, 255), 9),
+        "grass_block_top": natural_surface((70, 139, 54, 255), 10),
+        "moss_block": natural_surface((73, 113, 44, 255), 11),
+        "stone_bricks": brick_surface((104, 108, 111, 255), (48, 50, 54, 255), 12),
+        "mossy_stone_bricks": brick_surface((88, 104, 81, 255), (42, 48, 43, 255), 13),
+        "deepslate_bricks": brick_surface((54, 52, 62, 255), (22, 20, 27, 255), 14),
+        "deepslate_tiles": brick_surface((45, 43, 54, 255), (17, 15, 23, 255), 15, 8, 4),
+        "mud_bricks": brick_surface((116, 82, 70, 255), (58, 43, 38, 255), 16),
+        "bricks": brick_surface((151, 76, 60, 255), (69, 50, 47, 255), 17),
+        "prismarine_bricks": brick_surface((76, 151, 145, 255), (31, 80, 82, 255), 18),
+        "cobblestone": brick_surface((102, 104, 105, 255), (45, 46, 48, 255), 19, 7, 7),
+        "oak_planks": plank_surface((145, 105, 57, 255), 20),
+        "spruce_planks": plank_surface((91, 61, 38, 255), 21),
+        "dark_oak_planks": plank_surface((57, 36, 27, 255), 22),
+    }
+    for name, pixels in surfaces.items(): write_png(blocks / f"{name}.png", 32, 32, pixels)
+
+    # Grass side combines earthy strata and a rich top fringe.
+    grass = list(surfaces["dirt"])
+    for y in range(8):
+        for x in range(32):
+            if y < 4 + pixel_noise(23, x, 0) % 4: grass[y * 32 + x] = tint((68, 135, 52, 255), (x % 5) - 2)
+    write_png(blocks / "grass_block_side.png", 32, 32, grass)
+
+    stone, deep = (110, 111, 116, 255), (49, 51, 58, 255)
+    ores = {
+        "coal": (45, 48, 53, 255), "copper": (190, 105, 70, 255), "iron": (211, 194, 171, 255),
+        "gold": GOLD, "redstone": RED, "lapis": BLUE, "diamond": CYAN, "emerald": GREEN,
+    }
+    for index, (name, color) in enumerate(ores.items(), 30):
+        write_png(blocks / f"{name}_ore.png", 32, 32, ore_surface(stone, color, index))
+        write_png(blocks / f"deepslate_{name}_ore.png", 32, 32, ore_surface(deep, color, index + 40))
+
+    woods = {
+        "oak": (128, 88, 46, 255), "birch": (205, 193, 145, 255),
+        "spruce": (83, 54, 31, 255), "dark_oak": (54, 34, 24, 255),
+    }
+    for index, (name, color) in enumerate(woods.items(), 80):
+        write_png(blocks / f"{name}_log.png", 32, 32, log_surface(color, index, False))
+        write_png(blocks / f"{name}_log_top.png", 32, 32, log_surface(color, index, True))
+    write_png(blocks / "stripped_oak_log.png", 32, 32, log_surface((167, 129, 76, 255), 90, False))
+    write_png(blocks / "stripped_oak_log_top.png", 32, 32, log_surface((167, 129, 76, 255), 90, True))
+    write_png(blocks / "stripped_dark_oak_log.png", 32, 32, log_surface((92, 67, 43, 255), 91, False))
+    write_png(blocks / "stripped_dark_oak_log_top.png", 32, 32, log_surface((92, 67, 43, 255), 91, True))
+
+    leaves = {"oak": (53, 126, 53, 255), "birch": (80, 143, 59, 255), "spruce": (43, 94, 62, 255), "dark_oak": (42, 101, 43, 255)}
+    for index, (name, color) in enumerate(leaves.items(), 100):
+        write_png(blocks / f"{name}_leaves.png", 32, 32, leaf_surface(color, index))
+
+    for kind, maximum in (("wheat", 7), ("carrots", 3), ("potatoes", 3), ("beetroots", 3)):
+        for stage in range(maximum + 1):
+            write_png(blocks / f"{kind}_stage{stage}.png", 32, 32, crop_stage_pixels(kind, stage, maximum))
+
+    solid_blocks = {
+        "iron_block": (185, 192, 193, 255), "gold_block": (224, 172, 43, 255),
+        "cut_copper": (180, 93, 61, 255), "white_terracotta": (191, 164, 151, 255),
+        "sea_lantern": (166, 220, 207, 255), "quartz_block_side": (222, 218, 207, 255),
+        "quartz_block_top": (234, 229, 217, 255), "hay_block_side": (182, 143, 35, 255),
+        "hay_block_top": (211, 170, 42, 255),
+    }
+    for index, (name, color) in enumerate(solid_blocks.items(), 120):
+        write_png(blocks / f"{name}.png", 32, 32, natural_surface(color, index, 7))
+    write_png(blocks / "chiseled_stone_bricks.png", 32, 32, brick_surface((112, 114, 113, 255), (48, 50, 53, 255), 140, 16, 16))
+
+    wool_colors = {"red": RED, "blue": BLUE, "yellow": GOLD, "green": GREEN, "orange": ORANGE, "purple": PURPLE}
+    for index, (name, color) in enumerate(wool_colors.items(), 150):
+        write_png(blocks / f"{name}_wool.png", 32, 32, natural_surface(color, index, 9))
+
+    # Workstations use engraved medieval wood and forged stone rather than flat vanilla faces.
+    crafting_top = Canvas(32); crafting_top.pixels = plank_surface((116, 72, 38, 255), 170)
+    crafting_top.rect(3, 3, 28, 28, (62, 35, 24, 255)); crafting_top.rect(5, 5, 26, 26, (139, 89, 43, 255))
+    for line in (12, 19):
+        crafting_top.line(5, line, 26, line, tint(GOLD, -15)); crafting_top.line(line, 5, line, 26, tint(GOLD, -15))
+    crafting_top.line(5, 5, 26, 5, LIGHT); crafting_top.set(16, 16, RED)
+    write_png(blocks / "crafting_table_top.png", 32, 32, crafting_top.pixels)
+    crafting_side = Canvas(32); crafting_side.pixels = plank_surface((105, 63, 34, 255), 171)
+    crafting_side.rect(3, 4, 28, 25, (67, 37, 25, 255)); crafting_side.line(4, 5, 27, 5, GOLD)
+    crafting_side.line(6, 22, 23, 9, (187, 197, 202, 255)); crafting_side.line(20, 8, 27, 15, (203, 118, 58, 255))
+    write_png(blocks / "crafting_table_front.png", 32, 32, crafting_side.pixels)
+    write_png(blocks / "crafting_table_side.png", 32, 32, crafting_side.pixels)
+
+    furnace_side = brick_surface((94, 96, 101, 255), (38, 39, 44, 255), 172, 8, 8)
+    write_png(blocks / "furnace_side.png", 32, 32, furnace_side)
+    write_png(blocks / "furnace_top.png", 32, 32, natural_surface((105, 107, 111, 255), 173, 9))
+    for active in (False, True):
+        front = Canvas(32); front.pixels = list(furnace_side)
+        front.rect(6, 11, 25, 27, (19, 16, 19, 255)); front.rect(8, 13, 23, 25, (45, 28, 25, 255))
+        front.line(7, 10, 24, 10, (185, 130, 59, 255)); front.set(10, 7, LIGHT); front.set(21, 7, LIGHT)
+        if active:
+            front.rect(10, 18, 21, 24, ORANGE); front.line(12, 23, 16, 15, GOLD); front.line(19, 23, 16, 15, RED)
+        write_png(blocks / ("furnace_front_on.png" if active else "furnace_front.png"), 32, 32, front.pixels)
+
+    barrel = plank_surface((105, 65, 34, 255), 180)
+    for x in (3, 27):
+        for y in range(32): barrel[y * 32 + x] = tint(GOLD, -25)
+    write_png(blocks / "barrel_side.png", 32, 32, barrel)
+    write_png(blocks / "barrel_top.png", 32, 32, log_surface((122, 77, 39, 255), 181, True))
+    write_png(blocks / "barrel_bottom.png", 32, 32, log_surface((96, 58, 31, 255), 182, True))
+
+    items = minecraft / "item"
+    resources = {
+        "coal": (48, 52, 59, 255), "raw_iron": (189, 156, 132, 255), "raw_copper": (190, 102, 65, 255),
+        "raw_gold": (223, 172, 63, 255), "iron_ingot": (206, 214, 216, 255),
+        "copper_ingot": (200, 111, 69, 255), "gold_ingot": GOLD, "redstone": RED,
+        "lapis_lazuli": BLUE, "diamond": CYAN, "emerald": GREEN, "wheat": GOLD,
+        "carrot": ORANGE, "potato": (177, 137, 68, 255), "beetroot": RED,
+        "cod": (116, 171, 183, 255), "salmon": (207, 104, 87, 255),
+        "pufferfish": GOLD, "tropical_fish": ORANGE,
+    }
+    for name, color in resources.items(): png(items / f"{name}.png", resource_item_pixels(name, color))
 
 
 def medallion(base: tuple[int, int, int, int], border: tuple[int, int, int, int] = GOLD) -> Canvas:
@@ -1031,6 +1475,8 @@ def clean_generated_assets() -> None:
 def main() -> None:
     clean_generated_assets()
     generate_gui_textures()
+    generate_secondary_gui_textures()
+    generate_world_textures()
     # Root pet-egg definitions are hand-authored, but their premium textures are deterministic too.
     png(ROOT / "textures" / "item" / "pet_egg.png", pet_egg_icon(False))
     png(ROOT / "textures" / "item" / "pet_egg_chromatic.png", pet_egg_icon(True))

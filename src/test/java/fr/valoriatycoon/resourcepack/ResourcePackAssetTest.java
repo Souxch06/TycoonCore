@@ -111,6 +111,20 @@ class ResourcePackAssetTest {
         Path slot = pack.resolve("assets/minecraft/textures/gui/sprites/container/slot.png");
         assertEquals(18, pngWidth(slot));
         assertEquals(18, pngHeight(slot));
+        Path crafting = pack.resolve("assets/minecraft/textures/gui/container/crafting_table.png");
+        assertEquals(256, pngWidth(crafting));
+        Path header = pack.resolve("assets/valoriatycoon/textures/font/gui_header.png");
+        assertEquals(176, pngWidth(header));
+        assertEquals(64, pngHeight(header));
+        assertTrue(Files.isRegularFile(pack.resolve("assets/valoriatycoon/font/gui.json")));
+        for (String block : Set.of(
+                "stone", "grass_block_top", "crafting_table_top", "furnace_front",
+                "coal_ore", "deepslate_diamond_ore", "oak_log", "wheat_stage7"
+        )) {
+            Path texture = pack.resolve("assets/minecraft/textures/block/" + block + ".png");
+            assertEquals(32, pngWidth(texture), block);
+            assertEquals(32, pngHeight(texture), block);
+        }
     }
 
     @Test

@@ -192,7 +192,7 @@ La progression est persistée dans SQLite, les actions sont regroupées avant é
 
 ### Pack de ressources Valoria complet
 
-Le dossier `resource-pack/` contient le pack officiel Minecraft 26.2 de ValoriaTycoon. Il fournit **259 modèles et 259 textures premium 32×32** sans remplacer globalement les objets vanilla : chaque objet serveur est activé uniquement par `minecraft:item_model`. Les inventaires partagent désormais une façade fantasy complète — colonnes violettes, or, bandeau rouge, slots bordeaux et inventaire joueur indigo — au lieu du coffre gris vanilla.
+Le dossier `resource-pack/` contient le pack officiel Minecraft 26.2 de ValoriaTycoon. Il fournit **259 modèles et 259 textures premium 32×32** sans remplacer globalement les objets vanilla : chaque objet serveur est activé uniquement par `minecraft:item_model`. Les inventaires partagent désormais une façade fantasy complète — logo VALORIA, tours médiévales, colonnes violettes, or, bandeau rouge, slots bordeaux et inventaire joueur indigo — au lieu du coffre gris vanilla. L’établi, les fours, hoppers, Shulkers, roches, minerais, bois, cultures et principaux blocs du Tycoon utilisent aussi une direction artistique 32×32 cohérente.
 
 Le pack couvre le menu principal `/is`, les farms et leurs zones, l’auto-sell, les améliorations de parcelle, les dix rangs, les quêtes, les huit pets, la boutique et le contrôle des générateurs, toutes les capacités du multi-tool et les écrans de paiement. Les objets physiques possèdent également leur apparence propre : clés, œufs normal/chromatique, quatre générateurs, sacs d’argent/coins, fioles XP, paquets de ressources, bons de récompense, seize ressources compactées sur trois niveaux et les quarante-quatre combinaisons rang/forme du multi-tool.
 

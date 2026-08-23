@@ -188,14 +188,32 @@ def verify_resource_pack() -> None:
     gui = pack / "assets/minecraft/textures/gui"
     expected_gui = {
         gui / "container/generic_54.png": (256, 256),
+        gui / "container/inventory.png": (256, 256),
+        gui / "container/crafting_table.png": (256, 256),
+        gui / "container/furnace.png": (256, 256),
+        gui / "container/hopper.png": (256, 256),
+        gui / "container/shulker_box.png": (256, 256),
         gui / "sprites/container/slot.png": (18, 18),
         gui / "sprites/container/slot_highlight_front.png": (18, 18),
+        namespace / "textures/font/gui_header.png": (176, 64),
     }
     for path, dimensions in expected_gui.items():
         require(path.is_file(), f"Missing premium GUI texture: {path}")
         data = path.read_bytes()
         require(data.startswith(b"\x89PNG\r\n\x1a\n"), f"Invalid GUI PNG: {path}")
         require(struct.unpack(">II", data[16:24]) == dimensions, f"Invalid GUI dimensions: {path}")
+    json.loads((namespace / "font/gui.json").read_text(encoding="utf-8"))
+
+    essential_world = {
+        "stone", "deepslate", "grass_block_top", "stone_bricks", "crafting_table_top",
+        "furnace_front", "coal_ore", "deepslate_diamond_ore", "oak_log", "wheat_stage7",
+    }
+    block_root = pack / "assets/minecraft/textures/block"
+    for name in essential_world:
+        path = block_root / f"{name}.png"
+        require(path.is_file(), f"Missing Valoria world texture: {name}")
+        require(struct.unpack(">II", path.read_bytes()[16:24]) == (32, 32),
+                f"World texture is not 32x32: {name}")
 
     before = hash_tree(pack)
     subprocess.run([sys.executable, "scripts/generate-resource-pack.py"], cwd=ROOT, check=True,
