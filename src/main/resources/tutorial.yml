@@ -1,0 +1,37 @@
+# Tutoriel séquentiel actif uniquement jusqu'à l'obtention du rang Citoyen.
+enabled: true
+# Suivi, flush des petites progressions et barre d'action toutes les 2 secondes.
+tick-interval: 40
+
+actionbar:
+  no-island: '<yellow>Tutoriel : crée ton Skyblock avec <white>/is create</white>.</yellow>'
+  step: '<gold>Tutoriel</gold> <gray>—</gray> <white><objective></white> <yellow><progress>/<target></yellow>'
+  ready: '<green>Tutoriel terminé ! Ouvre <white>/rank</white> pour devenir Citoyen.</green>'
+
+# 6 × 4 000 $ = 24 000 $. Avec 1 000 $ de départ et les 5 000 $ de la quête
+# commune, le joueur atteint environ 30 000 $ avant de payer Citoyen à 25 000 $.
+steps:
+  mine-coal:
+    target: 48
+    reward-money: '4000.00'
+    objective: 'Va dans /farm et mine 48 blocs de charbon'
+  harvest-wheat:
+    target: 55
+    reward-money: '4000.00'
+    objective: 'Récolte 55 plants de blé dans /farm'
+  chop-oak:
+    target: 20
+    reward-money: '4000.00'
+    objective: 'Coupe 20 bûches de chêne dans /farm'
+  catch-cod:
+    target: 4
+    reward-money: '4000.00'
+    objective: 'Pêche 4 Morues crues dans /farm'
+  reach-vanilla-level:
+    target: 20
+    reward-money: '4000.00'
+    objective: 'Atteins le niveau XP vanilla 20'
+  complete-common-quest:
+    target: 1
+    reward-money: '4000.00'
+    objective: 'Termine une quête commune visible avec /is quests'

@@ -1,0 +1,45 @@
+# Les huit tables génériques sont persistées dans crate-rewards.yml et peuvent être ouvertes.
+reward-system-version: 1
+opening-enabled: true
+key-material: TRIPWIRE_HOOK
+
+keys:
+  vote:
+    name: '<green><bold>Clé Vote</bold></green>'
+    lore: ['<gray>Obtenue à raison d’une clé par vote validé.</gray>']
+  quest:
+    name: '<aqua><bold>Clé Quêtes</bold></aqua>'
+    lore: ['<gray>Obtenue à chaque quête répétable terminée.</gray>']
+  farm:
+    name: '<yellow><bold>Clé Farm</bold></yellow>'
+    lore: ['<gray>Trouvée grâce à la capacité Chercheur de clés Farm.</gray>']
+  common:
+    name: '<green><bold>Clé Commune</bold></green>'
+    lore: ['<gray>Première clé de la chaîne de raretés.</gray>']
+  rare:
+    name: '<blue><bold>Clé Rare</bold></blue>'
+    lore: ['<gray>Peut notamment apparaître dans une Caisse Commune.</gray>']
+  epic:
+    name: '<#FF7818><bold>Clé Épique</bold></#FF7818>'
+    lore: ['<gray>Peut apparaître jusque dans une Caisse Commune.</gray>']
+  legendary:
+    name: '<gold><bold>Clé Légendaire</bold></gold>'
+    lore: ['<gray>Peut apparaître à partir d’une Caisse Rare.</gray>']
+  valoria:
+    paid: true
+    name: '<#FF2E4B><bold>Clé Valoria</bold></#FF2E4B>'
+    lore:
+      - '<gold>Clé de la caisse signature du serveur.</gold>'
+      - '<gray>Principalement disponible via la boutique.</gray>'
+      - '<gray>Peut exceptionnellement apparaître dans une Caisse Légendaire.</gray>'
+      - '<dark_gray>Émission boutique idempotente liée à la transaction.</dark_gray>'
+
+# Lors d’un proc de la capacité commune aux quatre formes du multi-tool.
+tool-rarity-weights:
+  COMMON: 80
+  RARE: 15
+  EPIC: 4
+  LEGENDARY: 1
+
+# Les clés obtenues à l'intérieur des caisses et toute la chaîne de rareté sont définies
+# une seule fois dans crate-rewards.yml afin d'éviter deux sources de probabilités divergentes.

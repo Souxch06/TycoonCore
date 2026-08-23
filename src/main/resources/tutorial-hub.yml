@@ -1,0 +1,176 @@
+enabled: true
+world: valoria_spawn
+# Vérification légère : aucun chunk n'est chargé artificiellement.
+refresh-interval-ticks: 100
+view-range: 0.55
+line-width: 280
+shadowed: true
+default-background: true
+
+# Galerie installée dans la cour intérieure du château, relativement au point /spawn.
+panels:
+  welcome:
+    offset-x: 0.0
+    offset-y: 3.5
+    offset-z: -101.0
+    lines:
+      - "<gold><bold>ACADÉMIE DE VALORIA</bold></gold>"
+      - "<dark_gray>━━━━━━━━━━━━━━━━━━━━</dark_gray>"
+      - "<white>Bienvenue dans le guide permanent du serveur.</white>"
+      - "<gray>Parcours la salle pour découvrir chaque système important.</gray>"
+      - "<aqua>/warp tuto</aqua> <gray>permet de revenir ici à tout moment.</gray>"
+      - "<yellow>Ce guide ne relance jamais le tutoriel et ne redonne aucune récompense.</yellow>"
+
+  first-steps:
+    offset-x: -24.0
+    offset-y: 3.0
+    offset-z: -106.0
+    lines:
+      - "<green><bold>1 — BIEN DÉBUTER</bold></green>"
+      - "<dark_gray>━━━━━━━━━━━━━━</dark_gray>"
+      - "<white>1.</white> Crée ton Skyblock avec <green>/is create</green>."
+      - "<white>2.</white> Rejoins-le avec <green>/is go</green>."
+      - "<white>3.</white> Suis l'objectif affiché dans ta barre d'action."
+      - "<white>4.</white> Utilise <green>/farm</green> pour récolter les ressources demandées."
+      - "<white>5.</white> Termine une quête commune puis ouvre <gold>/rank</gold>."
+      - "<gray>Le tutoriel se termine définitivement dès le rang Citoyen.</gray>"
+
+  island:
+    offset-x: -24.0
+    offset-y: 3.0
+    offset-z: -113.0
+    lines:
+      - "<aqua><bold>2 — TON SKYBLOCK</bold></aqua>"
+      - "<dark_gray>━━━━━━━━━━━━━━</dark_gray>"
+      - "<gray>Ton île privée accueille tes constructions et tes générateurs.</gray>"
+      - "<white>/is</white> ouvre le panneau principal de tous les systèmes."
+      - "<white>/is upgrades</white> améliore taille, hoppers et membres."
+      - "<white>/is invite joueur</white> puis <white>/is accept</white> pour jouer ensemble."
+      - "<white>/is stats</white> affiche niveau, rang, production et temps de jeu."
+      - "<red>/is reset confirm est destructif : lis toujours la confirmation.</red>"
+
+  farms:
+    offset-x: -24.0
+    offset-y: 3.0
+    offset-z: -120.0
+    lines:
+      - "<green><bold>3 — FARMS PUBLIQUES</bold></green>"
+      - "<dark_gray>━━━━━━━━━━━━━━</dark_gray>"
+      - "<white>/farm</white> donne accès à la mine, aux champs, à la forêt et à la pêche."
+      - "<gray>Les blocs repoussent automatiquement : inutile de changer de chunk.</gray>"
+      - "<green>Zone I</green> : départ • <yellow>Zone II</yellow> : Artisan"
+      - "<gold>Zone III</gold> : Chevalier • <aqua>Zone IV</aqua> : Comte"
+      - "<gray>Les zones fermées repoussent le joueur et ne peuvent pas être contournées.</gray>"
+      - "<yellow>Utilise ton multi-tool pour recevoir XP, coins, métiers et capacités.</yellow>"
+
+  multitool:
+    offset-x: -24.0
+    offset-y: 3.0
+    offset-z: -127.0
+    lines:
+      - "<aqua><bold>4 — MULTI-TOOL ET COINS</bold></aqua>"
+      - "<dark_gray>━━━━━━━━━━━━━━━━</dark_gray>"
+      - "<gray>Tu possèdes un seul outil, unique, incassable et lié à ton compte.</gray>"
+      - "<white>Pioche • Houe • Hache • Canne à pêche</white> <red>— aucune pelle.</red>"
+      - "<gray>Il change de forme selon le bloc visé ou lors d'un clic sur l'eau.</gray>"
+      - "<yellow>Shift + clic droit</yellow> ouvre ses niveaux et capacités."
+      - "<gray>Chaque forme gagne sa propre XP et sa propre monnaie de coins.</gray>"
+      - "<yellow>Lors d'un nouveau rang, les niveaux repartent ; capacités et coins restent.</yellow>"
+
+  economy:
+    offset-x: 24.0
+    offset-y: 3.0
+    offset-z: -106.0
+    lines:
+      - "<gold><bold>5 — ÉCONOMIE ET COMPACTAGE</bold></gold>"
+      - "<dark_gray>━━━━━━━━━━━━━━━━━━</dark_gray>"
+      - "<white>/balance</white> consulte ton argent • <white>/pay</white> paie un joueur connecté."
+      - "<gray>L'argent achète promotions, améliorations et générateurs.</gray>"
+      - "<white>/autosell</white> vend automatiquement les ressources de farm une fois débloqué."
+      - "<gray>Le compactage utilise des recettes 3×3 récursives, sans Shift-clic.</gray>"
+      - "<yellow>Les minerais passent d'abord par leur bloc vanilla ; les poissons sont exclus.</yellow>"
+      - "<gray>Le Maître Décompacteur du spawn restitue le niveau inférieur.</gray>"
+
+  generators:
+    offset-x: 24.0
+    offset-y: 3.0
+    offset-z: -113.0
+    lines:
+      - "<yellow><bold>6 — GÉNÉRATEURS</bold></yellow>"
+      - "<dark_gray>━━━━━━━━━━━━━━</dark_gray>"
+      - "<white>/shop</white> vend les générateurs minier, agricole, forestier et pêcheur."
+      - "<gray>Paiement possible en argent ou avec les coins de l'outil associé.</gray>"
+      - "<gray>Place le bloc authentifié sur ton île puis clique-le pour le gérer.</gray>"
+      - "<white>Stockage • collecte • auto-sell • vitesse • prix de vente</white>"
+      - "<gray>Les cycles sont persistés : un redémarrage ne duplique pas la production.</gray>"
+      - "<gold>Les rangs accordent progressivement production et emplacements bonus.</gold>"
+
+  quests:
+    offset-x: 24.0
+    offset-y: 3.0
+    offset-z: -120.0
+    lines:
+      - "<red><bold>7 — QUÊTES ET MÉTIERS</bold></red>"
+      - "<dark_gray>━━━━━━━━━━━━━━━━</dark_gray>"
+      - "<white>/is quests</white> affiche les objectifs répétables de chaque outil."
+      - "<gray>Raretés : Commune, Rare, Épique et Légendaire.</gray>"
+      - "<gray>Une complétion donne argent, validation de rang et une Clé Quêtes.</gray>"
+      - "<white>Mineur • Farmer • Bûcheron • Pêcheur</white>"
+      - "<gray>Les métiers progressent en utilisant le multi-tool dans les farms.</gray>"
+      - "<green>Leurs niveaux sont permanents et ne repartent jamais lors d'un rang.</green>"
+
+  ranks:
+    offset-x: 24.0
+    offset-y: 3.0
+    offset-z: -127.0
+    lines:
+      - "<gold><bold>8 — RANGS MÉDIÉVAUX</bold></gold>"
+      - "<dark_gray>━━━━━━━━━━━━━━━━</dark_gray>"
+      - "<white>Citoyen → Artisan → Marchand → Écuyer → Chevalier</white>"
+      - "<white>Baron → Vicomte → Comte → Marquis → Duc</white>"
+      - "<gray>/rank contrôle argent, temps, XP vanilla, quêtes, outils, métiers et ressources.</gray>"
+      - "<yellow>Argent, objets et niveaux XP demandés sont consommés à la promotion.</yellow>"
+      - "<green>Île, temps, métiers, capacités, coins et générateurs sont conservés.</green>"
+      - "<red>Les caisses ne donnent jamais les prérequis réservés à la progression.</red>"
+
+  commands:
+    offset-x: 0.0
+    offset-y: 3.0
+    offset-z: -117.0
+    lines:
+      - "<white><bold>COMMANDES ESSENTIELLES</bold></white>"
+      - "<dark_gray>━━━━━━━━━━━━━━━━━━</dark_gray>"
+      - "<aqua>/is</aqua> île et panneau • <green>/farm</green> ressources • <gold>/rank</gold> progression"
+      - "<yellow>/shop</yellow> générateurs • <gold>/autosell</gold> vente • <light_purple>/pets</light_purple> compagnons"
+      - "<red>/is quests</red> quêtes • <blue>/top</blue> classements • <aqua>/warp</aqua> destinations"
+      - "<light_purple>/warp caisse</light_purple> marché des caisses • <white>/spawn</white> place centrale"
+      - "<yellow>Astuce : la plupart des systèmes sont aussi accessibles depuis /is.</yellow>"
+
+  crates:
+    offset-x: -10.0
+    offset-y: 3.0
+    offset-z: -129.0
+    lines:
+      - "<light_purple><bold>9 — CAISSES ET CLÉS</bold></light_purple>"
+      - "<dark_gray>━━━━━━━━━━━━━━━━</dark_gray>"
+      - "<white>/warp caisse</white> mène aux neuf caisses physiques du marché."
+      - "<gray>Vote, Quêtes, Farm, Commune, Rare, Épique, Légendaire, Valoria et Pets.</gray>"
+      - "<gray>Chaque clé et chaque récompense possède un identifiant serveur unique.</gray>"
+      - "<green>Une ouverture remet un jeton : clic droit pour réclamer son contenu.</green>"
+      - "<yellow>Vote : voter • Quêtes : compléter • Farm/raretés : capacités du multi-tool.</yellow>"
+      - "<red>Valoria est la caisse signature, principalement obtenue via la boutique.</red>"
+      - "<aqua>La Caisse Pets est spécialisée et remet un œuf physique échangeable.</aqua>"
+
+  pets:
+    offset-x: 10.0
+    offset-y: 3.0
+    offset-z: -129.0
+    lines:
+      - "<light_purple><bold>10 — PETS</bold></light_purple>"
+      - "<dark_gray>━━━━━━━━━━━━</dark_gray>"
+      - "<white>/pets</white> ouvre ta collection et la Caisse Pets."
+      - "<gray>Un seul compagnon peut être actif ; son bonus dépend de son espèce.</gray>"
+      - "<gray>Les pets gagnent de l'XP avec le multi-tool et les générateurs.</gray>"
+      - "<white>Commun • Rare • Épique • Légendaire • Mythique</white>"
+      - "<aqua>Un œuf est échangeable avant adoption et garde définitivement son tirage.</aqua>"
+      - "<yellow>Chromatique est très rare et purement visuel : aucun bonus supplémentaire.</yellow>"

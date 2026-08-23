@@ -1,0 +1,22 @@
+# Métiers permanents liés aux quatre formes du multi-tool.
+# Contrairement aux niveaux d’outils, ils ne sont pas réinitialisés lors d’une promotion.
+progression:
+  max-level: 100
+  base-experience: 100
+  # Chaque niveau demande 15 % d’XP supplémentaire par rapport au précédent.
+  experience-multiplier: '1.15'
+  flush-interval-ticks: 20
+
+professions:
+  miner:
+    display-name: Mineur
+    experience-per-action: 5
+  lumberjack:
+    display-name: Bûcheron
+    experience-per-action: 5
+  farmer:
+    display-name: Farmer
+    experience-per-action: 4
+  fisher:
+    display-name: Pêcheur
+    experience-per-action: 8

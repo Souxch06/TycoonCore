@@ -1,0 +1,194 @@
+prefix: '<dark_gray>[<gold>ValoriaTycoon</gold>]</dark_gray> '
+
+errors:
+  no-permission: '<red>Vous n''avez pas la permission.</red>'
+  players-only: '<red>Cette commande est réservée aux joueurs.</red>'
+  initializing: '<yellow>ValoriaTycoon est en cours d''initialisation. Réessayez dans un instant.</yellow>'
+  unavailable: '<red>Le service demandé est indisponible. Consultez la console.</red>'
+  invalid-amount: '<red>Montant invalide. Utilisez un nombre positif avec au plus deux décimales.</red>'
+  payment-limits: '<red>Le paiement doit être compris entre <min> et <max>.</red>'
+  player-not-found: '<red>Le joueur <player> doit être connecté.</red>'
+  self-payment: '<red>Vous ne pouvez pas vous payer vous-même.</red>'
+  insufficient-funds: '<red>Fonds insuffisants. Solde actuel : <balance>.</red>'
+  payment-cooldown: '<red>Patientez <seconds>s avant un nouveau paiement.</red>'
+  storage: '<red>La transaction a échoué et aucun argent n''a été modifié.</red>'
+  usage-pay: '<yellow>Utilisation : /pay <joueur> <montant></yellow>'
+  usage-admin: '<yellow>Utilisation : /isadmin <reload|give|setmoney|petkey|cratekey|create|reset|delete|debug></yellow>'
+
+spawn:
+  teleported: '<green>Bienvenue au spawn médiéval de ValoriaTycoon.</green>'
+  teleport-failed: '<red>La téléportation vers le spawn a échoué.</red>'
+  portal-hint: '<gold>Portail <farm></gold> <gray>— clic droit sur l’arche pour voyager.</gray>'
+
+crates:
+  opening-disabled: '<yellow>Les ouvertures de caisses génériques sont temporairement désactivées.</yellow>'
+  no-key: '<red>Vous ne possédez aucune clé physique pour la Caisse <crate>.</red>'
+  in-progress: '<yellow>Une opération de caisse est déjà en cours. Patientez un instant.</yellow>'
+  key-invalid: '<red>Cette clé est invalide. Toutes ses copies locales ont été supprimées.</red>'
+  key-already-used: '<red>Cette clé a déjà été consommée. Toutes ses copies locales ont été supprimées.</red>'
+  opened: '<green>Caisse <crate> ouverte : vous obtenez <reward>. Utilisez le jeton reçu.</green>'
+  jackpot-broadcast: '<gold><bold>JACKPOT !</bold> <player> obtient <reward> dans la Caisse <crate> !</gold>'
+  reward-invalid: '<red>Ce jeton est invalide. Toutes ses copies locales ont été supprimées.</red>'
+  reward-already-used: '<red>Ce jeton a déjà été utilisé. Toutes ses copies locales ont été supprimées.</red>'
+  balance-overflow: '<red>Votre solde est trop élevé pour utiliser ce sac maintenant.</red>'
+  reward-delivery-failed: '<red>La récompense est validée mais sa livraison physique a échoué. Elle sera retentée automatiquement à la reconnexion.</red>'
+  reward-claimed: '<green>Récompense utilisée : <reward>.</green>'
+  reward-recovered: '<yellow>Livraison de récompense restaurée après interruption : <reward>.</yellow>'
+
+warps:
+  usage: '<yellow>Utilisation : /warp [destination]</yellow>'
+  unknown: '<red>Ce warp n’existe pas. Utilisez /warp pour afficher la liste.</red>'
+  unavailable: '<red>Ce warp est temporairement indisponible.</red>'
+  cooldown: '<yellow>Patientez encore <seconds>s avant une nouvelle téléportation.</yellow>'
+  failed: '<red>La téléportation vers ce warp a échoué.</red>'
+  teleported: '<green>Vous avez rejoint le warp <warp>.</green>'
+
+balance:
+  self: '<gold>Votre solde : <yellow><balance></yellow></gold>'
+
+payment:
+  sent: '<green>Vous avez envoyé <amount> à <player>. Nouveau solde : <balance>.</green>'
+  received: '<green>Vous avez reçu <amount> de <player>. Nouveau solde : <balance>.</green>'
+
+admin:
+  reloaded: '<green>Configuration rechargée. La base, les mondes, parcelles, warps, tutoriel, compactage, machines, caisses, classements, modèles du pack et courbes d’amélioration nécessitent un redémarrage.</green>'
+  economy-updated: '<green>Solde de <player> mis à jour : <balance>.</green>'
+  pet-keys-given: '<green><amount> clé(s) physique(s) de la Caisse Pets donnée(s) à <player>.</green>'
+  debug: '<gray>État=<state>, SQLite=<database>, comptes=<cached>, parcelles=<plots>, resets=<reset_jobs>.</gray>'
+  plot-create-started: '<green>Création du Tycoon de <player> démarrée.</green>'
+  plot-reset-started: '<yellow>Nettoyage du Tycoon de <player> démarré.</yellow>'
+  plot-delete-started: '<yellow>Suppression du Tycoon de <player> démarrée.</yellow>'
+
+command:
+  tycoon-header: '<gold><bold>ValoriaTycoon</bold></gold> <gray>— étape 1</gray>'
+
+tycoon:
+  help: '<gray>/is menu | create | go | settings | stats | upgrades | quests | reset | members <dark_gray>—</dark_gray> /rank</gray>'
+  none: '<red>Vous ne possédez aucun Skyblock. Utilisez /is create.</red>'
+  already-owns: '<yellow>Vous possédez déjà un Tycoon.</yellow>'
+  create-started: '<yellow>Recherche et préparation d’une parcelle libre...</yellow>'
+  created: '<green>Votre Tycoon est prêt. Vous avez été téléporté sur votre parcelle.</green>'
+  group-full: '<red>Aucune parcelle libre dans ce groupe.</red>'
+  not-ready: '<yellow>Votre parcelle est encore en préparation ou suppression.</yellow>'
+  teleport-failed: '<red>La téléportation vers votre Tycoon a échoué.</red>'
+  protected: '<red>Cette île Skyblock est protégée.</red>'
+  hopper-limit: '<red>La limite de hoppers de cette parcelle est atteinte.</red>'
+  flight-enabled: '<green>Fly activé sur cette île.</green>'
+  flight-disabled: '<yellow>Fly désactivé en quittant l’île.</yellow>'
+  settings: '<gold>Skyblock : taille <plot_size>x<plot_size> | hoppers <hopper_limit> | membres <member_limit> | fly <fly></gold>'
+  stats: '<gold>Niveau <level> | Rang <rank_name> (<rank>) | Progression <progress> | Production <production> | Temps <playtime>s | Membres <members>/<member_limit> | Taille <plot_size>x<plot_size> | Hoppers <hopper_limit> | Argent <money></gold>'
+  reset-confirm: '<red>Cette action supprime tout le Skyblock. Tapez /is reset confirm dans les <seconds>s.</red>'
+  reset-expired: '<yellow>La confirmation de reset est absente ou expirée.</yellow>'
+  reset-started: '<yellow>Suppression et nettoyage de votre Tycoon en cours...</yellow>'
+  reset-complete: '<green>Votre Tycoon a été supprimé et sa parcelle libérée.</green>'
+  visit-usage: '<yellow>Utilisation : /is visit <propriétaire connecté></yellow>'
+  invite-usage: '<yellow>Utilisation : /is invite <joueur></yellow>'
+  accept-usage: '<yellow>Utilisation : /is accept <propriétaire></yellow>'
+  kick-usage: '<yellow>Utilisation : /is kick <joueur connecté></yellow>'
+  cannot-invite-self: '<red>Vous ne pouvez pas vous inviter vous-même.</red>'
+  invite-sent: '<green>Invitation envoyée à <player>.</green>'
+  invite-received: '<yellow><player> vous invite sur son Skyblock. Utilisez /is accept <player> sous <seconds>s.</yellow>'
+  invite-missing: '<red>Invitation introuvable ou expirée.</red>'
+  member-added-owner: '<green><player> est maintenant membre de votre Tycoon.</green>'
+  member-added-target: '<green>Vous êtes maintenant membre du Tycoon de <player>.</green>'
+  member-removed-owner: '<yellow><player> a été retiré de votre Tycoon.</yellow>'
+  member-removed-target: '<yellow>Vous avez été retiré du Tycoon de <player>.</yellow>'
+  member-limit: '<red>La limite de membres est atteinte.</red>'
+  already-member: '<yellow>Ce joueur est déjà membre.</yellow>'
+  not-member: '<yellow>Ce joueur n’est pas membre.</yellow>'
+  member-failed: '<red>La modification des membres a échoué.</red>'
+  members: '<gold>Membres : <members></gold>'
+
+farm:
+  protected: '<red>Cette partie de la zone de farm est protégée.</red>'
+  rank-barrier: '<red>Portail verrouillé — rang <gold><rank></gold> requis.</red>'
+  unavailable: '<red>Cette zone de farm est indisponible.</red>'
+  zone-locked: '<red>Cette zone nécessite le rang médiéval <rank>.</red>'
+  teleport-cooldown: '<yellow>Patientez <seconds>s avant une nouvelle téléportation.</yellow>'
+  teleport-failed: '<red>La téléportation vers la zone de farm a échoué.</red>'
+  teleported: '<green>Vous avez rejoint la zone <farm>.</green>'
+  autosell-locked: '<red>Vous devez acheter le niveau 1 pour débloquer la vente automatique.</red>'
+  autosell-enabled: '<green>Vente automatique activée.</green>'
+  autosell-disabled: '<yellow>Vente automatique désactivée : les ressources seront conservées.</yellow>'
+  autosell-upgrade-confirm: '<yellow>Utilisez Shift + clic pour confirmer cet achat à <cost>.</yellow>'
+  autosell-upgraded: '<green>Vente automatique améliorée au niveau <level> avec un multiplicateur x<multiplier>.</green>'
+  autosell-insufficient-funds: '<red>Fonds insuffisants. Prix : <cost>, solde : <balance>.</red>'
+  autosell-maximum: '<light_purple>Vous avez déjà atteint le niveau maximum de la vente automatique.</light_purple>'
+  autosell-profile-refreshed: '<yellow>Votre niveau a été actualisé. Vérifiez le menu puis confirmez à nouveau.</yellow>'
+  autosell-sold: '<green>Récoltes vendues : +<amount></green>'
+  autosell-failed: '<red>La vente a échoué ; les objets ont été rendus.</red>'
+  autosell-overflow: '<red>Cette récolte dépasse la valeur monétaire autorisée.</red>'
+
+pets:
+  crate-only: '<light_purple>Ce pet s’obtient sous forme d’œuf dans la Caisse Pets.</light_purple>'
+  no-key: '<red>Vous ne possédez aucune clé physique de la Caisse Pets.</red>'
+  key-use-menu: '<yellow>Cette clé s’utilise uniquement depuis la Caisse Pets dans /pets.</yellow>'
+  key-already-used: '<red>Cette clé a déjà été consommée. Toutes ses copies locales ont été supprimées.</red>'
+  egg-obtained: '<green>Vous obtenez l’œuf <pet> — variante <variant>.</green>'
+  egg-recovered: '<yellow>Un œuf non livré a été restauré : <pet> — <variant>.</yellow>'
+  egg-reclaimed: '<green>Votre pet <pet> est redevenu un œuf <variant>, sans nouveau tirage.</green>'
+  egg-redeemed: '<green>Pet <pet> équipé depuis son œuf — variante <variant>.</green>'
+  egg-invalid: '<red>Cet œuf est invalide ou a déjà été utilisé ; ses copies locales ont été supprimées.</red>'
+  egg-already-owned: '<yellow>Vous possédez déjà ce type de pet. L’œuf reste échangeable.</yellow>'
+  chromatic-broadcast: '<light_purple><bold>INCROYABLE !</bold> <player> vient d’obtenir <pet> chromatique dans la Caisse Pets !</light_purple>'
+  activated: '<green>Pet <pet> activé.</green>'
+  already-active: '<yellow>Ce pet est déjà actif.</yellow>'
+  rank-locked: '<red>Ce pet nécessite le rang <rank> pour être équipé.</red>'
+  reclaim-confirm: '<yellow>Utilisez Shift + clic pour confirmer la remise en œuf.</yellow>'
+  reclaim-xp-missing: '<red>Vous n’avez pas assez de niveaux XP vanilla pour cette opération.</red>'
+  reclaim-money-missing: '<red>Vous n’avez pas assez d’argent pour remettre ce pet en œuf.</red>'
+  unavailable: '<red>Cette opération de pet est indisponible.</red>'
+
+upgrades:
+  confirm: '<yellow>Utilisez Shift + clic pour confirmer cet achat à <cost>.</yellow>'
+  purchased: '<green>Amélioration <upgrade> achetée au niveau <level> pour cette parcelle.</green>'
+  insufficient-funds: '<red>Fonds insuffisants. Prix : <cost>, solde : <balance>.</red>'
+  maximum: '<light_purple>Cette amélioration est déjà au niveau maximum.</light_purple>'
+  refreshed: '<yellow>Les niveaux de la parcelle ont été actualisés. Vérifiez puis recommencez.</yellow>'
+
+ranks:
+  promoted: '<green>Promotion réussie : vous êtes désormais <gold><rank></gold> ! Les nouveaux bonus permanents sont actifs et votre multi-tool adopte son nouveau matériau et sa texture de rang. Argent restant : <balance>.</green>'
+  missing-items: '<red>Vous ne possédez pas tous les objets requis.</red>'
+  missing-money: '<red>Vous n’avez pas assez d’argent pour cette promotion.</red>'
+  missing-playtime: '<red>Temps de jeu cumulé insuffisant. Consultez /rank pour voir le seuil requis en minutes.</red>'
+  missing-vanilla-xp: '<red>Vous n’avez pas assez de niveaux XP vanilla pour cette promotion.</red>'
+  missing-quests: '<red>Il manque des validations de quêtes. Elles sont consommées à chaque promotion.</red>'
+  missing-tools: '<red>Un ou plusieurs outils n’ont pas le niveau requis.</red>'
+  missing-professions: '<red>Un ou plusieurs métiers permanents n’ont pas le niveau requis.</red>'
+  maximum: '<gold>Vous avez atteint le rang suprême : Duc.</gold>'
+  not-ready: '<yellow>Votre Skyblock ou votre rang a changé ; ouvrez de nouveau le panneau.</yellow>'
+
+menu:
+  hold-tool: '<yellow>Tenez votre multi-tool puis faites Shift + clic droit.</yellow>'
+
+tutorial:
+  step-completed: '<green>Mini-quête terminée : <objective>. Récompense : <reward>.</green>'
+  ready-for-rank: '<gold>Toutes les étapes sont terminées ! Utilisez /rank pour devenir Citoyen.</gold>'
+
+compaction:
+  hold-compacted-item: '<yellow>Tenez une ressource compactée dans votre main principale.</yellow>'
+  cannot-use: '<red>Une ressource compactée ne peut pas être placée, plantée ou consommée.</red>'
+  craft-one-at-time: '<yellow>Fabriquez les ressources compactées une par une, sans Shift-clic.</yellow>'
+  decompacted: '<green><resource> décompacté. Niveau obtenu : <level>.</green>'
+
+machines:
+  purchase-title: '<font:valoriatycoon:gui></font><gold><bold>ACHAT • <machine></bold></gold>'
+  purchased: '<green>Machine <machine> achetée. Placez le bloc sur votre Skyblock.</green>'
+  insufficient-money: '<red>Vous n’avez pas assez d’argent.</red>'
+  insufficient-coins: '<red>Vous n’avez pas assez de coins pour cet outil.</red>'
+  invalid-location: '<red>Cette machine doit être placée dans une zone constructible de votre Skyblock.</red>'
+  placement-failed: '<red>Le placement de la machine a échoué ; le bloc a été restitué.</red>'
+  not-owner: '<red>Seul le propriétaire de ce générateur peut le gérer.</red>'
+  upgrade-maximum: '<light_purple>Cette amélioration est déjà au niveau maximum.</light_purple>'
+  upgraded: '<green>Générateur amélioré avec succès.</green>'
+
+tools:
+  multitool-switched: '<gray>Multi-tool transformé en <yellow><tool></yellow>.</gray>'
+  upgraded-with-currency: '<green>Capacité <capability> améliorée au niveau <level> pour <payment>.</green>'
+  insufficient-funds: '<red>Fonds insuffisants. Prix : <cost>, solde : <balance>.</red>'
+  insufficient-coins: '<red><coin_name> insuffisants. Prix : <cost>, solde : <balance>.</red>'
+  maximum-level: '<light_purple>Cette amélioration est déjà au niveau maximum.</light_purple>'
+  profile-refreshed: '<yellow>Les données de cet outil ont été actualisées. Vérifiez puis confirmez à nouveau.</yellow>'
+
+login:
+  storage-unavailable: '<red>ValoriaTycoon ne peut pas charger vos données. Réessayez plus tard.</red>'

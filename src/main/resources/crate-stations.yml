@@ -1,0 +1,150 @@
+enabled: true
+world: valoria_spawn
+refresh-interval-ticks: 100
+interaction-width: 1.6
+interaction-height: 1.8
+label-offset-y: 1.65
+
+effects:
+  enabled: true
+  interval-ticks: 4
+  view-distance: 40.0
+
+# Positions relatives à /spawn. La grille encadre le stand bleu atteint par /warp caisse.
+# Chaque modèle, palette, intensité de particules et mouvement reste configurable séparément.
+stations:
+  vote:
+    offset-x: 33.0
+    offset-y: 0.0
+    offset-z: 0.0
+    yaw: 180.0
+    item-model: 'item/crate/vote'
+    effect:
+      primary-color: '#45E7EF'
+      secondary-color: '#F5FFFF'
+      particle-count: 4
+      particle-size: 0.75
+      orbit-radius: 0.78
+      orbit-speed: 0.035
+      bob-height: 0.07
+      yaw-sway-degrees: 2.5
+  quest:
+    offset-x: 39.0
+    offset-y: 0.0
+    offset-z: 0.0
+    yaw: 180.0
+    item-model: 'item/crate/quest'
+    effect:
+      primary-color: '#55DDF0'
+      secondary-color: '#F8DA84'
+      particle-count: 4
+      particle-size: 0.75
+      orbit-radius: 0.74
+      orbit-speed: 0.030
+      bob-height: 0.06
+      yaw-sway-degrees: 2.0
+  farm:
+    offset-x: 45.0
+    offset-y: 0.0
+    offset-z: 0.0
+    yaw: 180.0
+    item-model: 'item/crate/farm'
+    effect:
+      primary-color: '#48BE52'
+      secondary-color: '#F2C94C'
+      particle-count: 3
+      particle-size: 0.80
+      orbit-radius: 0.72
+      orbit-speed: 0.025
+      bob-height: 0.05
+      yaw-sway-degrees: 1.5
+  common:
+    offset-x: 33.0
+    offset-y: 0.0
+    offset-z: 4.0
+    yaw: 180.0
+    item-model: 'item/crate/common'
+    effect:
+      primary-color: '#48DD69'
+      secondary-color: '#CAE0D0'
+      particle-count: 2
+      particle-size: 0.70
+      orbit-radius: 0.62
+      orbit-speed: 0.022
+      bob-height: 0.04
+      yaw-sway-degrees: 1.0
+  rare:
+    offset-x: 39.0
+    offset-y: 0.0
+    offset-z: 4.0
+    yaw: 180.0
+    item-model: 'item/crate/rare'
+    effect:
+      primary-color: '#3D8BFF'
+      secondary-color: '#6FE3FF'
+      particle-count: 4
+      particle-size: 0.85
+      orbit-radius: 0.78
+      orbit-speed: 0.035
+      bob-height: 0.07
+      yaw-sway-degrees: 2.5
+  epic:
+    offset-x: 45.0
+    offset-y: 0.0
+    offset-z: 4.0
+    yaw: 180.0
+    item-model: 'item/crate/epic'
+    effect:
+      primary-color: '#FF7818'
+      secondary-color: '#FFC439'
+      particle-count: 5
+      particle-size: 0.90
+      orbit-radius: 0.84
+      orbit-speed: 0.042
+      bob-height: 0.08
+      yaw-sway-degrees: 3.0
+  legendary:
+    offset-x: 33.0
+    offset-y: 0.0
+    offset-z: 8.0
+    yaw: 180.0
+    item-model: 'item/crate/legendary'
+    effect:
+      primary-color: '#FFD32D'
+      secondary-color: '#FFF8B2'
+      particle-count: 6
+      particle-size: 1.00
+      orbit-radius: 0.92
+      orbit-speed: 0.048
+      bob-height: 0.10
+      yaw-sway-degrees: 3.5
+  valoria:
+    offset-x: 39.0
+    offset-y: 0.0
+    offset-z: 8.0
+    yaw: 180.0
+    item-model: 'item/crate/valoria'
+    effect:
+      primary-color: '#FF2E4B'
+      secondary-color: '#FFBA27'
+      particle-count: 8
+      particle-size: 1.10
+      orbit-radius: 1.05
+      orbit-speed: 0.055
+      bob-height: 0.12
+      yaw-sway-degrees: 4.5
+  pets:
+    offset-x: 45.0
+    offset-y: 0.0
+    offset-z: 8.0
+    yaw: 180.0
+    item-model: 'item/crate/pets'
+    effect:
+      primary-color: '#F669B3'
+      secondary-color: '#53E7EE'
+      particle-count: 5
+      particle-size: 0.90
+      orbit-radius: 0.82
+      orbit-speed: 0.040
+      bob-height: 0.08
+      yaw-sway-degrees: 3.0

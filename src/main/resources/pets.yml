@@ -1,0 +1,207 @@
+menu:
+  size: 54
+  title: '<font:valoriatycoon:gui></font><gold><bold>MES PETS</bold></gold>'
+  filler: BLACK_STAINED_GLASS_PANE
+
+# Les Clés Pets physiques proviennent de l'administration et des tables de caisses génériques.
+crate:
+  slot: 49
+  icon: CHEST
+  name: '<light_purple><bold>Caisse Pets</bold></light_purple>'
+  lore:
+    - '<gray>Consomme une clé physique et donne un œuf de pet échangeable.</gray>'
+    - '<gray>Chaque œuf fixe définitivement sa variante normale ou chromatique.</gray>'
+  chromatic-chance: '0.01'
+  key-material: TRIPWIRE_HOOK
+  key-name: '<light_purple><bold>Clé de la Caisse Pets</bold></light_purple>'
+  key-lore:
+    - '<gray>Clé physique échangeable entre joueurs.</gray>'
+    - '<dark_gray>Utilisable depuis le menu Pets.</dark_gray>'
+    - '<red>Chaque clé possède un identifiant unique anti-duplication.</red>'
+  rarity-weights:
+    COMMON: 60
+    RARE: 25
+    EPIC: 10
+    LEGENDARY: 4
+    MYTHIC: 1
+
+# Tous les pets utilisent ce même œuf moddé. Les deux modèles sont fournis
+# dans le pack de ressources ValoriaTycoon livré avec le projet.
+egg:
+  material: EGG
+  normal-item-model: 'valoriatycoon:pet_egg'
+  chromatic-item-model: 'valoriatycoon:pet_egg_chromatic'
+
+reclaim:
+  enabled: true
+  world: valoria_spawn
+  offset-x: -2.5
+  offset-y: 0.0
+  offset-z: 0.5
+  yaw: 180.0
+  name: '<aqua><bold>Gardien des Œufs</bold></aqua>'
+  menu-title: '<font:valoriatycoon:gui></font><gold><bold>GARDIEN DES ŒUFS</bold></gold>'
+  money-cost: '5000000.00'
+  vanilla-xp-levels: 30
+
+progression:
+  flush-interval-ticks: 40
+  experience-per-tool-action: 2
+  experience-per-generator-cycle: 1
+
+visual:
+  follow-interval-ticks: 10
+
+rarities:
+  COMMON:
+    name: '<gray>Commun</gray>'
+    max-level: 25
+    base-experience: 100
+    experience-growth: '1.12'
+  RARE:
+    name: '<blue>Rare</blue>'
+    max-level: 40
+    base-experience: 150
+    experience-growth: '1.13'
+  EPIC:
+    name: '<dark_purple>Épique</dark_purple>'
+    max-level: 60
+    base-experience: 250
+    experience-growth: '1.14'
+  LEGENDARY:
+    name: '<gold>Légendaire</gold>'
+    max-level: 80
+    base-experience: 400
+    experience-growth: '1.15'
+  MYTHIC:
+    name: '<light_purple><bold>Mythique</bold></light_purple>'
+    max-level: 100
+    base-experience: 650
+    experience-growth: '1.16'
+
+pets:
+  rabbit_farmer:
+    rarity: COMMON
+    entity: RABBIT
+    icon: RABBIT_FOOT
+    legacy-egg-material: RABBIT_SPAWN_EGG
+    slot: 10
+    required-rank: 1
+    name: '<gray>Lapin fermier</gray>'
+    lore:
+      - '<gray>Apprend vite au contact de la terre.</gray>'
+      - '<gray>Spécialité : métiers et revenus.</gray>'
+    effects:
+      PROFESSION_EXPERIENCE: { base: '0.0100', per-level: '0.0008' }
+      MONEY: { base: '0.0050', per-level: '0.0004' }
+
+  fox_prospector:
+    rarity: COMMON
+    entity: FOX
+    icon: SWEET_BERRIES
+    legacy-egg-material: FOX_SPAWN_EGG
+    slot: 11
+    required-rank: 1
+    name: '<gold>Renard prospecteur</gold>'
+    lore:
+      - '<gray>Repère les petites caches de valeur.</gray>'
+      - '<gray>Spécialité : coins et XP des outils.</gray>'
+    effects:
+      TOOL_COINS: { base: '0.0150', per-level: '0.0010' }
+      TOOL_EXPERIENCE: { base: '0.0050', per-level: '0.0005' }
+
+  miner_wolf:
+    rarity: RARE
+    entity: WOLF
+    icon: BONE
+    legacy-egg-material: WOLF_SPAWN_EGG
+    slot: 12
+    required-rank: 3
+    name: '<blue>Loup des cavernes</blue>'
+    lore:
+      - '<gray>Un compagnon endurant pour les longues sessions.</gray>'
+      - '<gray>Spécialité : XP outil et métier.</gray>'
+    effects:
+      TOOL_EXPERIENCE: { base: '0.0300', per-level: '0.0015' }
+      PROFESSION_EXPERIENCE: { base: '0.0200', per-level: '0.0010' }
+
+  golden_bee:
+    rarity: RARE
+    entity: BEE
+    icon: HONEYCOMB
+    legacy-egg-material: BEE_SPAWN_EGG
+    slot: 13
+    required-rank: 3
+    name: '<yellow>Abeille dorée</yellow>'
+    lore:
+      - '<gray>Transforme le travail régulier en richesse.</gray>'
+      - '<gray>Spécialité : revenus et XP métier.</gray>'
+    effects:
+      MONEY: { base: '0.0250', per-level: '0.0012' }
+      PROFESSION_EXPERIENCE: { base: '0.0150', per-level: '0.0008' }
+
+  allay_collector:
+    rarity: EPIC
+    entity: ALLAY
+    icon: AMETHYST_SHARD
+    legacy-egg-material: ALLAY_SPAWN_EGG
+    slot: 14
+    required-rank: 5
+    name: '<dark_purple>Allay collectionneur</dark_purple>'
+    lore:
+      - '<gray>Multiplie parfois toutes les récompenses d’une action.</gray>'
+      - '<gray>Spécialité : coins et double récompense.</gray>'
+    effects:
+      TOOL_COINS: { base: '0.0500', per-level: '0.0020' }
+      DOUBLE_TOOL_REWARD_CHANCE: { base: '0.0100', per-level: '0.0005' }
+
+  industrial_golem:
+    rarity: EPIC
+    entity: IRON_GOLEM
+    icon: IRON_BLOCK
+    legacy-egg-material: IRON_GOLEM_SPAWN_EGG
+    slot: 15
+    required-rank: 5
+    name: '<gray>Golem industriel</gray>'
+    lore:
+      - '<gray>Optimise la cadence des installations de l’île.</gray>'
+      - '<gray>Spécialité : production et double cycle.</gray>'
+    effects:
+      GENERATOR_PRODUCTION: { base: '0.0500', per-level: '0.0020' }
+      DOUBLE_GENERATOR_OUTPUT_CHANCE: { base: '0.0100', per-level: '0.0005' }
+
+  miniature_dragon:
+    rarity: LEGENDARY
+    entity: PARROT
+    icon: DRAGON_BREATH
+    legacy-egg-material: PARROT_SPAWN_EGG
+    slot: 16
+    required-rank: 8
+    name: '<gold>Dragon miniature</gold>'
+    lore:
+      - '<gray>Un familier prestigieux aux bonus polyvalents.</gray>'
+      - '<gray>Spécialité : argent, outils et générateurs.</gray>'
+    effects:
+      MONEY: { base: '0.0600', per-level: '0.0015' }
+      TOOL_EXPERIENCE: { base: '0.0600', per-level: '0.0015' }
+      GENERATOR_PRODUCTION: { base: '0.0400', per-level: '0.0010' }
+
+  phoenix:
+    rarity: MYTHIC
+    entity: PARROT
+    icon: FIRE_CHARGE
+    legacy-egg-material: PARROT_SPAWN_EGG
+    slot: 17
+    required-rank: 10
+    name: '<light_purple><bold>Phénix de Valoria</bold></light_purple>'
+    lore:
+      - '<gray>Le pet ultime, réservé aux Ducs.</gray>'
+      - '<gray>Spécialité : tous les boosts et résurgence.</gray>'
+    effects:
+      MONEY: { base: '0.0800', per-level: '0.0017' }
+      TOOL_EXPERIENCE: { base: '0.0800', per-level: '0.0020' }
+      PROFESSION_EXPERIENCE: { base: '0.0800', per-level: '0.0020' }
+      TOOL_COINS: { base: '0.0600', per-level: '0.0018' }
+      GENERATOR_PRODUCTION: { base: '0.0600', per-level: '0.0015' }
+      DOUBLE_TOOL_REWARD_CHANCE: { base: '0.0200', per-level: '0.0007' }
+      DOUBLE_GENERATOR_OUTPUT_CHANCE: { base: '0.0150', per-level: '0.0006' }
