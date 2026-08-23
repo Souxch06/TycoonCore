@@ -53,6 +53,7 @@ public final class CrateRewardService implements Listener {
     private final Set<UUID> claims = ConcurrentHashMap.newKeySet();
     private final Set<UUID> deliveries = ConcurrentHashMap.newKeySet();
     private final Set<UUID> claimDeliveries = ConcurrentHashMap.newKeySet();
+    private volatile CrateOpeningEffect openingEffect = CrateOpeningEffect.NONE;
 
     public CrateRewardService(
             CrateSettings crateSettings,
@@ -105,6 +106,11 @@ public final class CrateRewardService implements Listener {
 
     public boolean openingEnabled() {
         return crateSettings.openingEnabled();
+    }
+
+    /** Binds the physical station cinematic after composition without creating a dependency cycle. */
+    public void setOpeningEffect(CrateOpeningEffect openingEffect) {
+        this.openingEffect = Objects.requireNonNull(openingEffect, "openingEffect");
     }
 
     /** Starts one server-authoritative opening from the first matching physical key. */
@@ -162,6 +168,7 @@ public final class CrateRewardService implements Listener {
             }
             keyItems.removeCopies(player, token.keyId());
             celebrateOpening(player, type);
+            openingEffect.play(player, type);
             CrateReward reward = result.reward();
             messages.send(
                     player,

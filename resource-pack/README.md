@@ -12,8 +12,12 @@ Valoria compatible avec les conteneurs vanilla de 1 à 6 rangées.
 - logo VALORIA flottant, tours et ruban héraldique via une police GUI privée ;
 - interfaces dédiées : inventaire, établi, fourneau, haut-fourneau, fumoir,
   hopper, Shulker et conteneurs serveur de 1 à 6 rangées ;
-- textures 32×32 du monde Tycoon : roches, minerais, briques médiévales,
-  bois, feuillages, cultures, établis, fourneaux, blocs de machines et ressources ;
+- 156 textures 32×32 du monde Tycoon : roches, sols, minerais et blocs minéraux,
+  briques médiévales, bois, feuillages, cultures et leurs stades, plantes,
+  redstone, établis, fours, pistons, lanternes, rails et blocs de machines ;
+- 42 textures d’objets vanilla utiles : ressources, monnaies, nourritures,
+  poissons, composants, navigation et récompenses ;
+- neuf reliquaires 3D de 12 à 22 éléments et neuf sceaux magiques orbitaux ;
 - menu principal `/is` : argent, statistiques, farms, générateurs, upgrades,
   multi-tool, auto-sell, paramètres, pets, quêtes et rangs ;
 - menus secondaires : zones de farm, états verrouillés, achats, générateurs,
@@ -38,7 +42,7 @@ Valoria compatible avec les conteneurs vanilla de 1 à 6 rangées.
   netherite couronnée et runes cyan du Duc ;
 - icône de pack Valoria.
 
-Le pack contient **259 modèles d'items** et autant de textures premium 32×32, avec une interface de conteneur Valoria complète. Les
+Le pack contient **268 modèles d'items** et autant de textures premium 32×32, avec une interface de conteneur Valoria complète. Les
 sources sont générées de façon déterministe, sans outil propriétaire :
 
 ```bash

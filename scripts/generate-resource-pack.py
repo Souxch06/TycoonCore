@@ -657,6 +657,40 @@ def resource_item_pixels(name: str, color: tuple[int, int, int, int]) -> list[tu
     return c.pixels
 
 
+def utility_item_pixels(name: str) -> list[tuple[int, int, int, int]]:
+    c = Canvas()
+    if name in {"apple", "golden_apple", "enchanted_golden_apple"}:
+        symbol(c, "apple", GOLD if name != "apple" else RED)
+        if name == "enchanted_golden_apple": c.set(4, 4, PURPLE); c.set(11, 11, CYAN)
+    elif name == "golden_carrot":
+        c.line(6, 5, 8, 13, GOLD); c.line(10, 5, 8, 13, tint(GOLD, -25)); c.line(8, 5, 6, 2, GREEN); c.line(8, 5, 11, 3, GREEN)
+    elif name in {"wheat_seeds", "sugar", "sugar_cane"}:
+        symbol(c, "seed" if name == "wheat_seeds" else "replant", WHITE if name == "sugar" else GREEN)
+    elif name in {"tripwire_hook", "nautilus_shell"}:
+        symbol(c, "key" if name == "tripwire_hook" else "gem", GOLD if name == "tripwire_hook" else CYAN)
+    elif name == "experience_bottle":
+        c.rect(6, 2, 9, 5, GOLD); c.rect(4, 6, 11, 13, INK); c.rect(5, 6, 10, 12, CYAN); c.set(6, 7, WHITE)
+    elif name in {"paper", "writable_book"}:
+        symbol(c, "scroll" if name == "paper" else "info", WHITE)
+    elif name == "clock": symbol(c, "clock", GOLD)
+    elif name == "compass":
+        c.rect(4, 4, 11, 11, GRAY); c.rect(5, 5, 10, 10, INK); c.line(8, 8, 10, 5, RED); c.line(8, 8, 6, 11, WHITE)
+    elif name == "nether_star": symbol(c, "spark", WHITE)
+    elif name in {"amethyst_shard", "prismarine_crystals"}: symbol(c, "gem", PURPLE if name == "amethyst_shard" else CYAN)
+    elif name == "honeycomb":
+        for x, y in ((5, 5), (9, 5), (7, 9)): c.rect(x, y, x + 2, y + 2, GOLD)
+    elif name == "rabbit_foot":
+        c.rect(6, 4, 9, 11, (214, 202, 188, 255)); c.set(5, 4, WHITE); c.set(10, 4, WHITE); c.set(8, 12, GOLD)
+    elif name in {"dragon_breath", "fire_charge"}: symbol(c, "flame", PURPLE if name == "dragon_breath" else ORANGE)
+    elif name == "bone":
+        c.line(5, 11, 11, 5, WHITE); c.rect(3, 10, 6, 13, WHITE); c.rect(10, 3, 13, 6, WHITE)
+    elif name == "arrow":
+        c.line(4, 12, 11, 4, WHITE); c.line(8, 4, 11, 4, GRAY); c.line(11, 4, 11, 7, GRAY)
+    else:
+        symbol(c, "info", LIGHT)
+    return c.pixels
+
+
 def generate_world_textures() -> None:
     minecraft = ROOT.parent / "minecraft" / "textures"
     blocks = minecraft / "block"
@@ -768,6 +802,135 @@ def generate_world_textures() -> None:
     write_png(blocks / "barrel_top.png", 32, 32, log_surface((122, 77, 39, 255), 181, True))
     write_png(blocks / "barrel_bottom.png", 32, 32, log_surface((96, 58, 31, 255), 182, True))
 
+    # Remaining blocks explicitly placed by spawn, farms, plots and generators.
+    extended_surfaces = {
+        "bedrock": natural_surface((37, 38, 43, 255), 190, 22),
+        "coal_block": natural_surface((28, 30, 34, 255), 191, 18),
+        "coarse_dirt": natural_surface((105, 71, 43, 255), 192, 20),
+        "copper_block": natural_surface((180, 94, 62, 255), 193, 8),
+        "diamond_block": natural_surface((57, 203, 195, 255), 194, 7),
+        "emerald_block": natural_surface((42, 176, 88, 255), 195, 7),
+        "lapis_block": natural_surface((41, 67, 164, 255), 196, 10),
+        "redstone_block": natural_surface((166, 28, 35, 255), 197, 11),
+        "sand": natural_surface((215, 198, 146, 255), 198, 8),
+        "red_terracotta": natural_surface((137, 64, 51, 255), 199, 8),
+        "prismarine": natural_surface((82, 142, 133, 255), 200, 12),
+        "polished_andesite": brick_surface((128, 131, 134, 255), (72, 74, 77, 255), 201, 16, 16),
+        "polished_deepslate": brick_surface((57, 56, 65, 255), (28, 27, 34, 255), 202, 16, 16),
+        "polished_blackstone_bricks": brick_surface((43, 37, 48, 255), (18, 15, 22, 255), 203, 8, 6),
+        "red_nether_bricks": brick_surface((91, 22, 31, 255), (34, 9, 16, 255), 204, 8, 6),
+        "mossy_cobblestone": brick_surface((82, 96, 76, 255), (41, 46, 40, 255), 205, 7, 7),
+    }
+    for name, pixels in extended_surfaces.items(): write_png(blocks / f"{name}.png", 32, 32, pixels)
+
+    write_png(blocks / "stripped_spruce_log.png", 32, 32, log_surface((122, 88, 53, 255), 206, False))
+    write_png(blocks / "stripped_spruce_log_top.png", 32, 32, log_surface((122, 88, 53, 255), 206, True))
+
+    # Ground-state variants.
+    podzol = list(natural_surface((89, 59, 36, 255), 207, 15))
+    for y in range(5):
+        for x in range(32): podzol[y * 32 + x] = tint((87, 67, 41, 255), (x % 7) - 3)
+    write_png(blocks / "podzol_top.png", 32, 32, podzol)
+    write_png(blocks / "podzol_side.png", 32, 32, podzol)
+    path_top = natural_surface((123, 98, 61, 255), 208, 8)
+    write_png(blocks / "dirt_path_top.png", 32, 32, path_top)
+    write_png(blocks / "dirt_path_side.png", 32, 32, grass)
+    for moist, color in ((False, (104, 70, 42, 255)), (True, (74, 48, 34, 255))):
+        farm = natural_surface(color, 209 + int(moist), 9)
+        for x in range(1, 32, 4):
+            for y in range(32): farm[y * 32 + x] = tint(color, -22)
+        write_png(blocks / ("farmland_moist.png" if moist else "farmland.png"), 32, 32, farm)
+
+    # Redstone lamp, piston and metallic decorations.
+    for active in (False, True):
+        lamp = brick_surface((113, 66, 31, 255) if not active else (213, 139, 43, 255),
+                             (48, 27, 20, 255), 212 + int(active), 8, 8)
+        if active:
+            for x, y in ((5, 5), (15, 5), (25, 5), (10, 15), (21, 15), (5, 25), (16, 25), (26, 25)):
+                lamp[y * 32 + x] = LIGHT
+        write_png(blocks / ("redstone_lamp_on.png" if active else "redstone_lamp.png"), 32, 32, lamp)
+    piston_side = plank_surface((118, 79, 43, 255), 214)
+    write_png(blocks / "piston_side.png", 32, 32, piston_side)
+    write_png(blocks / "piston_bottom.png", 32, 32, natural_surface((83, 86, 90, 255), 215, 9))
+    piston_top = Canvas(32); piston_top.pixels = natural_surface((116, 117, 118, 255), 216, 7)
+    piston_top.rect(4, 4, 27, 27, (147, 102, 56, 255)); piston_top.rect(8, 8, 23, 23, (83, 85, 89, 255))
+    write_png(blocks / "piston_top.png", 32, 32, piston_top.pixels)
+    write_png(blocks / "piston_inner.png", 32, 32, natural_surface((70, 72, 77, 255), 217, 7))
+
+    metal_cutout = Canvas(32)
+    for x in (5, 13, 21, 29): metal_cutout.rect(x, 0, min(31, x + 2), 31, (118, 122, 128, 255))
+    for y in (7, 23): metal_cutout.rect(0, y, 31, y + 2, (157, 160, 164, 255))
+    write_png(blocks / "iron_bars.png", 32, 32, metal_cutout.pixels)
+    chain = Canvas(32)
+    for y in range(0, 32, 8):
+        chain.rect(13, y, 18, min(31, y + 6), (123, 126, 132, 255)); chain.rect(15, y + 1, 16, min(31, y + 5), INK)
+    write_png(blocks / "iron_chain.png", 32, 32, chain.pixels)
+
+    # Plants and decorative flora used by generators and the medieval spawn.
+    plant_specs = {
+        "dandelion": GOLD, "azure_bluet": WHITE, "fern": GREEN, "brown_mushroom": (142, 91, 57, 255),
+        "red_mushroom": RED, "sugar_cane": (91, 181, 77, 255), "oak_sapling": GREEN,
+        "birch_sapling": (103, 167, 72, 255), "spruce_sapling": (49, 105, 67, 255),
+        "dark_oak_sapling": (43, 97, 45, 255),
+    }
+    for index, (name, color) in enumerate(plant_specs.items(), 220):
+        plant = Canvas(32)
+        stems = (10, 16, 22) if name == "sugar_cane" else (16,)
+        for stem in stems:
+            plant.line(stem, 31, stem, 8 if name == "sugar_cane" else 18, tint(GREEN, (stem % 5) * 4))
+            plant.set(stem - 2, 23, GREEN); plant.set(stem + 2, 19, tint(GREEN, 18))
+        if "mushroom" in name:
+            plant.rect(11, 15, 21, 20, color); plant.rect(14, 20, 18, 29, (205, 188, 155, 255))
+        elif "sapling" in name:
+            plant.line(16, 27, 9, 16, color); plant.line(16, 27, 23, 15, tint(color, 18))
+            plant.rect(7, 13, 12, 18, color); plant.rect(20, 12, 25, 17, tint(color, 12))
+        elif name not in {"sugar_cane", "fern"}:
+            plant.rect(12, 11, 20, 18, color); plant.set(16, 10, LIGHT)
+        write_png(blocks / f"{name}.png", 32, 32, plant.pixels)
+
+    # Nether-wart and cocoa growth stages.
+    for stage in range(3):
+        wart = Canvas(32)
+        for x in (6, 13, 20, 27):
+            height = 5 + stage * 6 + x % 3
+            wart.line(x, 31, x, 31 - height, (112, 17, 31, 255))
+            if stage > 0: wart.rect(x - 2, 27 - height, x + 2, 30 - height, RED)
+        write_png(blocks / f"nether_wart_stage{stage}.png", 32, 32, wart.pixels)
+        cocoa = Canvas(32)
+        size = 5 + stage * 4
+        cocoa.rect(16 - size // 2, 14 - size // 2, 16 + size // 2, 14 + size // 2,
+                   (122 + stage * 24, 72 + stage * 17, 29, 255))
+        cocoa.line(16, 2, 16, 9, GREEN); cocoa.set(14, 12, LIGHT)
+        write_png(blocks / f"cocoa_stage{stage}.png", 32, 32, cocoa.pixels)
+
+    # Remaining transparent/animated-looking construction details.
+    crying = natural_surface((27, 17, 40, 255), 240, 14)
+    for x, y in ((5, 3), (17, 2), (25, 8), (9, 16), (20, 20), (4, 27), (28, 29)):
+        for dx, dy in ((0, 0), (1, 1), (-1, 2), (2, 3)):
+            if 0 <= x + dx < 32 and 0 <= y + dy < 32:
+                crying[(y + dy) * 32 + x + dx] = tint(PURPLE, 35 - (dx + dy) * 6)
+    write_png(blocks / "crying_obsidian.png", 32, 32, crying)
+    write_png(blocks / "quartz_block_bottom.png", 32, 32, natural_surface((210, 206, 197, 255), 241, 7))
+    glass = Canvas(32)
+    glass.rect(0, 0, 31, 31, (17, 13, 23, 95)); glass.line(0, 0, 31, 0, (93, 53, 108, 190)); glass.line(0, 0, 0, 31, (93, 53, 108, 190))
+    glass.line(31, 0, 31, 31, (7, 6, 11, 210)); glass.line(0, 31, 31, 31, (7, 6, 11, 210))
+    write_png(blocks / "black_stained_glass.png", 32, 32, glass.pixels)
+    rail = Canvas(32)
+    rail.line(7, 0, 7, 31, (135, 105, 66, 255)); rail.line(24, 0, 24, 31, (135, 105, 66, 255))
+    for y in range(2, 32, 6): rail.line(7, y, 24, y, (173, 177, 181, 255))
+    write_png(blocks / "rail.png", 32, 32, rail.pixels)
+    lantern = Canvas(32)
+    lantern.rect(12, 2, 19, 6, (70, 72, 77, 255)); lantern.rect(8, 7, 23, 27, (45, 48, 55, 255))
+    lantern.rect(11, 10, 20, 24, GOLD); lantern.rect(13, 12, 18, 22, LIGHT)
+    lantern.line(8, 7, 23, 7, (179, 128, 52, 255)); lantern.line(9, 27, 22, 27, INK)
+    write_png(blocks / "lantern.png", 32, 32, lantern.pixels)
+    for lit in (False, True):
+        campfire = Canvas(32)
+        campfire.line(4, 25, 27, 12, (100, 62, 34, 255)); campfire.line(4, 12, 27, 25, (126, 78, 38, 255))
+        if lit:
+            campfire.line(16, 5, 10, 20, GOLD); campfire.line(16, 5, 23, 20, ORANGE); campfire.set(16, 13, LIGHT)
+        write_png(blocks / ("campfire_log_lit.png" if lit else "campfire_log.png"), 32, 32, campfire.pixels)
+
     items = minecraft / "item"
     resources = {
         "coal": (48, 52, 59, 255), "raw_iron": (189, 156, 132, 255), "raw_copper": (190, 102, 65, 255),
@@ -779,6 +942,14 @@ def generate_world_textures() -> None:
         "pufferfish": GOLD, "tropical_fish": ORANGE,
     }
     for name, color in resources.items(): png(items / f"{name}.png", resource_item_pixels(name, color))
+    utilities = (
+        "apple", "golden_apple", "enchanted_golden_apple", "golden_carrot", "wheat_seeds",
+        "sugar", "sugar_cane", "tripwire_hook", "nautilus_shell", "experience_bottle",
+        "paper", "writable_book", "clock", "compass", "nether_star", "amethyst_shard",
+        "prismarine_crystals", "honeycomb", "rabbit_foot", "dragon_breath", "fire_charge",
+        "bone", "arrow",
+    )
+    for name in utilities: png(items / f"{name}.png", utility_item_pixels(name))
 
 
 def medallion(base: tuple[int, int, int, int], border: tuple[int, int, int, int] = GOLD) -> Canvas:
@@ -1293,6 +1464,23 @@ def crate_texture(
     return c.pixels
 
 
+def crate_rune_icon(kind: str, color: tuple[int, int, int, int]) -> list[tuple[int, int, int, int]]:
+    c = Canvas()
+    mark = {
+        "vote": "check", "quest": "scroll", "farm": "wheat", "common": "shield",
+        "rare": "gem", "epic": "flame", "legendary": "crown", "valoria": "crown", "pets": "paw",
+    }[kind]
+    # Floating octagonal magic seal with an open center and four bright nodes.
+    c.line(5, 2, 10, 2, tint(color, 35)); c.line(3, 4, 3, 11, color)
+    c.line(12, 4, 12, 11, tint(color, -22)); c.line(5, 13, 10, 13, tint(color, -30))
+    c.line(3, 4, 5, 2, color); c.line(10, 2, 12, 4, color)
+    c.line(3, 11, 5, 13, tint(color, -18)); c.line(12, 11, 10, 13, tint(color, -28))
+    for x, y in ((5, 2), (12, 6), (10, 13), (3, 9)):
+        c.set(x, y, WHITE); c.set(min(15, x + 1), y, GOLD)
+    symbol(c, mark, LIGHT)
+    return c.pixels
+
+
 def model_element(
     start: list[float],
     end: list[float],
@@ -1321,114 +1509,264 @@ def model_element(
 
 
 def crate_elements(kind: str) -> list[dict[str, object]]:
-    """Build nine recognizable silhouettes instead of recoloring one vanilla cube."""
+    """Build nine premium video-game reliquaries with independent silhouettes and ornaments."""
     cube = model_element
+
+    def armored_base(
+        body_from: list[float] = [2, 1, 2],
+        body_to: list[float] = [14, 10, 14],
+        lid_height: float = 13,
+    ) -> list[dict[str, object]]:
+        return [
+            cube(body_from, body_to, "body"),
+            cube([1.4, 1, 1.4], [14.6, 2.1, 14.6], "dark"),
+            cube([1.2, 9, 1.2], [14.8, lid_height, 14.8], "base"),
+            cube([0.8, 9.2, 0.8], [15.2, 10.3, 15.2], "trim"),
+            cube([1.2, lid_height - 0.8, 1.2], [14.8, lid_height, 14.8], "accent"),
+            cube([1.1, 2, 1.1], [3, 10.5, 3], "trim"),
+            cube([13, 2, 1.1], [14.9, 10.5, 3], "trim"),
+            cube([1.1, 2, 13], [3, 10.5, 14.9], "dark"),
+            cube([13, 2, 13], [14.9, 10.5, 14.9], "dark"),
+            cube([1.2, 5.2, 1], [14.8, 6.5, 15], "accent"),
+            cube([5.5, 5, 0.5], [10.5, 10.5, 2.1], "body"),
+            cube([6.7, 6.2, 0.0], [9.3, 9.3, 1.5], "light"),
+            cube([7.4, 8.4, -0.25], [8.6, 10.7, 1.25], "trim"),
+        ]
+
     if kind == "vote":
         return [
-            cube([2, 1, 3], [14, 10, 13]), cube([1, 10, 2], [15, 12, 14], "trim"),
-            cube([3, 4, 2], [4, 10, 3], "accent"), cube([12, 4, 2], [13, 10, 3], "accent"),
+            cube([2, 1, 3], [14, 10, 13], "body"),
+            cube([1.2, 1, 2.2], [14.8, 2.2, 13.8], "dark"),
+            cube([1, 9.2, 2], [15, 12.2, 14], "trim"),
+            cube([2, 10, 3], [14, 13, 13], "base"),
+            cube([4, 3, 2], [5.3, 10.5, 3.2], "accent"),
+            cube([10.7, 3, 2], [12, 10.5, 3.2], "accent"),
+            cube([5, 5, 1.5], [11, 10, 3], "body"),
+            cube([6.8, 6.5, 1], [9.2, 9, 2.2], "light"),
+            # Ballot/envelope floating from the top slot.
             cube([5, 12, 5], [11, 14, 11], "light", {
                 "angle": -22.5, "axis": "x", "origin": [8, 12, 8], "rescale": True,
             }),
-            cube([5, 6, 2], [11, 10, 3], "body"), cube([7, 5, 1.5], [9, 7, 2.5], "trim"),
+            cube([7, 11.5, 6], [9, 15.5, 10], "accent", {
+                "angle": 22.5, "axis": "z", "origin": [8, 13, 8], "rescale": True,
+            }),
+            # Heraldic side wings.
+            cube([-0.5, 6, 5], [3, 8, 11], "accent", {
+                "angle": -22.5, "axis": "z", "origin": [2, 7, 8], "rescale": True,
+            }),
+            cube([13, 6, 5], [16.5, 8, 11], "accent", {
+                "angle": 22.5, "axis": "z", "origin": [14, 7, 8], "rescale": True,
+            }),
+            cube([2, 2, 2.4], [3.2, 10.5, 13.6], "light"),
+            cube([12.8, 2, 2.4], [14, 10.5, 13.6], "light"),
         ]
+
     if kind == "quest":
         return [
-            cube([2, 1, 3], [14, 10, 13]), cube([1, 9, 2], [15, 12, 14], "dark"),
-            cube([1, 2, 2], [3, 11, 14], "trim"), cube([13, 2, 2], [15, 11, 14], "trim"),
-            cube([4, 11, 4], [8, 13, 12], "light", {
-                "angle": -22.5, "axis": "z", "origin": [8, 12, 8], "rescale": True,
+            cube([2, 1, 3], [14, 9.5, 13], "body"),
+            cube([1, 2, 2], [3.2, 11.5, 14], "trim"),
+            cube([12.8, 2, 2], [15, 11.5, 14], "trim"),
+            cube([1.5, 8.5, 1.5], [14.5, 11, 14.5], "dark"),
+            # Open enchanted tome replaces a normal lid.
+            cube([3.2, 10, 3], [8, 13, 13], "light", {
+                "angle": -22.5, "axis": "z", "origin": [8, 11, 8], "rescale": True,
             }),
-            cube([8, 11, 4], [12, 13, 12], "light", {
-                "angle": 22.5, "axis": "z", "origin": [8, 12, 8], "rescale": True,
+            cube([8, 10, 3], [12.8, 13, 13], "light", {
+                "angle": 22.5, "axis": "z", "origin": [8, 11, 8], "rescale": True,
             }),
-            cube([6, 6, 1.5], [10, 10, 3], "body"),
+            cube([7.4, 10.5, 2.5], [8.6, 13.5, 13.5], "trim"),
+            cube([4.2, 12.3, 4], [7.6, 13, 12], "accent"),
+            cube([8.4, 12.3, 4], [11.8, 13, 12], "accent"),
+            # Scroll rollers and arcane front seal.
+            cube([0.5, 3, 5], [2, 10, 11], "light"),
+            cube([14, 3, 5], [15.5, 10, 11], "light"),
+            cube([5.3, 4.5, 1.2], [10.7, 9.8, 3], "body"),
+            cube([6.5, 5.8, 0.5], [9.5, 8.8, 2], "accent", {
+                "angle": 45, "axis": "z", "origin": [8, 7, 1], "rescale": True,
+            }),
+            cube([3, 1, 2.4], [13, 2.2, 13.6], "dark"),
         ]
+
     if kind == "farm":
         return [
-            cube([1, 1, 2], [15, 10, 14]), cube([1, 3, 1.5], [15, 4, 14.5], "dark"),
-            cube([1, 7, 1.5], [15, 8, 14.5], "dark"), cube([3, 1, 1.4], [4, 10, 14.6], "trim"),
-            cube([12, 1, 1.4], [13, 10, 14.6], "trim"), cube([1, 10, 2], [15, 12, 14], "accent"),
-            cube([7.5, 11, 7.5], [8.5, 17, 8.5], "trim"),
-            cube([5, 13, 7], [8, 14.5, 9], "accent", {
+            cube([1, 1, 2], [15, 10, 14], "body"),
+            cube([1, 2.5, 1.5], [15, 4, 14.5], "dark"),
+            cube([1, 6.5, 1.5], [15, 8, 14.5], "dark"),
+            cube([2.5, 1, 1.3], [4, 11, 14.7], "trim"),
+            cube([12, 1, 1.3], [13.5, 11, 14.7], "trim"),
+            cube([0.8, 9.5, 1.5], [15.2, 12, 14.5], "accent"),
+            cube([4, 10.5, 3], [12, 12.8, 13], "base"),
+            cube([5, 4.5, 1], [11, 9.5, 2.6], "body"),
+            cube([6.7, 5.8, 0.4], [9.3, 8.8, 1.7], "light"),
+            # Growing wheat crown and leaves.
+            cube([7.4, 11, 7.4], [8.6, 18, 8.6], "trim"),
+            cube([4.5, 13, 7], [8, 15, 9], "accent", {
                 "angle": -22.5, "axis": "z", "origin": [8, 14, 8], "rescale": True,
             }),
-            cube([8, 14, 7], [11, 15.5, 9], "accent", {
+            cube([8, 14, 7], [11.5, 16, 9], "accent", {
                 "angle": 22.5, "axis": "z", "origin": [8, 15, 8], "rescale": True,
             }),
+            cube([5, 15, 7.2], [7, 17, 8.8], "light", {
+                "angle": -22.5, "axis": "z", "origin": [8, 15, 8], "rescale": True,
+            }),
+            cube([9, 16, 7.2], [11, 18, 8.8], "light", {
+                "angle": 22.5, "axis": "z", "origin": [8, 16, 8], "rescale": True,
+            }),
         ]
+
     if kind == "common":
-        return [
-            cube([2, 1, 2], [14, 10, 14]), cube([1.5, 9, 1.5], [14.5, 12, 14.5], "base"),
-            cube([1, 2, 1], [3, 11, 3], "trim"), cube([13, 2, 1], [15, 11, 3], "trim"),
-            cube([1, 2, 13], [3, 11, 15], "trim"), cube([13, 2, 13], [15, 11, 15], "trim"),
-            cube([6, 6, 1], [10, 10, 2.5], "body"), cube([7, 5, 0.5], [9, 7, 2], "light"),
-        ]
+        elements = armored_base(lid_height=12.5)
+        elements.extend([
+            cube([5.5, 4.5, 0.5], [10.5, 10.5, 2.4], "accent"),
+            cube([6.5, 5.5, 0.0], [9.5, 9.5, 1.5], "light", {
+                "angle": 45, "axis": "z", "origin": [8, 7.5, 1], "rescale": True,
+            }),
+            cube([3.5, 11.5, 3.5], [5, 14, 5], "trim"),
+            cube([11, 11.5, 3.5], [12.5, 14, 5], "trim"),
+        ])
+        return elements
+
     if kind == "rare":
-        return [
-            cube([2, 1, 2], [14, 10, 14]), cube([1, 9, 1], [15, 12, 15], "trim"),
-            cube([3, 2, 1.5], [4, 10, 14.5], "accent"), cube([12, 2, 1.5], [13, 10, 14.5], "accent"),
-            cube([6, 11, 6], [10, 15, 10], "accent", {
-                "angle": 45, "axis": "y", "origin": [8, 13, 8], "rescale": True,
+        elements = armored_base(lid_height=13.2)
+        elements.extend([
+            # Sapphire crystal crown with five independently angled shards.
+            cube([6, 12, 6], [10, 17, 10], "accent", {
+                "angle": 45, "axis": "y", "origin": [8, 14, 8], "rescale": True,
             }),
-            cube([6, 5, 1], [10, 10, 2.5], "body", {
-                "angle": 45, "axis": "z", "origin": [8, 8, 2], "rescale": True,
+            cube([3.5, 11.5, 5], [6, 15.5, 8], "accent", {
+                "angle": -22.5, "axis": "z", "origin": [5, 13, 7], "rescale": True,
             }),
-            cube([7, 7, 0.5], [9, 9, 2], "light"),
-        ]
+            cube([10, 11.5, 8], [12.5, 15.5, 11], "accent", {
+                "angle": 22.5, "axis": "z", "origin": [11, 13, 9], "rescale": True,
+            }),
+            cube([6.8, 6, -0.3], [9.2, 9.2, 1.5], "light", {
+                "angle": 45, "axis": "z", "origin": [8, 8, 1], "rescale": True,
+            }),
+            cube([0, 5, 6.5], [2.5, 10, 9.5], "light", {
+                "angle": 22.5, "axis": "z", "origin": [2, 7, 8], "rescale": True,
+            }),
+            cube([13.5, 5, 6.5], [16, 10, 9.5], "light", {
+                "angle": -22.5, "axis": "z", "origin": [14, 7, 8], "rescale": True,
+            }),
+        ])
+        return elements
+
     if kind == "epic":
-        return [
-            cube([2, 1, 2], [14, 10, 14]), cube([1, 9, 1], [15, 12, 15], "dark"),
-            cube([2, 4, 1.5], [14, 5, 14.5], "trim"), cube([4, 1, 1.5], [5, 11, 14.5], "accent"),
-            cube([11, 1, 1.5], [12, 11, 14.5], "accent"),
-            cube([2, 11, 2], [4, 16, 4], "trim", {
-                "angle": -22.5, "axis": "z", "origin": [3, 12, 3], "rescale": True,
+        elements = armored_base(lid_height=13.5)
+        elements.extend([
+            # Obsidian forge horns and lava core.
+            cube([1, 11, 2], [4, 18, 5], "dark", {
+                "angle": -22.5, "axis": "z", "origin": [3, 13, 3], "rescale": True,
             }),
-            cube([12, 11, 2], [14, 16, 4], "trim", {
-                "angle": 22.5, "axis": "z", "origin": [13, 12, 3], "rescale": True,
+            cube([12, 11, 2], [15, 18, 5], "dark", {
+                "angle": 22.5, "axis": "z", "origin": [13, 13, 3], "rescale": True,
             }),
-            cube([6, 5, 1], [10, 10, 2.5], "body"), cube([7, 7, 0.5], [9, 9, 2], "light"),
-        ]
+            cube([3, 12, 10], [5, 17, 13], "trim", {
+                "angle": -22.5, "axis": "z", "origin": [4, 13, 11], "rescale": True,
+            }),
+            cube([11, 12, 10], [13, 17, 13], "trim", {
+                "angle": 22.5, "axis": "z", "origin": [12, 13, 11], "rescale": True,
+            }),
+            cube([5.5, 5, -0.2], [10.5, 10.5, 2], "dark"),
+            cube([6.5, 6, -0.6], [9.5, 9.5, 1.3], "accent"),
+            cube([7.2, 6.5, -0.9], [8.8, 9, 0.8], "light"),
+            cube([5.5, 13, 6], [10.5, 16, 10], "accent", {
+                "angle": 45, "axis": "y", "origin": [8, 14, 8], "rescale": True,
+            }),
+        ])
+        return elements
+
     if kind == "legendary":
-        return [
-            cube([1.5, 1, 2], [14.5, 10, 14]), cube([0.5, 9, 1], [15.5, 12, 15], "trim"),
-            cube([2, 2, 1.3], [3.5, 11, 14.7], "light"), cube([12.5, 2, 1.3], [14, 11, 14.7], "light"),
-            cube([5, 12, 5], [11, 14, 11], "trim"), cube([5, 14, 5], [6.5, 17, 11], "accent"),
-            cube([7.25, 14, 5], [8.75, 18, 11], "light"), cube([9.5, 14, 5], [11, 17, 11], "accent"),
-            cube([6, 5, 1], [10, 10, 2.5], "body"), cube([7, 6, 0.5], [9, 9, 2], "light"),
-        ]
+        elements = armored_base([1.5, 1, 2], [14.5, 10.5, 14], 13.5)
+        elements.extend([
+            # Full royal crown, raised sun and side rays.
+            cube([4.5, 13, 5], [11.5, 15, 11], "trim"),
+            cube([4.5, 14, 5], [6.2, 18, 11], "accent", {
+                "angle": -22.5, "axis": "z", "origin": [8, 14, 8], "rescale": True,
+            }),
+            cube([7.1, 14, 5], [8.9, 19, 11], "light"),
+            cube([9.8, 14, 5], [11.5, 18, 11], "accent", {
+                "angle": 22.5, "axis": "z", "origin": [8, 14, 8], "rescale": True,
+            }),
+            cube([-1, 11, 7], [4.5, 12.5, 9], "light", {
+                "angle": -22.5, "axis": "z", "origin": [8, 12, 8], "rescale": True,
+            }),
+            cube([11.5, 11, 7], [17, 12.5, 9], "light", {
+                "angle": 22.5, "axis": "z", "origin": [8, 12, 8], "rescale": True,
+            }),
+            cube([6.2, 5, -0.4], [9.8, 10.2, 1.7], "accent"),
+            cube([7.2, 6.2, -0.8], [8.8, 9.2, 1.1], "light"),
+        ])
+        return elements
+
     if kind == "valoria":
         return [
-            cube([0.5, 1, 1.5], [15.5, 11, 14.5]), cube([-0.5, 10, 0.5], [16.5, 13, 15.5], "dark"),
-            cube([1, 2, 1], [3, 12, 15], "trim"), cube([13, 2, 1], [15, 12, 15], "trim"),
-            cube([0, 5, 1], [16, 7, 15], "accent"), cube([5, 12, 5], [11, 14, 11], "trim"),
-            cube([4, 14, 5], [6, 18, 11], "trim", {
+            # Oversized crimson/obsidian throne chest.
+            cube([0.5, 1, 1.5], [15.5, 11, 14.5], "body"),
+            cube([-0.8, 1, 0.5], [16.8, 2.5, 15.5], "dark"),
+            cube([-0.8, 10, 0.5], [16.8, 14, 15.5], "dark"),
+            cube([0, 11, 1], [16, 14.5, 15], "base"),
+            cube([0.4, 12.8, 1.4], [15.6, 14.6, 14.6], "trim"),
+            cube([0, 2, 1], [3, 13, 15], "trim"),
+            cube([13, 2, 1], [16, 13, 15], "trim"),
+            cube([0, 5, 0.5], [16, 7.2, 15.5], "accent"),
+            cube([4.5, 4.8, -0.2], [11.5, 11.5, 2], "dark"),
+            cube([5.7, 5.8, -0.8], [10.3, 10.2, 1.4], "accent"),
+            cube([7.1, 6.6, -1.1], [8.9, 9.4, 0.9], "light"),
+            # Five-point imperial crown.
+            cube([4, 14, 5], [12, 16, 11], "trim"),
+            cube([3.5, 15, 5], [5.5, 20, 11], "trim", {
+                "angle": -22.5, "axis": "z", "origin": [8, 15, 8], "rescale": True,
+            }),
+            cube([6, 15, 5], [7.5, 19, 11], "accent"),
+            cube([7.2, 15, 5], [8.8, 21, 11], "light"),
+            cube([8.5, 15, 5], [10, 19, 11], "accent"),
+            cube([10.5, 15, 5], [12.5, 20, 11], "trim", {
+                "angle": 22.5, "axis": "z", "origin": [8, 15, 8], "rescale": True,
+            }),
+            # Swept-back throne wings and floating halo segments.
+            cube([-3, 8, 4], [3, 11, 12], "accent", {
+                "angle": -22.5, "axis": "z", "origin": [2, 9, 8], "rescale": True,
+            }),
+            cube([13, 8, 4], [19, 11, 12], "accent", {
+                "angle": 22.5, "axis": "z", "origin": [14, 9, 8], "rescale": True,
+            }),
+            cube([-2, 13.5, 7], [5, 15, 9], "light", {
                 "angle": -22.5, "axis": "z", "origin": [8, 14, 8], "rescale": True,
             }),
-            cube([7, 14, 5], [9, 19, 11], "light"),
-            cube([10, 14, 5], [12, 18, 11], "trim", {
+            cube([11, 13.5, 7], [18, 15, 9], "light", {
                 "angle": 22.5, "axis": "z", "origin": [8, 14, 8], "rescale": True,
             }),
-            cube([-1, 14, 7], [5, 15, 9], "accent", {
-                "angle": -22.5, "axis": "z", "origin": [8, 14, 8], "rescale": True,
+            cube([6, 17.5, 3], [10, 19, 5], "accent", {
+                "angle": 45, "axis": "y", "origin": [8, 18, 4], "rescale": True,
             }),
-            cube([11, 14, 7], [17, 15, 9], "accent", {
-                "angle": 22.5, "axis": "z", "origin": [8, 14, 8], "rescale": True,
-            }),
-            cube([5, 5, 0.5], [11, 11, 2], "body"), cube([7, 6, 0], [9, 9, 1.5], "light"),
         ]
+
+    # Pets: magical egg reliquary with ears, paws and floating side charms.
     return [
-        cube([2, 1, 2], [14, 10, 14]), cube([1, 9, 1], [15, 12, 15], "trim"),
-        cube([2, 11, 4], [6, 16, 8], "accent", {
+        cube([2, 1, 2], [14, 10, 14], "body"),
+        cube([1, 8.5, 1], [15, 12, 15], "base"),
+        cube([2, 10.5, 2], [14, 13, 14], "trim"),
+        cube([2, 2, 1.2], [4, 11, 14.8], "accent"),
+        cube([12, 2, 1.2], [14, 11, 14.8], "accent"),
+        cube([3, 11, 4], [6.5, 17, 9], "accent", {
             "angle": -22.5, "axis": "z", "origin": [5, 12, 8], "rescale": True,
         }),
-        cube([10, 11, 4], [14, 16, 8], "accent", {
+        cube([9.5, 11, 4], [13, 17, 9], "accent", {
             "angle": 22.5, "axis": "z", "origin": [11, 12, 8], "rescale": True,
         }),
-        cube([5, 5, 1], [11, 10, 2.5], "body"), cube([7, 6, 0.5], [9, 8, 2], "light"),
-        cube([1, 3, 5], [3, 8, 11], "accent"), cube([13, 3, 5], [15, 8, 11], "trim"),
+        cube([5, 4.5, 0.5], [11, 10.5, 2.4], "body"),
+        cube([6.5, 6, 0], [9.5, 9.5, 1.6], "light"),
+        cube([-0.5, 5, 6], [2.5, 9, 10], "light", {
+            "angle": 45, "axis": "y", "origin": [2, 7, 8], "rescale": True,
+        }),
+        cube([13.5, 5, 6], [16.5, 9, 10], "light", {
+            "angle": 45, "axis": "y", "origin": [14, 7, 8], "rescale": True,
+        }),
+        cube([6, 12, 5], [10, 16, 11], "accent", {
+            "angle": 45, "axis": "y", "origin": [8, 14, 8], "rescale": True,
+        }),
     ]
-
 
 def write_crate_model(
     path: str,
@@ -1451,6 +1789,25 @@ def write_crate_model(
             "fixed": {"rotation": [0, 180, 0], "translation": [0, 0, 0], "scale": [1.15, 1.15, 1.15]},
         },
         "elements": crate_elements(kind),
+    }, indent=2) + "\n")
+    png(texture_path, pixels)
+
+
+def write_orbit_model(path: str, pixels: list[tuple[int, int, int, int]]) -> None:
+    item_path = ROOT / "items" / f"{path}.json"
+    model_path = ROOT / "models" / "item" / f"{path}.json"
+    texture_path = ROOT / "textures" / "item" / f"{path}.png"
+    item_path.parent.mkdir(parents=True, exist_ok=True)
+    model_path.parent.mkdir(parents=True, exist_ok=True)
+    item_path.write_text(json.dumps({
+        "model": {"type": "minecraft:model", "model": f"valoriatycoon:item/{path}"},
+    }, indent=2) + "\n")
+    model_path.write_text(json.dumps({
+        "parent": "minecraft:item/generated",
+        "textures": {"layer0": f"valoriatycoon:item/{path}"},
+        "display": {
+            "fixed": {"rotation": [0, 0, 0], "translation": [0, 0, 0], "scale": [0.34, 0.34, 0.34]},
+        },
     }, indent=2) + "\n")
     png(texture_path, pixels)
 
@@ -1604,6 +1961,10 @@ def main() -> None:
             f"item/crate/{crate}",
             crate,
             crate_texture(crate, base, trim, accent),
+        )
+        write_orbit_model(
+            f"item/crate/rune/{crate}",
+            crate_rune_icon(crate, accent),
         )
     for tier in range(1, 6):
         write_model(

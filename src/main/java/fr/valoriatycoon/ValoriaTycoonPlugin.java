@@ -630,6 +630,7 @@ public final class ValoriaTycoonPlugin extends JavaPlugin {
                 messages,
                 getLogger()
         );
+        crateRewards.setOpeningEffect(crateStations::playOpening);
         MachineControlPanel machineControls = new MachineControlPanel(
                 machines,
                 machineSettings,

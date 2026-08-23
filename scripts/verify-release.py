@@ -17,7 +17,7 @@ import zipfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-EXPECTED_MODELS = 259
+EXPECTED_MODELS = 268
 
 
 def require(condition: bool, message: str) -> None:
@@ -205,8 +205,26 @@ def verify_resource_pack() -> None:
     json.loads((namespace / "font/gui.json").read_text(encoding="utf-8"))
 
     essential_world = {
-        "stone", "deepslate", "grass_block_top", "stone_bricks", "crafting_table_top",
-        "furnace_front", "coal_ore", "deepslate_diamond_ore", "oak_log", "wheat_stage7",
+        "stone", "deepslate", "andesite", "granite", "diorite", "tuff", "calcite",
+        "dripstone_block", "bedrock", "dirt", "coarse_dirt", "grass_block_top",
+        "grass_block_side", "dirt_path_top", "podzol_top", "farmland", "farmland_moist",
+        "sand", "stone_bricks", "mossy_stone_bricks", "cobblestone", "mossy_cobblestone",
+        "deepslate_bricks", "deepslate_tiles", "polished_deepslate",
+        "polished_blackstone_bricks", "mud_bricks", "bricks", "red_nether_bricks",
+        "prismarine", "prismarine_bricks", "crafting_table_top", "furnace_front",
+        "barrel_side", "piston_top", "redstone_lamp", "redstone_lamp_on",
+        "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore", "lapis_ore",
+        "diamond_ore", "emerald_ore", "deepslate_coal_ore", "deepslate_copper_ore",
+        "deepslate_iron_ore", "deepslate_gold_ore", "deepslate_redstone_ore",
+        "deepslate_lapis_ore", "deepslate_diamond_ore", "deepslate_emerald_ore",
+        "coal_block", "copper_block", "iron_block", "gold_block", "lapis_block",
+        "redstone_block", "diamond_block", "emerald_block", "oak_log", "birch_log",
+        "spruce_log", "dark_oak_log", "stripped_oak_log", "stripped_spruce_log",
+        "stripped_dark_oak_log", "oak_planks", "spruce_planks", "dark_oak_planks",
+        "oak_leaves", "birch_leaves", "spruce_leaves", "dark_oak_leaves",
+        "wheat_stage7", "carrots_stage3", "potatoes_stage3", "beetroots_stage3",
+        "nether_wart_stage2", "cocoa_stage2", "sugar_cane", "lantern", "iron_chain",
+        "iron_bars", "rail", "campfire_log_lit", "crying_obsidian",
     }
     block_root = pack / "assets/minecraft/textures/block"
     for name in essential_world:
@@ -214,6 +232,20 @@ def verify_resource_pack() -> None:
         require(path.is_file(), f"Missing Valoria world texture: {name}")
         require(struct.unpack(">II", path.read_bytes()[16:24]) == (32, 32),
                 f"World texture is not 32x32: {name}")
+    essential_items = {
+        "coal", "raw_copper", "raw_iron", "raw_gold", "copper_ingot", "iron_ingot",
+        "gold_ingot", "redstone", "lapis_lazuli", "diamond", "emerald", "wheat",
+        "carrot", "potato", "beetroot", "cod", "salmon", "pufferfish", "tropical_fish",
+        "apple", "golden_apple", "enchanted_golden_apple", "golden_carrot", "wheat_seeds",
+        "sugar", "tripwire_hook", "nautilus_shell", "experience_bottle", "paper",
+        "writable_book", "clock", "compass", "nether_star", "amethyst_shard",
+    }
+    item_root = pack / "assets/minecraft/textures/item"
+    for name in essential_items:
+        path = item_root / f"{name}.png"
+        require(path.is_file(), f"Missing Valoria vanilla item texture: {name}")
+        require(struct.unpack(">II", path.read_bytes()[16:24]) == (32, 32),
+                f"Vanilla item texture is not 32x32: {name}")
 
     before = hash_tree(pack)
     subprocess.run([sys.executable, "scripts/generate-resource-pack.py"], cwd=ROOT, check=True,

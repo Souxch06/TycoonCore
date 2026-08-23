@@ -23,7 +23,7 @@
 - huit caisses génériques ouvertes avec tables finales et Caisse Pets spécialisée ;
 - clés et jetons de récompense physiques uniques, reprise après crash et consommation SQLite ;
 - Caisse Valoria signature et jackpot Légendaire à 0,5 % ;
-- pack Valoria de 259 modèles/textures.
+- pack Valoria de 268 modèles/textures.
 
 ## Blocage fonctionnel interne
 

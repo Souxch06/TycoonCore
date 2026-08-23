@@ -31,7 +31,7 @@ Vérifier dans la console :
 - migration SQLite jusqu’à `user_version = 26` ;
 - chargement du spawn, des quatre farms et des mondes Skyblock ;
 - message `ValoriaTycoon is ready` ;
-- 259 modèles/textures dans l’audit.
+- 268 modèles/textures dans l’audit.
 
 Commandes de découverte :
 

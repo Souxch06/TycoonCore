@@ -16,6 +16,7 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.Particle;
+import org.bukkit.Sound;
 import org.bukkit.World;
 import org.bukkit.entity.Display;
 import org.bukkit.entity.Entity;
@@ -50,6 +51,9 @@ public final class CrateStationService implements Listener {
     private final NamespacedKey markerKey;
     private final NamespacedKey typeKey;
     private final Map<CrateStationType, StationEntities> entities = new EnumMap<>(
+            CrateStationType.class
+    );
+    private final Map<CrateStationType, OpeningAnimation> openingAnimations = new EnumMap<>(
             CrateStationType.class
     );
     private BukkitTask refreshTask;
@@ -119,7 +123,34 @@ public final class CrateStationService implements Listener {
         }
         entities.values().forEach(StationEntities::remove);
         entities.clear();
+        openingAnimations.clear();
         animationTicks = 0L;
+    }
+
+    /** Starts a committed opening cinematic; database state is already safe at this point. */
+    public void playOpening(Player player, CrateType crateType) {
+        if (!Bukkit.isPrimaryThread()) {
+            throw new IllegalStateException("Crate cinematics must start on the primary thread");
+        }
+        CrateStationType stationType = switch (crateType) {
+            case VOTE -> CrateStationType.VOTE;
+            case QUEST -> CrateStationType.QUEST;
+            case FARM -> CrateStationType.FARM;
+            case COMMON -> CrateStationType.COMMON;
+            case RARE -> CrateStationType.RARE;
+            case EPIC -> CrateStationType.EPIC;
+            case LEGENDARY -> CrateStationType.LEGENDARY;
+            case VALORIA -> CrateStationType.VALORIA;
+        };
+        StationEntities station = entities.get(stationType);
+        if (station == null || !station.valid()) {
+            return;
+        }
+        openingAnimations.put(stationType, new OpeningAnimation(0));
+        Location base = station.baseLocation();
+        base.getWorld().playSound(base, Sound.BLOCK_CHEST_OPEN, 1.1F, 0.72F + crateType.ordinal() * 0.06F);
+        base.getWorld().spawnParticle(Particle.END_ROD, base.clone().add(0.0, 0.8, 0.0),
+                stationType == CrateStationType.VALORIA ? 32 : 18, 0.45, 0.45, 0.45, 0.025);
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)
@@ -138,6 +169,13 @@ public final class CrateStationService implements Listener {
             return;
         }
         if (type.pets()) {
+            StationEntities station = entities.get(CrateStationType.PETS);
+            if (station != null && station.valid()) {
+                openingAnimations.put(CrateStationType.PETS, new OpeningAnimation(0));
+                station.baseLocation().getWorld().playSound(
+                        station.baseLocation(), Sound.BLOCK_CHEST_OPEN, 0.9F, 1.35F
+                );
+            }
             pets.open(player);
             return;
         }
@@ -182,6 +220,11 @@ public final class CrateStationService implements Listener {
             display.setBillboard(Display.Billboard.FIXED);
             display.setItemDisplayTransform(ItemDisplay.ItemDisplayTransform.FIXED);
             display.setTeleportDuration(settings.effectsEnabled() ? settings.effectIntervalTicks() : 0);
+            display.setBrightness(new Display.Brightness(12, 15));
+            if (type == CrateStationType.LEGENDARY || type == CrateStationType.VALORIA) {
+                display.setGlowing(true);
+                display.setGlowColorOverride(Color.fromRGB(station.effect().primaryRgb()));
+            }
             ItemStack item = new ItemStack(Material.CHEST);
             ItemMeta meta = item.getItemMeta();
             visuals.apply(meta, station.itemModel());
@@ -189,6 +232,29 @@ public final class CrateStationService implements Listener {
             display.setItemStack(item);
             display.setViewRange(1.0F);
         });
+        List<ItemDisplay> satellites = new ArrayList<>();
+        for (int index = 0; index < satelliteCount(type); index++) {
+            Location satelliteLocation = location.clone().add(0.0, 0.7, 0.0);
+            satellites.add(location.getWorld().spawn(satelliteLocation, ItemDisplay.class, display -> {
+                mark(display, type);
+                display.setPersistent(false);
+                display.setInvulnerable(true);
+                display.setGravity(false);
+                display.setSilent(true);
+                display.setBillboard(Display.Billboard.FIXED);
+                display.setItemDisplayTransform(ItemDisplay.ItemDisplayTransform.FIXED);
+                display.setTeleportDuration(settings.effectsEnabled() ? settings.effectIntervalTicks() : 0);
+                display.setBrightness(new Display.Brightness(15, 15));
+                display.setGlowing(true);
+                display.setGlowColorOverride(Color.fromRGB(station.effect().primaryRgb()));
+                ItemStack rune = new ItemStack(Material.AMETHYST_SHARD);
+                ItemMeta runeMeta = rune.getItemMeta();
+                visuals.apply(runeMeta, "item/crate/rune/" + type.configKey());
+                rune.setItemMeta(runeMeta);
+                display.setItemStack(rune);
+                display.setViewRange(1.0F);
+            }));
+        }
         Location interactionLocation = location.clone().add(0.0, -0.75, 0.0);
         Interaction interaction = location.getWorld().spawn(
                 interactionLocation,
@@ -218,7 +284,7 @@ public final class CrateStationService implements Listener {
             display.setViewRange(1.0F);
             display.text(label(type));
         });
-        return new StationEntities(model, interaction, label, location.clone());
+        return new StationEntities(model, interaction, label, List.copyOf(satellites), location.clone());
     }
 
     private void animateStations() {
@@ -232,14 +298,105 @@ public final class CrateStationService implements Listener {
             CrateStationSettings.Station station = settings.station(type);
             CrateStationSettings.Effect effect = station.effect();
             double phase = animationTicks * effect.orbitSpeed() + type.ordinal() * 0.73;
+            OpeningAnimation opening = openingAnimations.get(type);
             Location animated = stationEntities.baseLocation().clone();
-            animated.add(0.0, Math.sin(phase * 0.70) * effect.bobHeight(), 0.0);
-            animated.setYaw((float) (station.yaw() + Math.sin(phase * 0.42) * effect.yawSwayDegrees()));
+            double openingProgress = 0.0;
+            if (opening == null) {
+                animated.add(0.0, Math.sin(phase * 0.70) * effect.bobHeight(), 0.0);
+                animated.setYaw((float) (
+                        station.yaw() + Math.sin(phase * 0.42) * effect.yawSwayDegrees()
+                ));
+            } else {
+                int elapsed = opening.elapsedTicks() + settings.effectIntervalTicks();
+                openingProgress = Math.min(1.0, elapsed / 60.0);
+                double lift = Math.sin(openingProgress * Math.PI) * (type == CrateStationType.VALORIA ? 0.62 : 0.42);
+                double shake = Math.sin(elapsed * 1.65) * (1.0 - openingProgress) * 0.055;
+                animated.add(shake, lift, -shake);
+                animated.setYaw((float) (station.yaw() + elapsed * (type == CrateStationType.VALORIA ? 13.0 : 9.0)));
+                spawnOpeningEffects(type, stationEntities.baseLocation(), effect, opening.elapsedTicks(), elapsed);
+                if (elapsed >= 60) {
+                    openingAnimations.remove(type);
+                } else {
+                    openingAnimations.put(type, new OpeningAnimation(elapsed));
+                }
+            }
             stationEntities.model().teleport(animated);
+            animateSatellites(type, stationEntities, effect, phase, openingProgress);
 
-            if (hasNearbyPlayer(animated)) {
+            if (hasNearbyPlayer(animated) && opening == null) {
                 spawnAmbientEffects(type, stationEntities.baseLocation(), effect, phase);
             }
+        }
+    }
+
+    private void animateSatellites(
+            CrateStationType type,
+            StationEntities station,
+            CrateStationSettings.Effect effect,
+            double phase,
+            double openingProgress
+    ) {
+        int count = station.satellites().size();
+        if (count == 0) {
+            return;
+        }
+        boolean opening = openingProgress > 0.0;
+        double speed = opening ? 4.8 : 1.35;
+        double radius = effect.orbitRadius() * (opening ? 1.15 - openingProgress * 0.48 : 0.72);
+        double lift = opening ? Math.sin(openingProgress * Math.PI) * 0.55 : 0.0;
+        for (int index = 0; index < count; index++) {
+            double direction = index % 2 == 0 ? 1.0 : -1.0;
+            double angle = phase * speed * direction + TWO_PI * index / count;
+            Location target = station.baseLocation().clone().add(
+                    Math.cos(angle) * radius,
+                    0.72 + lift + Math.sin(angle * 2.0 + index) * (opening ? 0.30 : 0.18),
+                    Math.sin(angle) * radius
+            );
+            target.setYaw((float) Math.toDegrees(-angle + Math.PI / 2.0));
+            station.satellites().get(index).teleport(target);
+        }
+    }
+
+    private void spawnOpeningEffects(
+            CrateStationType type,
+            Location base,
+            CrateStationSettings.Effect effect,
+            int previous,
+            int elapsed
+    ) {
+        World world = base.getWorld();
+        double progress = Math.min(1.0, elapsed / 60.0);
+        int points = type == CrateStationType.VALORIA ? 20 : 14;
+        for (int index = 0; index < points; index++) {
+            double angle = elapsed * 0.22 + TWO_PI * index / points;
+            double radius = effect.orbitRadius() * (1.25 - progress * 0.72);
+            double height = 0.2 + progress * 1.45 + Math.sin(angle * 3.0) * 0.16;
+            int rgb = index % 2 == 0 ? effect.primaryRgb() : effect.secondaryRgb();
+            world.spawnParticle(
+                    Particle.DUST,
+                    base.clone().add(Math.cos(angle) * radius, height, Math.sin(angle) * radius),
+                    1, 0.0, 0.0, 0.0, 0.0,
+                    new Particle.DustOptions(Color.fromRGB(rgb), effect.particleSize() + 0.22F)
+            );
+        }
+        world.spawnParticle(
+                elapsed < 40 ? Particle.ENCHANT : Particle.END_ROD,
+                base.clone().add(0.0, 0.65 + progress, 0.0),
+                type == CrateStationType.VALORIA ? 7 : 4,
+                0.45, 0.35, 0.45, 0.02
+        );
+        if (previous < 20 && elapsed >= 20) {
+            world.playSound(base, Sound.BLOCK_BEACON_ACTIVATE, 0.85F, 1.15F);
+            world.spawnParticle(Particle.ELECTRIC_SPARK, base.clone().add(0.0, 0.8, 0.0),
+                    24, 0.65, 0.45, 0.65, 0.06);
+        }
+        if (previous < 44 && elapsed >= 44) {
+            world.playSound(base, Sound.ENTITY_PLAYER_LEVELUP, 1.1F,
+                    type == CrateStationType.VALORIA ? 0.82F : 1.25F);
+            world.spawnParticle(Particle.TOTEM_OF_UNDYING, base.clone().add(0.0, 1.0, 0.0),
+                    type == CrateStationType.VALORIA ? 70 : 42, 0.75, 0.8, 0.75, 0.14);
+            world.spawnParticle(Particle.END_ROD, base.clone().add(0.0, 1.0, 0.0),
+                    type == CrateStationType.VALORIA ? 45 : 28, 0.55, 0.65, 0.55, 0.08);
         }
     }
 
@@ -275,6 +432,25 @@ public final class CrateStationService implements Listener {
                     0.0,
                     dust
             );
+            // Counter-rotating inner halo gives the idle effect real depth rather than one flat ring.
+            double innerAngle = -phase * 1.35 + TWO_PI * index / effect.particleCount();
+            double innerRadius = effect.orbitRadius() * 0.48;
+            Location inner = base.clone().add(
+                    Math.cos(innerAngle) * innerRadius,
+                    0.82 + Math.sin(innerAngle * 2.0) * 0.16,
+                    Math.sin(innerAngle) * innerRadius
+            );
+            int innerRgb = index % 2 == 0 ? effect.secondaryRgb() : effect.primaryRgb();
+            world.spawnParticle(
+                    Particle.DUST,
+                    inner,
+                    1,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    new Particle.DustOptions(Color.fromRGB(innerRgb), Math.max(0.35F, effect.particleSize() - 0.18F))
+            );
         }
 
         int sparklePeriod = type == CrateStationType.VALORIA ? 20 : 40;
@@ -283,6 +459,16 @@ public final class CrateStationService implements Listener {
             Location sparkle = base.clone().add(0.0, type == CrateStationType.VALORIA ? 1.55 : 1.35, 0.0);
             world.spawnParticle(Particle.END_ROD, sparkle, 1, 0.16, 0.12, 0.16, 0.01);
         }
+    }
+
+    private int satelliteCount(CrateStationType type) {
+        return switch (type) {
+            case COMMON -> 1;
+            case VOTE, QUEST, FARM, RARE -> 2;
+            case EPIC, PETS -> 3;
+            case LEGENDARY -> 4;
+            case VALORIA -> 5;
+        };
     }
 
     private double radiusScale(CrateStationType type, int index) {
@@ -385,15 +571,32 @@ public final class CrateStationService implements Listener {
             ItemDisplay model,
             Interaction hitbox,
             TextDisplay label,
+            List<ItemDisplay> satellites,
             Location baseLocation
     ) {
+        private StationEntities {
+            satellites = List.copyOf(satellites);
+        }
+
         private boolean valid() {
-            return model.isValid() && hitbox.isValid() && label.isValid();
+            return model.isValid()
+                    && hitbox.isValid()
+                    && label.isValid()
+                    && satellites.stream().allMatch(Entity::isValid);
         }
 
         private void remove() {
             List<Entity> all = new ArrayList<>(List.of(model, hitbox, label));
+            all.addAll(satellites);
             all.forEach(Entity::remove);
+        }
+    }
+
+    private record OpeningAnimation(int elapsedTicks) {
+        private OpeningAnimation {
+            if (elapsedTicks < 0 || elapsedTicks > 60) {
+                throw new IllegalArgumentException("Invalid crate opening animation tick");
+            }
         }
     }
 }

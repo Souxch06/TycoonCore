@@ -23,7 +23,7 @@ class ResourcePackAssetTest {
         Set<String> models = relativeFiles(root.resolve("models/item"), ".json");
         Set<String> textures = relativeFiles(root.resolve("textures/item"), ".png");
 
-        assertEquals(259, items.size());
+        assertEquals(268, items.size());
         assertEquals(items, models);
         assertEquals(items, textures);
         assertTrue(items.contains("ui/main/ranks"));
@@ -37,6 +37,7 @@ class ResourcePackAssetTest {
         assertTrue(items.contains("item/key/crate_valoria"));
         assertTrue(items.contains("item/crate/valoria"));
         assertTrue(items.contains("item/crate/pets"));
+        assertTrue(items.contains("item/crate/rune/valoria"));
         assertTrue(items.contains("item/reward/money_bag/5"));
         assertTrue(items.contains("item/reward/coin_bag/universal"));
         assertTrue(items.contains("item/reward/xp_vial/4"));
@@ -63,6 +64,8 @@ class ResourcePackAssetTest {
             String model = Files.readString(models.resolve(crate + ".json"));
             assertTrue(model.contains("\"elements\""), crate + " must be a real custom 3D model");
             assertTrue(!model.contains("minecraft:block/cube_all"), crate + " must not reuse a vanilla cube");
+            assertTrue(model.split("\"from\"").length - 1 >= 12,
+                    crate + " must use at least twelve independent 3D elements");
             textureHashes.add(HexFormat.of().formatHex(
                     digest.digest(Files.readAllBytes(textures.resolve(crate + ".png")))
             ));
@@ -117,9 +120,16 @@ class ResourcePackAssetTest {
         assertEquals(176, pngWidth(header));
         assertEquals(64, pngHeight(header));
         assertTrue(Files.isRegularFile(pack.resolve("assets/valoriatycoon/font/gui.json")));
+        assertEquals(156, relativeFiles(
+                pack.resolve("assets/minecraft/textures/block"), ".png"
+        ).size());
+        assertEquals(42, relativeFiles(
+                pack.resolve("assets/minecraft/textures/item"), ".png"
+        ).size());
         for (String block : Set.of(
                 "stone", "grass_block_top", "crafting_table_top", "furnace_front",
-                "coal_ore", "deepslate_diamond_ore", "oak_log", "wheat_stage7"
+                "coal_ore", "deepslate_diamond_ore", "oak_log", "wheat_stage7",
+                "crying_obsidian", "iron_chain", "lantern", "piston_top"
         )) {
             Path texture = pack.resolve("assets/minecraft/textures/block/" + block + ".png");
             assertEquals(32, pngWidth(texture), block);
