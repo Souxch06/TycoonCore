@@ -26,7 +26,7 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
-/** Displays the medieval rank overview and performs secure promotion on click. */
+/** Shows the next medieval rank and performs secure promotion on click. */
 public final class RankPanel implements Listener {
     private final RankService ranks;
     private final CompactionService compaction;
