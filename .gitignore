@@ -22,3 +22,6 @@ dist/
 # Caches Python (scripts du dépôt)
 __pycache__/
 *.pyc
+
+# Dépendance optionnelle de scripts/check-sources-java.mjs
+node_modules/
