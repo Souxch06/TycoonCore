@@ -11,6 +11,7 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import xyz.arcadiadevs.valoriatycoon.utils.ScoreboardService;
 import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemStack;
 import xyz.arcadiadevs.valoriatycoon.guis.AuctionGui;
 import xyz.arcadiadevs.valoriatycoon.guis.SellGui;
 import xyz.arcadiadevs.valoriatycoon.utils.SellUtil;
@@ -23,12 +24,51 @@ implements Listener {
     /** Tableau de bord : même point d'ancrage que /sell, pour ne pas dépendre de la classe principale. */
     @EventHandler(priority=EventPriority.MONITOR)
     public void onPlayerJoin(PlayerJoinEvent playerJoinEvent) {
-        ScoreboardService.show(playerJoinEvent.getPlayer());
+        Player player = playerJoinEvent.getPlayer();
+        ScoreboardService.show(player);
+        AuctionHouse.deliverReturns(player);
     }
 
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent playerQuitEvent) {
         ScoreboardService.hide(playerQuitEvent.getPlayer());
+        AuctionGui.forget(playerQuitEvent.getPlayer().getUniqueId());
+    }
+
+    /** /ah sell <prix> [quantité] — la quantité par défaut est la pile tenue en main. */
+    private String executeSell(Player player, String[] args) {
+        if (args.length < 3) {
+            return AuctionHouse.color("&7Utilise &f/ah sell <prix> [quantité]&7, prix à la pièce.");
+        }
+        double price;
+        try {
+            price = Double.parseDouble(args[2]);
+        }
+        catch (NumberFormatException exception) {
+            return AuctionHouse.color("&cPrix invalide : &f" + args[2]);
+        }
+        int quantity = -1;
+        if (args.length > 3) {
+            quantity = parseId(args[3]);
+            if (quantity <= 0) {
+                return AuctionHouse.color("&cQuantité invalide : &f" + args[3]);
+            }
+        }
+        if (quantity <= 0) {
+            ItemStack held = player.getInventory().getItemInMainHand();
+            quantity = held == null ? 1 : Math.max(1, held.getAmount());
+        }
+        String message = AuctionHouse.list(player, price, quantity);
+        return message == null ? AuctionHouse.color("&aMise en vente effectuée.") : message;
+    }
+
+    private static int parseId(String raw) {
+        try {
+            return Integer.parseInt(raw.trim());
+        }
+        catch (NumberFormatException exception) {
+            return -1;
+        }
     }
 
     @EventHandler(priority=EventPriority.HIGHEST)
@@ -38,52 +78,72 @@ implements Listener {
 
         // Marché des joueurs (/ah) : intercepté ici comme /sell, pour ne pas dépendre d'une
         // inscription de commande dans la classe principale du plugin.
-        String[] sbArgs = playerCommandPreprocessEvent.getMessage().split(" ");
-        String sbLabel = sbArgs.length > 0 ? sbArgs[0].toLowerCase() : "";
-        if (sbLabel.equals("/sb") || sbLabel.equals("/scoreboard") || sbLabel.equals("/tableau")) {
-            playerCommandPreprocessEvent.setCancelled(true);
-            player.sendMessage(ScoreboardService.toggle(player));
-            return;
-        }
-
         String[] ahArgs = playerCommandPreprocessEvent.getMessage().split(" ");
         String ahLabel = ahArgs.length > 0 ? ahArgs[0].toLowerCase() : "";
         if (ahLabel.equals("/ah") || ahLabel.equals("/auctionhouse") || ahLabel.equals("/marche")) {
             playerCommandPreprocessEvent.setCancelled(true);
-            if (!AuctionHouse.isEnabled()) {
-                player.sendMessage(AuctionHouse.color("&cLe marché des joueurs est désactivé."));
+            AuctionHouse.ensureStarted();
+            if (!AuctionHouse.isEnabled() && (ahArgs.length < 2 || !ahArgs[1].equalsIgnoreCase("reload"))) {
+                player.sendMessage(AuctionHouse.color("&cLe marché des joueurs est désactivé (auction-house.enabled)."));
                 return;
             }
             if (ahArgs.length < 2) {
-                AuctionGui.open(player, 0);
+                AuctionGui.open(player);
                 return;
             }
-            if (ahArgs[1].equalsIgnoreCase("sell")) {
+            String ahAction = ahArgs[1].toLowerCase();
+            if (ahAction.equals("sell") || ahAction.equals("vendre")) {
+                player.sendMessage(executeSell(player, ahArgs));
+                return;
+            }
+            if (ahAction.equals("search") || ahAction.equals("recherche")) {
+                AuctionGui.search(player, ahArgs.length > 2 ? ahArgs[2] : "");
+                return;
+            }
+            if (ahAction.equals("own") || ahAction.equals("mes")) {
+                AuctionGui.openOwn(player);
+                return;
+            }
+            if (ahAction.equals("cancel") || ahAction.equals("annuler")) {
+                int ahId = ahArgs.length > 2 ? parseId(ahArgs[2]) : 0;
+                player.sendMessage(AuctionHouse.cancel(player, ahId));
+                return;
+            }
+            if (ahAction.equals("stats") || ahAction.equals("info")) {
+                player.sendMessage(AuctionHouse.summary(player));
+                return;
+            }
+            if (ahAction.equals("remove") || ahAction.equals("retirer")) {
+                if (!player.hasPermission("valoriatycoon.ah.admin")) {
+                    player.sendMessage(AuctionHouse.color("&cRéservé à l'administration (&fvaloriatycoon.ah.admin&c)."));
+                    return;
+                }
                 if (ahArgs.length < 3) {
-                    player.sendMessage(AuctionHouse.color("&7Utilise &f/ah sell <prix>&7, l'item en main sera mis en vente."));
+                    player.sendMessage(AuctionHouse.color("&7Utilise &f/ah remove <id>&7."));
                     return;
                 }
-                double ahPrice;
-                try {
-                    ahPrice = Double.parseDouble(ahArgs[2]);
-                }
-                catch (NumberFormatException ahException) {
-                    player.sendMessage(AuctionHouse.color("&cPrix invalide : &f" + ahArgs[2]));
+                int ahTarget = parseId(ahArgs[2]);
+                if (ahTarget <= 0) {
+                    player.sendMessage(AuctionHouse.color("&cNuméro d'annonce invalide."));
                     return;
                 }
-                String ahMessage = AuctionHouse.list(player, ahPrice);
-                if (ahMessage != null) {
-                    player.sendMessage(ahMessage);
+                player.sendMessage(AuctionHouse.adminRemove(ahTarget, player));
+                return;
+            }
+            if (ahAction.equals("reload")) {
+                if (!player.hasPermission("valoriatycoon.ah.admin")) {
+                    player.sendMessage(AuctionHouse.color("&cRéservé à l'administration."));
+                    return;
                 }
+                player.sendMessage(AuctionHouse.reload(xyz.arcadiadevs.valoriatycoon.ValoriaTycoon.getInstance()));
                 return;
             }
-            if (ahArgs[1].equalsIgnoreCase("cancel") || ahArgs[1].equalsIgnoreCase("annuler")) {
-                player.sendMessage(AuctionHouse.cancel(player));
-                return;
-            }
-            AuctionGui.open(player, 0);
+            player.sendMessage(AuctionHouse.color("&8[&aAH&8] &f/ah&7 ouvrir · &f/ah sell <prix> [qté]&7 · "
+                    + "&f/ah cancel [id]&7 · &f/ah search <motif>&7 · &f/ah own&7 · &f/ah stats"));
             return;
         }
+
+
         String[] stringArray = playerCommandPreprocessEvent.getMessage().split(" ");
         stringArray[0] = stringArray[0].toLowerCase();
         if (!Config.SELL_COMMAND_ENABLED.getBoolean()) {

@@ -117,24 +117,34 @@ const CONTRACTS = [
     methods: [
       { name: 'isEnabled', returns: 'boolean', arity: 0, static: true },
       { name: 'title', returns: 'String', arity: 0, static: true },
-      { name: 'list', returns: 'String', arity: 2, static: true },
-      { name: 'buy', returns: 'String', arity: 2, static: true },
-      { name: 'cancel', returns: 'String', arity: 1, static: true },
+      { name: 'list', returns: 'String', arity: 3, static: true },
+      { name: 'buy', returns: 'String', arity: 3, static: true },
+      { name: 'cancel', returns: 'String', arity: 2, static: true },
+      { name: 'adminRemove', returns: 'String', arity: 2, static: true },
+      { name: 'sellerIdOf', returns: 'UUID', arity: 1, static: true },
+      { name: 'deliverReturns', returns: 'void', arity: 1, static: true },
+      { name: 'sweep', returns: 'void', arity: 0, static: true },
+      { name: 'ensureStarted', returns: 'void', arity: 0, static: true },
+      { name: 'reload', returns: 'String', arity: 1, static: true },
+      { name: 'summary', returns: 'String', arity: 1, static: true },
+      { name: 'sortedIds', returns: 'List', arity: 3, static: true },
       { name: 'count', returns: 'int', arity: 0, static: true },
-      { name: 'ids', returns: 'List', arity: 0, static: true },
     ],
     forbidImports: ['lombok'],
-    mustContain: ['class YamlData', 'getOfflinePlayer', 'setItemInMainHand'],
+    mustContain: ['class Store', 'getOfflinePlayer', 'ATOMIC_MOVE', 'addReturn', 'takeReturns', 'deliverReturns'],
     mustNotContain: ['net.minecraft', 'getNMSClass', 'NBTEditor'],
   },
   {
     file: 'sources/plugin/xyz/arcadiadevs/valoriatycoon/guis/AuctionGui.java',
     why: "vue partagée du marché : vue vanilla + redraw de toutes les vues ouvertes",
     methods: [
-      { name: 'open', returns: 'void', arity: 2, static: true },
+      { name: 'open', returns: 'void', arity: 1, static: true },
+      { name: 'search', returns: 'void', arity: 2, static: true },
+      { name: 'openOwn', returns: 'void', arity: 1, static: true },
+      { name: 'forget', returns: 'void', arity: 1, static: true },
       { name: 'refreshAll', returns: 'void', arity: 0, static: true, visibility: 'public' },
       { name: 'getInventory', returns: 'Inventory', arity: 0, static: false, visibility: 'public' },
-      { name: 'listingIdAt', returns: 'int', arity: 1, static: false, visibility: 'package' },
+      { name: 'listingAt', returns: 'int', arity: 1, static: false, visibility: 'package' },
     ],
     mustContain: ['implements InventoryHolder', 'class Handler implements Listener', 'setCancelled', 'runTask'],
     mustNotContain: ['net.minecraft'],
@@ -143,7 +153,7 @@ const CONTRACTS = [
     file: 'sources/plugin/xyz/arcadiadevs/valoriatycoon/commands/SellCommandListener.java',
     why: "point d'entrée /ah (interception de commande, comme /sell)",
     methods: [{ name: 'onPlayerCommandPreprocess', returns: 'void', arity: 1, static: false }],
-    mustContain: ['"/ah"', 'AuctionGui.open', 'setCancelled'],
+    mustContain: ['"/ah"', 'AuctionGui.open', 'setCancelled', 'deliverReturns', 'AuctionGui.forget'],
     mustNotContain: ['net.minecraft'],
   },
   {
@@ -156,6 +166,7 @@ const CONTRACTS = [
       { name: 'missing', returns: 'String', arity: 0, static: true },
     ],
     mustContain: ['getMethod("getScore", String.class)', 'resetScores', 'registerNewObjective', 'setDisplayName'],
+    // (contrat du tableau de bord)
     mustNotContain: ['net.minecraft', 'NBTEditor'],
   },
   {
@@ -270,8 +281,11 @@ for (const contract of CONTRACTS) {
   for (const needle of contract.mustContain ?? []) {
     if (!readFileSync(path, 'utf8').includes(needle)) ko(`mustContain introuvable : ${needle}`);
   }
+  const codeOnly = readFileSync(path, 'utf8')
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/^\s*\/\/.*$/gm, '');
   for (const needle of contract.mustNotContain ?? []) {
-    if (readFileSync(path, 'utf8').includes(needle)) ko(`référence interdite présente : ${needle}`);
+    if (codeOnly.includes(needle)) ko(`référence interdite dans le CODE (les commentaires sont exclus) : ${needle}`);
   }
   if (contract.file.endsWith("nbteditor/NBTEditor.java")) {
     const bridgeSrc = readFileSync(path, "utf8");

@@ -50,6 +50,9 @@ permissions:
   valoriatycoon.ah.sell:
     description: Mettre un item en vente sur le marché.
     default: true
+  valoriatycoon.ah.admin:
+    description: Retirer une annonce d'autrui et recharger le marché.
+    default: op
   valoriatycoon.ah.notify:
     description: Recevoir les annonces d'achat et de vente dans le chat.
     default: op

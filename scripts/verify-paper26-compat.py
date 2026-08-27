@@ -57,6 +57,12 @@ def check(label, ok, detail=""):
     results.append((label, bool(ok), detail))
 
 
+def strip_comments(text: str) -> str:
+    """Retire javadoc et commentaires : un contrôle de code ne doit pas échouer sur une explication."""
+    without_blocks = re.sub(r"/\*.*?\*/", "", text, flags=re.S)
+    return re.sub(r"^[ \t]*//.*$", "", without_blocks, flags=re.M)
+
+
 def top_list(text: str, key: str):
     """Éléments d'une liste de premier niveau d'un YAML (lignes «  - x »), commentaires ignorés."""
     items = []
@@ -213,17 +219,41 @@ def verify_tree():
     # 4d. marché entre joueurs (/ah)
     for cfg_name in ("resources/config.yml", "artifacts/extracted/config.yml"):
         cfg_text = (ROOT / cfg_name).read_text(encoding="utf-8")
-        check(f"{cfg_name} : clés auction-house présentes",
-              "auction-house:" in cfg_text and "sell-fee:" in cfg_text and "min-price:" in cfg_text)
+        check(f"{cfg_name} : clés auction-house complètes",
+              all(key in cfg_text for key in ("auction-house:", "listing-fee:", "sales-tax:", "expiry-hours:",
+                                              "max-listings-per-player:", "enforce-price-band:", "blacklist:")),
+              "les clés du marché doivent être livrées avec le plugin, sinon les valeurs par défaut du code seule font foi")
     for yml_name in ("resources/plugin.yml", "artifacts/extracted/plugin.yml"):
         yml_text = (ROOT / yml_name).read_text(encoding="utf-8")
         check(f"{yml_name} : permissions valoriatycoon.ah.* déclarées",
               all(node in yml_text for node in ("valoriatycoon.ah.use", "valoriatycoon.ah.sell", "valoriatycoon.ah.notify")),
               "sans nœuds de permission par défaut, /ah est réservé aux OP par Bukkit")
     ah_src = (ROOT / "sources/plugin/xyz/arcadiadevs/valoriatycoon/commands/AuctionHouse.java").read_text(encoding="utf-8")
-    check("AuctionHouse : séquestre écrit à chaque mutation", 'this.yaml.save(this.file)' in ah_src or "save()" in ah_src)
-    check("AuctionHouse : monnaie via Vault uniquement", "net.milkbowl.vault.economy.Economy" in ah_src)
-    check("AuctionHouse : aucun accès aux noms internes du serveur", "net.minecraft" not in ah_src and "NBTEditor" not in ah_src)
+    ah_code = strip_comments(ah_src)
+    check("AuctionHouse : séquestre écrit à chaque mutation", 'this.save()' in ah_src)
+    check("AuctionHouse : sauvegarde atomique (tmp + ATOMIC_MOVE)",
+          "ATOMIC_MOVE" in ah_src and '.tmp' in ah_src,
+          "sans écriture atomique, un crash pendant la sauvegarde corromprait le marché")
+    check("AuctionHouse : achats/annulations passent par le prix unitaire",
+          "unit-price" in ah_src and "unit * delivered" in ah_src)
+    check("AuctionHouse : retours hors-ligne (mailbox returns)",
+          "addReturn" in ah_src and "takeReturns" in ah_src and "deliverReturns" in ah_src)
+    check("AuctionHouse : expiration traitée par tâche périodique", "sweep()" in ah_src and "runTaskTimer" in ah_src)
+    check("AuctionHouse : bande de prix et blacklist appliquées à la mise en vente",
+          "enforceBand" in ah_src and "blacklist.contains" in ah_src)
+    ahgui = (ROOT / "sources/plugin/xyz/arcadiadevs/valoriatycoon/guis/AuctionGui.java").read_text(encoding="utf-8")
+    check("AuctionGui : clics reportés d'un tick (pas de mutation pendant l'événement)",
+          "runTask(" in ahgui and "setCancelled(true)" in ahgui)
+    check("AuctionGui : une seule vue par joueur + oubli au quit",
+          "VIEWS.remove(gui.player.getUniqueId())" in ahgui and "static void forget" in ahgui)
+    check("AuctionGui : aucun accès aux noms internes du serveur", "net.minecraft" not in strip_comments(ahgui))
+    check("AuctionHouse : monnaie via Vault uniquement", "net.milkbowl.vault.economy.Economy" in ah_code)
+    check("AuctionHouse : l'admin ne peut pas faire disparaître un item (rendus + livraison)",
+          "store.addReturn(seller, item)" in ah_code and "deliver(online, item)" in ah_code)
+    check("AuctionHouse : aucun accès aux noms internes du serveur",
+          "net.minecraft" not in ah_code and "NBTEditor" not in ah_code
+          and "org.bukkit.craftbukkit" not in ah_code,
+          "le code du marché ne doit rien résoudre dans les noms internes du serveur")
     check("AuctionHouse : items de générateur refusés à la vente", "spawnitem.tier" in ah_src and "isPluginItem" in ah_src)
 
     # 4e. tableau de bord
@@ -286,6 +316,10 @@ def verify_jar(jar_path: Path):
                      "xyz/arcadiadevs/valoriatycoon/commands/SellCommandListener.class"):
         check(f"JAR : {ah_entry.split('/')[-1]} compilée", ah_entry in names,
               "le pom n'a pas compilé le marché des joueurs (voir <includes> du maven-compiler-plugin)")
+    if "xyz/arcadiadevs/valoriatycoon/commands/AuctionHouse.class" in names:
+        ah_blob = jar.read("xyz/arcadiadevs/valoriatycoon/commands/AuctionHouse.class")
+        check("JAR : AuctionHouse sans NMS", b"net/minecraft" not in ah_blob and b"craftbukkit" not in ah_blob)
+        check("JAR : AuctionHouse branché sur le rafraîchissement des vues", b"AuctionGui" in ah_blob)
     for sb_entry in ("xyz/arcadiadevs/valoriatycoon/utils/ScoreboardService.class",):
         check(f"JAR : {sb_entry.split('/')[-1]} compilée", sb_entry in names, "le pom ne compile pas le tableau de bord")
     if "xyz/arcadiadevs/valoriatycoon/commands/SellCommandListener.class" in names:

@@ -200,51 +200,63 @@ passe par `guis.upgrade-gui.enabled: false` + shift+clic droit sur le bloc.
 
 ## Le marché entre joueurs (`/ah`)
 
-Commandes (interceptées comme `/sell`, donc pas besoin de les déclarer ailleurs ; `/auctionhouse`
-et `/marche` sont des équivalents) :
+Commandes (interceptées comme `/sell`, rien à déclarer ailleurs ; `/auctionhouse` et `/marche`
+fonctionnent aussi) :
 
 | commande | effet |
 | --- | --- |
-| `/ah` | ouvre la interface du marché (18 annonces par page) |
-| `/ah sell <prix>` | met en vente **l'item tenu en main** |
-| `/ah cancel` | annule toutes tes annonces et te rend les items |
+| `/ah` | ouvre le marché (45 cases, 36 annonces par page) |
+| `/ah sell <prix> [quantité]` | met en vente l'item en main, **prix à la pièce** (défaut : la pile entière) |
+| `/ah search <motif>` | filtre par nom d'item (`/ah search` seul = tout revoir) |
+| `/ah own` | ne voit que ses annonces |
+| `/ah cancel` / `/ah cancel <id>` | récupère tout, ou une annonce précise |
+| `/ah stats` | annonces totales, les tiennes, taxe, expiration, blacklist |
+| `/ah remove <id>`, `/ah reload` | administration (`valoriatycoon.ah.admin`) |
 
-Dans l'interface : clic sur une annonce = achat immédiat (débit de ton solde, versement au vendeur
-moins la commission) ; `Page précédente/suivante` pour naviguer ; `Récupérer mes annonces` pour
-tout annuler ; `Vendre ce que tu tiens` rappelle la commande. Toutes les interfaces ouvertes sont
-redessinées dès qu'une annonce bouge : personne ne peut acheter un item déjà vendu (le clic renvoie
-« cette annonce vient d'être vendue »).
+Dans l'interface : **clic gauche = 1 pièce**, **clic droit = 1 stack**, **Maj = tout le lot** ;
+sur **tes** annonces, **Maj + clic = annuler et récupérer**. En bas : pages, filtre, tri
+(numéro / prix croissant / prix décroissant / plus récentes), bascule marché↔mes annonces, aide.
 
-Config (`plugins/ValoriaTycoon/config.yml`, à la fin du fichier) :
+Config (`plugins/ValoriaTycoon/config.yml`) :
 
 ```yaml
 auction-house:
   enabled: true
-  title: "&aMarché des joueurs"
-  sell-fee: 0.02      # commission prélevée à la mise en vente
-  min-price: 1.0
-  max-price: 1000000.0
+  listing-fee: 0.0        # frais de mise en vente (fraction du total), anti-spam
+  sales-tax: 0.02         # taxe sur le vendeur à chaque vente
+  min-price: 0.5
+  max-price: 10000000.0
+  enforce-price-band: true
+  price-band: 12.0        # prix hors [moyenne/12 ; moyenne×12] refusé
+  max-listings-per-player: 6
+  expiry-hours: 72        # 0 = pas d'expiration
+  sweep-ticks: 1200       # ménage des expirations, 60 s
+  blacklist: [ BEDROCK, BARRIER, COMMAND_BLOCK, ... ]
 ```
 
-Permissions (déclarées dans `plugin.yml`) : `valoriatycoon.ah.use` et `valoriatycoon.ah.sell`
-ouvertes à tous par défaut, `valoriatycoon.ah.notify` pour les annonces de vente dans le chat
-(OP par défaut).
+Garanties de conception (c'est ce qui rend un marché utilisable en communauté) :
 
-Choix de conception qui protègent contre la duplication et la perte d'objets :
+- **Séquestre serveur** : l'item déposé quitte l'inventaire et vit dans `auction.yml`. Rien ne reste
+  dans une interface → pas de dupe à la déconnexion, pas de perte au crash, l'état survit au restart.
+- **Prix unitaire** : une annonce = prix à la pièce + quantité. Les achats partiels sont donc exacts,
+  sans arrondi qui crée ou détruit de la monnaie.
+- **Livraison avant facturation, remboursement symétrique** : ce qui n'a pas pu être donné est remboursé
+  et rendu à l'annonce ; si l'économie refuse le remboursement, l'item est posé aux pieds du joueur et
+  tracé dans le log. Un objet ne se perd jamais.
+- **Écriture atomique** : `auction.yml.tmp` puis `ATOMIC_MOVE`. Un crash en pleine sauvegarde laisse
+  l'ancien fichier intact, pas un YAML tronqué.
+- **Boîte de rendus** : item expiré, annonce retirée par un admin, vendeur hors-ligne → déposé dans
+  `returns.<uuid>` et rendu au prochain connect. Aucun « ton item a disparu parce que tu n'étais pas là ».
+- **Contre-expertise de prix** : moyenne par type d'item tenue à jour par vente réelle ; une annonce hors
+  bande est refusée → bloque dump, cadeau à 1 $ et blanchiment.
+- **Items du plugin refusés** : un item marqué en `PersistentDataContainer` par ValoriaTycoon (bloc ou
+  pierre de générateur) ne peut pas être vendu, pour ne pas créer de générateur sans propriétaire.
+- **Aucun nom interne du serveur** dans ce module : ni `net.minecraft`, ni paquet CraftBukkit — donc pas
+  de `NoSuchMethodError` quand Minecraft renomme. Les contrôles du dépôt le vérifient dans le *code*
+  (commentaires exclus) et sur le `.class` livré.
 
-- **séquestre serveur** : l'item quittte l'inventaire du vendeur et est écrit dans
-  `plugins/ValoriaTycoon/auction.yml`, sauvegardé à chaque opération. Rien ne vit dans l'interface.
-- **achat = d'abord livraison, ensuite paiement** : inventaire plein → l'item tombe à tes pieds et
-  le paiement est annulé ; paiement refusé par Vault → l'item est retiré de nouveau. Aucun chemin
-  ne donne un item gratuit ou un solde créédité deux fois.
-- **items du plugin refusés** : un bloc/objet de générateur (marqué en `PersistentDataContainer`)
-  ne peut pas être mis en vente, pour ne pas créer de générateur hors sol sans propriétaire.
-- **aucun nom interne du serveur** : ni `net.minecraft`, ni paquet CraftBukkit — donc ce module ne
-  se casse pas quand Minecraft change de nommage, contrairement à l'ancienne bibliothèque NBT.
-
-Non fait volontairement dans cet increment (à demander si tu le veux) : expiration automatique des
-annonces, recherche par nom d'item, minimum/maximum par transaction, annulation forcee par un admin
-(`/ah remove <id>`), et sauvegarde asynchrone du fichier.
+Reste hors de ce module (à demander si besoin) : encherès, paniers, historique par joueur, notification
+de vente par mail/discord, recherche par texte libre côté GUI.
 
 ## Tableau de bord (`/sb`)
 

@@ -886,10 +886,39 @@ developer-options:
 auction-house:
   enabled: true
   title: "&aMarché des joueurs"
-  # Commission prélevée à la mise en vente (0.02 = 2 %), et reversée au vendeur à l'achat.
-  sell-fee: 0.02
-  min-price: 1.0
-  max-price: 1000000.0
+  # Frais de mise en vente, en proportion du total de l'annonce (0 = gratuit). Ils découragent
+  # le spam d'annonces ; ils ne sont PAS remboursés si l'annonce expire.
+  listing-fee: 0.0
+  # Taxe prélevée sur le vendeur à chaque vente effective (0.02 = 2 %).
+  sales-tax: 0.02
+  # Prix unitaire accepté, par pièce (le marché affiche des prix à l'unité, pas au lot).
+  min-price: 0.5
+  max-price: 10000000.0
+  # Annonce refusée si son prix sort de [moyenne / bande ; moyenne x bande] dès qu'au moins une
+  # vente du même item est connue. C'est ce qui bloque dump, vente cadeau et blanchiment.
+  enforce-price-band: true
+  price-band: 12.0
+  # Annonces simultanées maximum par joueur.
+  max-listings-per-player: 6
+  # Une annonce non vendue expire et l'item est rendu (en jeu si le vendeur est connecté, sinon
+  # mis de côté et rendu à sa prochaine connexion). 0 = pas d'expiration.
+  expiry-hours: 72
+  # Période du ménage d'expirations, en ticks (1200 = 60 s).
+  sweep-ticks: 1200
+  # Items refusés à la vente (le plugin refuse aussi ses propres items de générateur).
+  blacklist:
+    - BEDROCK
+    - BARRIER
+    - COMMAND_BLOCK
+    - CHAIN_COMMAND_BLOCK
+    - REPEATING_COMMAND_BLOCK
+    - STRUCTURE_BLOCK
+    - JIGSAW
+    - END_PORTAL
+    - END_GATEWAY
+    - LIGHT
+    - STRUCTURE_VOID
+    - DEBUG_STICK
 # Petit tableau de bord latéral (sidebar) : pseudo, solde, et lignes personnalisables.
 scoreboard:
   enabled: true
