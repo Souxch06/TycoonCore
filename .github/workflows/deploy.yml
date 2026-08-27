@@ -1,0 +1,38 @@
+name: Build and Deploy MiningTycoon
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Récupérer le code
+        uses: actions/checkout@v4
+
+      - name: Installer Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      - name: Compiler le plugin
+        run: mvn clean package -DskipTests
+
+      - name: Vérifier le JAR
+        run: ls -lah target/
+
+      - name: Envoyer le plugin sur MCServerHost
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SFTP_HOST }}
+          username: ${{ secrets.SFTP_USERNAME }}
+          password: ${{ secrets.SFTP_PASSWORD }}
+          port: ${{ secrets.SFTP_PORT }}
+          source: "target/*.jar"
+          target: "plugins/"
+          overwrite: true
