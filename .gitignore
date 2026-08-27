@@ -1,0 +1,20 @@
+# Fichiers système / éditeurs
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Sorties de build locales
+target/
+build/
+out/
+dist/
+
+# Archives temporaires générées localement
+*.zip
+*.tar.gz
+*.tgz
+
+# Logs temporaires
+*.log
+*.tmp
