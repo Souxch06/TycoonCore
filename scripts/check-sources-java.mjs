@@ -131,7 +131,8 @@ const CONTRACTS = [
       { name: 'count', returns: 'int', arity: 0, static: true },
     ],
     forbidImports: ['lombok'],
-    mustContain: ['class Store', 'getOfflinePlayer', 'ATOMIC_MOVE', 'addReturn', 'takeReturns', 'deliverReturns'],
+    mustContain: ['class Store', 'getOfflinePlayer', 'ATOMIC_MOVE', 'addReturn', 'takeReturns', 'deliverReturns',
+                  'section.contains("unit-price")', 'lotPrice / size'],
     mustNotContain: ['net.minecraft', 'getNMSClass', 'NBTEditor'],
   },
   {

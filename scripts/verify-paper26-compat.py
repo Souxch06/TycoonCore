@@ -236,6 +236,9 @@ def verify_tree():
           "sans écriture atomique, un crash pendant la sauvegarde corromprait le marché")
     check("AuctionHouse : achats/annulations passent par le prix unitaire",
           "unit-price" in ah_src and "unit * delivered" in ah_src)
+    check("AuctionHouse : annonces de l'ancien format (prix au lot) reprises sans perte ni gratuité",
+          'section.contains("unit-price")' in ah_src and 'getDouble("price"' in ah_src,
+          "sans ce repli, une annonce existante aurait un prix unitaire de 0 et serait achetable gratuitement")
     check("AuctionHouse : retours hors-ligne (mailbox returns)",
           "addReturn" in ah_src and "takeReturns" in ah_src and "deliverReturns" in ah_src)
     check("AuctionHouse : expiration traitée par tâche périodique", "sweep()" in ah_src and "runTaskTimer" in ah_src)

@@ -456,8 +456,13 @@ public final class AuctionHouse {
         return store == null ? 0.0D : store.unitPrice(id);
     }
 
+    /**
+     * Total de l'annonce. Pour une annonce reprise de l'ancien format (prix au lot), on rend le prix
+     * du lot tel qu'il était stocké plutôt qu'un aller-retour lot → pièce → lot qui perderait des
+     * centimes à chaque affichage.
+     */
     public static double totalAt(int id) {
-        return store == null ? 0.0D : store.unitPrice(id) * store.amount(id);
+        return store == null ? 0.0D : store.total(id);
     }
 
     public static int amountAt(int id) {
@@ -656,12 +661,46 @@ public final class AuctionHouse {
             return section.getItemStack("item");
         }
 
+        /**
+         * Prix à la pièce. Les annonces écrites par la version précédente stockaient un prix AU LOT
+         * (champ {@code price}) sans quantité : sans ce repli, une annonce existante se lirait
+         * {@code unit-price = 0} et serait achetable gratuitement. On reconvertit donc lot/quantité,
+         * la quantité étant déduite de la pile séquestrée.
+         */
         double unitPrice(int id) {
-            return this.yaml.getDouble("listings." + id + ".unit-price", 0.0D);
+            ConfigurationSection section = this.section(id);
+            if (section == null) {
+                return 0.0D;
+            }
+            if (section.contains("unit-price")) {
+                return section.getDouble("unit-price", 0.0D);
+            }
+            double lotPrice = section.getDouble("price", 0.0D);
+            int size = this.amount(id);
+            return size > 1 ? lotPrice / size : lotPrice;
         }
 
         int amount(int id) {
-            return this.yaml.getInt("listings." + id + ".amount", 1);
+            ConfigurationSection section = this.section(id);
+            if (section == null) {
+                return 1;
+            }
+            if (section.contains("amount")) {
+                return Math.max(1, section.getInt("amount", 1));
+            }
+            ItemStack lot = section.getItemStack("item");
+            return lot == null ? 1 : Math.max(1, lot.getAmount());
+        }
+
+        double total(int id) {
+            ConfigurationSection section = this.section(id);
+            if (section == null) {
+                return 0.0D;
+            }
+            if (!section.contains("unit-price") && section.contains("price")) {
+                return section.getDouble("price", 0.0D);
+            }
+            return section.getDouble("unit-price", 0.0D) * this.amount(id);
         }
 
         long expires(int id) {
