@@ -144,6 +144,9 @@ implements TabCompleter {
                 return null;
             }
             if (stringArray.length == 1) {
+                if (string2.equalsIgnoreCase("sell")) {
+                    return List.of("hand", "all");
+                }
                 return List.of("hand", "all", "gui");
             }
             return null;

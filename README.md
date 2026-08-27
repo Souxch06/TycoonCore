@@ -88,9 +88,9 @@ scripts/
 | `/valoriatycoon stopevent` | Arrête l'événement en cours. |
 | `/valoriatycoon reload` | Recharge la configuration du plugin. |
 | `/generators` ou `/gen` | Ouvre l'interface d'achat des générateurs. |
+| `/sell` | Ouvre l'interface de vente. |
 | `/selldrops hand` ou `/sell hand` | Vend les drops tenus en main. |
 | `/selldrops all` ou `/sell all` | Vend tous les drops de l'inventaire. |
-| `/selldrops gui` ou `/sell gui` | Ouvre l'interface de vente. |
 
 ## Permissions
 

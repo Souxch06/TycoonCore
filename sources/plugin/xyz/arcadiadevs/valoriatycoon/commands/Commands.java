@@ -53,6 +53,7 @@ implements CommandExecutor {
                 ChatUtil.sendMessage(commandSender, "&7- /valoriatycoon giveall <palier> [quantité] : donne un générateur à tous les joueurs");
                 ChatUtil.sendMessage(commandSender, "&7- /valoriatycoon wand sell <joueur> <utilisations> <multiplicateur> : donne une baguette de vente à un joueur");
                 ChatUtil.sendMessage(commandSender, "&7- /valoriatycoon setlimit <joueur> <limite> : définit la limite de générateurs d'un joueur");
+                ChatUtil.sendMessage(commandSender, "&7- /sell : ouvre l'interface de vente");
                 ChatUtil.sendMessage(commandSender, "&7- /sell hand/all : vend les drops en main ou dans votre inventaire");
                 ChatUtil.sendMessage(commandSender, "&7- /gen : affiche tous les générateurs");
                 return true;
@@ -287,6 +288,14 @@ implements CommandExecutor {
                 return true;
             }
             if (stringArray.length == 0) {
+                if (string.equalsIgnoreCase("sell")) {
+                    if (!commandSender.hasPermission(Permissions.GENERATOR_DROPS_SELL_GUI.getPermission(new String[0]))) {
+                        Messages.NO_PERMISSION.format(new Object[0]).send(commandSender);
+                        return true;
+                    }
+                    SellGui.open(object);
+                    return true;
+                }
                 Messages.NOT_ENOUGH_ARGUMENTS.format(new Object[0]).send(commandSender);
                 return true;
             }

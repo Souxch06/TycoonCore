@@ -30,6 +30,16 @@ implements Listener {
             return;
         }
         if (stringArray.length < 2) {
+            if (string.equalsIgnoreCase("sell")) {
+                if (!player.hasPermission(Permissions.GENERATOR_DROPS_SELL_GUI.getPermission(new String[0]))) {
+                    Messages.NO_PERMISSION.format(new Object[0]).send((CommandSender)player);
+                    playerCommandPreprocessEvent.setCancelled(true);
+                    return;
+                }
+                SellGui.open(player);
+                playerCommandPreprocessEvent.setCancelled(true);
+                return;
+            }
             Messages.NOT_ENOUGH_ARGUMENTS.format(new Object[0]).send((CommandSender)player);
             playerCommandPreprocessEvent.setCancelled(true);
             return;

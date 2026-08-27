@@ -372,8 +372,8 @@ default-lore:
 # La description par défaut des drops peut utiliser les placeholders suivants :
 # - %sellPrice% correspond au prix de vente du drop du générateur
 default-item-spawn-lore:
-  - "&7Écrivez &e/sell &6hand&8/&6all &7dans le chat"
-  - "&7pour vendre les drops pour &e%sellPrice%"
+  - "&7Écrivez &e/sell &7pour ouvrir le menu"
+  - "&7ou &e/sell &6hand&8/&6all &7pour vendre pour &e%sellPrice%"
 
 # Si hologramLines n'est pas défini, les lignes d'hologramme par défaut seront utilisées.
 # Les lignes d'hologramme par défaut peuvent utiliser les placeholders suivants :
