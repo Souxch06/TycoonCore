@@ -1,7 +1,7 @@
 /*
- * Decompiled with CFR 0.152.
+ * Décompilé avec CFR 0.152.
  * 
- * Could not load the following classes:
+ * Impossible de charger les classes suivantes :
  *  org.bukkit.entity.Player
  *  org.bukkit.event.EventHandler
  *  org.bukkit.event.Listener
@@ -66,7 +66,7 @@ implements Listener {
         int n3 = (n - n2 * this.rows * 9) / 9;
         int n4 = n - n2 * this.rows * 9 - n3 * 9;
         if (guiItem.getType() != GuiItemType.ITEM && n2 != 0) {
-            throw new IllegalArgumentException("Only items can be set on pages other than the first one.");
+            throw new IllegalArgumentException("Seuls les items peuvent être placés sur les pages autres que la première.");
         }
         this.pages.get((int)n2).getItems()[n3][n4] = guiItem;
     }
@@ -154,7 +154,7 @@ implements Listener {
                 break;
             }
             default: {
-                throw new IllegalStateException("Unexpected value: " + (Object)((Object)guiItem.getType()));
+                throw new IllegalStateException("Valeur inattendue : " + (Object)((Object)guiItem.getType()));
             }
         }
     }

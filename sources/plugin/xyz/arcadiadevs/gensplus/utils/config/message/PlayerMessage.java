@@ -1,7 +1,7 @@
 /*
- * Decompiled with CFR 0.152.
+ * Décompilé avec CFR 0.152.
  * 
- * Could not load the following classes:
+ * Impossible de charger les classes suivantes :
  *  net.md_5.bungee.api.ChatMessageType
  *  net.md_5.bungee.chat.ComponentSerializer
  *  org.bukkit.Bukkit
@@ -92,8 +92,8 @@ public class PlayerMessage {
                 this.send((CommandSender)player);
             }
             catch (RuntimeException runtimeException) {
-                GensPlus.getInstance().getLogger().log(Level.WARNING, "Could not parse raw message sent to player. Make sure it has the right syntax");
-                GensPlus.getInstance().getLogger().log(Level.WARNING, "Message: " + string);
+                GensPlus.getInstance().getLogger().log(Level.WARNING, "Impossible d'analyser le message brut envoyé au joueur. Vérifiez que la syntaxe est correcte");
+                GensPlus.getInstance().getLogger().log(Level.WARNING, "Message : " + string);
                 runtimeException.printStackTrace();
             }
         }

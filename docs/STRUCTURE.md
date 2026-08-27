@@ -8,7 +8,7 @@ Contient le fichier JAR original :
 
 ## `artifacts/extracted/`
 
-Contient l'extraction brute complète du JAR. Ce dossier garde la même structure que celle visible dans une application comme ZArchiver :
+Contient tous les fichiers extraits du JAR. La structure reste identique à celle visible dans une application comme ZArchiver. Les ressources principales (`config.yml`, `messages.yml`, `plugin.yml`) ont été francisées pour garder le dépôt cohérent :
 
 - `com/`
 - `data/`
@@ -23,7 +23,7 @@ Contient l'extraction brute complète du JAR. Ce dossier garde la même structur
 - `module-info.class`
 - `plugin.yml`
 
-Cette zone sert de référence : elle permet de vérifier que rien n'a été perdu par rapport au JAR.
+Cette zone sert de référence de structure : elle permet de vérifier qu'aucun fichier du JAR n'a été perdu.
 
 ## `sources/plugin/`
 
@@ -59,7 +59,7 @@ Copie pratique des fichiers de configuration principaux du plugin :
 - `data/player_data.json`
 - `data/wands_data.json`
 
-Les mêmes fichiers existent aussi dans `artifacts/extracted/`, qui reste l'extraction brute complète.
+Les mêmes fichiers existent aussi dans `artifacts/extracted/`. Les ressources principales y sont également en français afin que le dépôt reste homogène.
 
 ## `docs/decompilation-summary.txt`
 
@@ -67,7 +67,7 @@ Résumé généré par CFR pendant la décompilation. Il liste les classes/méth
 
 ## Vérification
 
-Pour vérifier que l'extraction brute correspond au JAR :
+Pour vérifier que tous les chemins de fichiers du JAR sont présents dans l'extraction :
 
 ```bash
 python3 scripts/verify-extraction.py

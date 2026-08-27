@@ -1,5 +1,5 @@
 /*
- * Decompiled with CFR 0.152.
+ * Décompilé avec CFR 0.152.
  */
 package xyz.arcadiadevs.guilib;
 

@@ -1,7 +1,7 @@
 /*
- * Decompiled with CFR 0.152.
+ * Décompilé avec CFR 0.152.
  * 
- * Could not load the following classes:
+ * Impossible de charger les classes suivantes :
  *  org.bukkit.Bukkit
  *  org.bukkit.command.Command
  *  org.bukkit.command.CommandExecutor
@@ -59,14 +59,14 @@ implements CommandExecutor {
                 return true;
             }
             if (stringArray[0].equalsIgnoreCase("help")) {
-                ChatUtil.sendMessage(commandSender, "&9GensPlus Commands:");
-                ChatUtil.sendMessage(commandSender, "&7- /gensplus: Display plugin version");
-                ChatUtil.sendMessage(commandSender, "&7- /gensplus give <player> <tier> [amount]: Give a generator to a player");
-                ChatUtil.sendMessage(commandSender, "&7- /gensplus giveall <tier> [amount]: Give a generator to all players");
-                ChatUtil.sendMessage(commandSender, "&7- /gensplus wand sell <player> <uses> <multiplier>: Give a sell wand to a player");
-                ChatUtil.sendMessage(commandSender, "&7- /gensplus setlimit <player> <limit>: Set a player's generator limit");
-                ChatUtil.sendMessage(commandSender, "&7- /selldrops hand/all: Sell all drops in your hand or inventory");
-                ChatUtil.sendMessage(commandSender, "&7- /generators: view all generators");
+                ChatUtil.sendMessage(commandSender, "&9Commandes GensPlus :");
+                ChatUtil.sendMessage(commandSender, "&7- /gensplus : affiche la version du plugin");
+                ChatUtil.sendMessage(commandSender, "&7- /gensplus give <joueur> <palier> [quantité] : donne un générateur à un joueur");
+                ChatUtil.sendMessage(commandSender, "&7- /gensplus giveall <palier> [quantité] : donne un générateur à tous les joueurs");
+                ChatUtil.sendMessage(commandSender, "&7- /gensplus wand sell <joueur> <utilisations> <multiplicateur> : donne une baguette de vente à un joueur");
+                ChatUtil.sendMessage(commandSender, "&7- /gensplus setlimit <joueur> <limite> : définit la limite de générateurs d'un joueur");
+                ChatUtil.sendMessage(commandSender, "&7- /selldrops hand/all : vend les drops en main ou dans votre inventaire");
+                ChatUtil.sendMessage(commandSender, "&7- /generators : affiche tous les générateurs");
                 return true;
             }
             if (stringArray[0].equalsIgnoreCase("list")) {

@@ -1,7 +1,7 @@
 /*
- * Decompiled with CFR 0.152.
+ * Décompilé avec CFR 0.152.
  * 
- * Could not load the following classes:
+ * Impossible de charger les classes suivantes :
  *  dev.lone.itemsadder.api.CustomStack
  *  io.th0rgal.oraxen.api.OraxenItems
  *  org.bukkit.Bukkit
@@ -80,14 +80,14 @@ public class ItemUtil {
             ItemStack itemStack = inventory.getItem(n);
             if (itemStack != null && (itemMeta = itemStack.getItemMeta()) != null && itemMeta.hasLore() && (list = itemMeta.getLore()) != null) {
                 String string = (String)list.get(0);
-                if (string.contains("Generator drop tier")) {
+                if (string.contains("Palier du drop de générateur")) {
                     var6_6 = Integer.parseInt(string.split(" ")[3]);
                     list.remove(0);
                     itemMeta.setLore(list);
                     itemStack.setItemMeta(itemMeta);
                     itemStack = NBTEditor.set(itemStack, var6_6, "gensplus", "spawnitem", "tier");
                     inventory.setItem(n, itemStack);
-                } else if (string.contains("Generator tier")) {
+                } else if (string.contains("Palier du générateur")) {
                     var6_6 = Integer.parseInt(string.split(" ")[2]);
                     list.remove(0);
                     itemMeta.setLore(list);

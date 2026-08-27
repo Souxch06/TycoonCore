@@ -1,5 +1,5 @@
 /*
- * Decompiled with CFR 0.152.
+ * Décompilé avec CFR 0.152.
  */
 package xyz.arcadiadevs.gensplus.utils.config;
 
@@ -31,7 +31,7 @@ public enum Permissions {
         String string = this.permission;
         int n = this.countBrackets(this.permission);
         if (n != stringArray.length) {
-            throw new IllegalArgumentException("Invalid number of arguments");
+            throw new IllegalArgumentException("Nombre d'arguments invalide");
         }
         String[] stringArray2 = stringArray;
         int n2 = stringArray.length;

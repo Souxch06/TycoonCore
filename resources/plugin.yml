@@ -23,13 +23,12 @@ softdepend:
 
 commands:
   gensplus:
-    description: Main command
+    description: Commande principale de GensPlus
     usage: /gensplus
     aliases: [ gens, gp ]
   generators:
-    description: List all generators in gui
+    description: Affiche la liste des générateurs dans une interface
     usage: /generators
   selldrops:
-    description: Sell all drops in inventory
+    description: Vend les drops présents dans l'inventaire
     usage: /selldrops
-#sENuZzcElnQyATVw81TyRFMBR0TaxmRPZFcVR1SoR1VWpFWXFzcK1EOVBjdZFzcK1EOVJmY

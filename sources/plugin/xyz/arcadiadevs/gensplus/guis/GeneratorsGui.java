@@ -1,7 +1,7 @@
 /*
- * Decompiled with CFR 0.152.
+ * Décompilé avec CFR 0.152.
  * 
- * Could not load the following classes:
+ * Impossible de charger les classes suivantes :
  *  net.milkbowl.vault.economy.Economy
  *  org.bukkit.Material
  *  org.bukkit.OfflinePlayer
@@ -64,9 +64,9 @@ public class GeneratorsGui {
             Material material = XMaterial.matchXMaterial(Config.GUIS_GENERATORS_GUI_NEXT_PAGE_MATERIAL.getString()).orElse(XMaterial.ARROW).parseMaterial();
             Material material2 = XMaterial.matchXMaterial(Config.GUIS_GENERATORS_GUI_PREVIOUS_PAGE_MATERIAL.getString()).orElse(XMaterial.ARROW).parseMaterial();
             Material material3 = XMaterial.matchXMaterial(Config.GUIS_GENERATORS_GUI_CLOSE_BUTTON_MATERIAL.getString()).orElse(XMaterial.BARRIER).parseMaterial();
-            ItemStack itemStack3 = new ItemBuilder(material).name(ChatUtil.translate("&aNext Page")).build();
-            ItemStack itemStack4 = new ItemBuilder(material2).name(ChatUtil.translate("&aPrevious Page")).build();
-            ItemStack itemStack5 = new ItemBuilder(material3).name(ChatUtil.translate("&cClose")).build();
+            ItemStack itemStack3 = new ItemBuilder(material).name(ChatUtil.translate("&aPage suivante")).build();
+            ItemStack itemStack4 = new ItemBuilder(material2).name(ChatUtil.translate("&aPage précédente")).build();
+            ItemStack itemStack5 = new ItemBuilder(material3).name(ChatUtil.translate("&cFermer")).build();
             gui.setItem((n - 1) * 9 + 3, new GuiItem(GuiItemType.PREVIOUS, itemStack4, null));
             gui.setItem((n - 1) * 9 + 4, new GuiItem(GuiItemType.CLOSE, itemStack5, null));
             gui.setItem((n - 1) * 9 + 5, new GuiItem(GuiItemType.NEXT, itemStack3, null));

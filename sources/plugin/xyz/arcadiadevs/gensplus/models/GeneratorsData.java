@@ -1,7 +1,7 @@
 /*
- * Decompiled with CFR 0.152.
+ * Décompilé avec CFR 0.152.
  * 
- * Could not load the following classes:
+ * Impossible de charger les classes suivantes :
  *  lombok.Generated
  *  org.bukkit.Location
  *  org.bukkit.entity.Player
@@ -40,7 +40,7 @@ public record GeneratorsData(List<Generator> generators) {
     public record Generator(String name, int tier, double price, double sellPrice, int speed, ItemStack spawnItem, ItemStack blockType, List<String> lore, boolean instantBreak) {
         public void giveItem(Player player) {
             if (player.getInventory().firstEmpty() == -1) {
-                ActionBarUtil.sendActionBar(player, "&cYour inventory is full!");
+                ActionBarUtil.sendActionBar(player, "&cVotre inventaire est plein !");
                 player.getWorld().dropItemNaturally(player.getLocation(), this.blockType);
                 return;
             }

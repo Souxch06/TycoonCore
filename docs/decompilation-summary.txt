@@ -6,78 +6,78 @@ com.google.gson.internal.$Gson$Types
 ----------------------------
 
 resolve(java.lang.reflect.Type java.lang.Class<?> java.lang.reflect.Type java.util.Map<java.lang.reflect.TypeVariable<?>, java.lang.reflect.Type> )
-  Unable to fully structure code
-  Could not resolve type clashes
+  Impossible de restructurer complètement le code
+  Impossible de résoudre les conflits de types
 
 
 kotlin.collections.SlidingWindowKt
 ----------------------------
 
 invokeSuspend(java.lang.Object )
-  Unable to fully structure code
+  Impossible de restructurer complètement le code
 
 
 kotlin.internal.PlatformImplementations
 ----------------------------
 
 <clinit>()
-  Unable to fully structure code
+  Impossible de restructurer complètement le code
 
 
 kotlin.jvm.JvmClassMappingKt
 ----------------------------
 
 getJavaObjectType(kotlin.reflect.KClass<T> )
-  Unable to fully structure code
-  Could not resolve type clashes
+  Impossible de restructurer complètement le code
+  Impossible de résoudre les conflits de types
 
 
 kotlin.sequences.SequencesKt__SequencesKt
 ----------------------------
 
 invokeSuspend(java.lang.Object )
-  Unable to fully structure code
+  Impossible de restructurer complètement le code
 invokeSuspend(java.lang.Object )
-  Unable to fully structure code
+  Impossible de restructurer complètement le code
 
 
 kotlin.sequences.SequencesKt___SequencesKt
 ----------------------------
 
 invokeSuspend(java.lang.Object )
-  Unable to fully structure code
+  Impossible de restructurer complètement le code
 invokeSuspend(java.lang.Object )
-  Unable to fully structure code
+  Impossible de restructurer complètement le code
 invokeSuspend(java.lang.Object )
-  Unable to fully structure code
+  Impossible de restructurer complètement le code
 invokeSuspend(java.lang.Object )
-  Unable to fully structure code
+  Impossible de restructurer complètement le code
 invokeSuspend(java.lang.Object )
-  Unable to fully structure code
-  Could not resolve type clashes
+  Impossible de restructurer complètement le code
+  Impossible de résoudre les conflits de types
 
 
 kotlin.text.DelimitedRangesSequence
 ----------------------------
 
 calcNext()
-  Unable to fully structure code
+  Impossible de restructurer complètement le code
 
 
 kotlin.text.Regex
 ----------------------------
 
 invoke(java.lang.Enum )
-  Ignored method signature, as it can't be verified against descriptor
+  Signature de méthode ignorée, car elle ne peut pas être vérifiée avec le descripteur
 invokeSuspend(java.lang.Object )
-  Unable to fully structure code
+  Impossible de restructurer complètement le code
 
 
 kotlin.io.path.PathTreeWalk
 ----------------------------
 
 invokeSuspend(java.lang.Object )
-  Unable to fully structure code
-  Could not resolve type clashes
+  Impossible de restructurer complètement le code
+  Impossible de résoudre les conflits de types
 invokeSuspend(java.lang.Object )
-  Unable to fully structure code
+  Impossible de restructurer complètement le code

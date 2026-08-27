@@ -1,7 +1,7 @@
 /*
- * Decompiled with CFR 0.152.
+ * Décompilé avec CFR 0.152.
  * 
- * Could not load the following classes:
+ * Impossible de charger les classes suivantes :
  *  lombok.Generated
  *  org.bukkit.OfflinePlayer
  *  org.bukkit.command.CommandSender
@@ -45,11 +45,11 @@ implements Listener {
         Player player = blockPlaceEvent.getPlayer();
         ItemStack itemStack = blockPlaceEvent.getItemInHand();
         if (Config.DEVELOPER_OPTIONS.getBoolean()) {
-            player.sendMessage("[DEBUG] Placing item: " + String.valueOf(itemStack.getType()));
-            player.sendMessage("[DEBUG] Has spawn NBT: " + NBTEditor.contains(itemStack, new Object[]{NBTEditor.CUSTOM_DATA, "gensplus", "spawnitem", "tier"}));
-            player.sendMessage("[DEBUG] Has block NBT: " + NBTEditor.contains(itemStack, new Object[]{NBTEditor.CUSTOM_DATA, "gensplus", "blocktype", "tier"}));
+            player.sendMessage("[DEBUG] Placement de l'item : " + String.valueOf(itemStack.getType()));
+            player.sendMessage("[DEBUG] Possède le NBT d'item généré : " + NBTEditor.contains(itemStack, new Object[]{NBTEditor.CUSTOM_DATA, "gensplus", "spawnitem", "tier"}));
+            player.sendMessage("[DEBUG] Possède le NBT de bloc : " + NBTEditor.contains(itemStack, new Object[]{NBTEditor.CUSTOM_DATA, "gensplus", "blocktype", "tier"}));
             if (NBTEditor.contains(itemStack, new Object[]{NBTEditor.CUSTOM_DATA, "gensplus", "blocktype", "tier"})) {
-                player.sendMessage("[DEBUG] Block tier: " + NBTEditor.getInt(itemStack, new Object[]{NBTEditor.CUSTOM_DATA, "gensplus", "blocktype", "tier"}));
+                player.sendMessage("[DEBUG] Palier du bloc : " + NBTEditor.getInt(itemStack, new Object[]{NBTEditor.CUSTOM_DATA, "gensplus", "blocktype", "tier"}));
             }
         }
         if (NBTEditor.contains(itemStack, new Object[]{NBTEditor.CUSTOM_DATA, "gensplus", "spawnitem", "tier"}) && !Config.CAN_DROPS_BE_PLACED.getBoolean()) {

@@ -1,7 +1,7 @@
 /*
- * Decompiled with CFR 0.152.
+ * Décompilé avec CFR 0.152.
  * 
- * Could not load the following classes:
+ * Impossible de charger les classes suivantes :
  *  org.bukkit.Bukkit
  *  org.bukkit.configuration.file.YamlConfiguration
  *  org.bukkit.entity.Player
@@ -61,12 +61,12 @@ public class Metrics {
             yamlConfiguration.addDefault("logFailedRequests", (Object)false);
             yamlConfiguration.addDefault("logSentData", (Object)false);
             yamlConfiguration.addDefault("logResponseStatusText", (Object)false);
-            yamlConfiguration.options().header("bStats (https://bStats.org) collects some basic information for plugin authors, like how\nmany people use their plugin and their total player count. It's recommended to keep bStats\nenabled, but if you're not comfortable with this, you can turn this setting off. There is no\nperformance penalty associated with having metrics enabled, and data sent to bStats is fully\nanonymous.").copyDefaults(true);
+            yamlConfiguration.options().header("bStats (https://bStats.org) collecte quelques informations de base pour les auteurs de plugins, comme le nombre de personnes qui utilisent leur plugin et le nombre total de joueurs. Il est recommandé de garder bStats activé, mais vous pouvez désactiver ce réglage si vous le souhaitez. Les métriques n'ont pas d'impact sur les performances et les données envoyées à bStats sont entièrement anonymes.").copyDefaults(true);
             try {
                 yamlConfiguration.save(file2);
             }
             catch (IOException iOException) {
-                // empty catch block
+                // bloc catch vide
             }
         }
         boolean bl = yamlConfiguration.getBoolean("enabled", true);
@@ -176,7 +176,7 @@ public class Metrics {
 
         protected CustomChart(String string) {
             if (string == null) {
-                throw new IllegalArgumentException("chartId must not be null");
+                throw new IllegalArgumentException("chartId ne doit pas être null");
             }
             this.chartId = string;
         }
@@ -194,7 +194,7 @@ public class Metrics {
                 }
                 catch (Throwable throwable) {
                     if (bl) {
-                        biConsumer.accept("Failed to get data for custom chart with id " + this.chartId, throwable);
+                        biConsumer.accept("Impossible de récupérer les données du graphique personnalisé avec l'id " + this.chartId, throwable);
                     }
                     return null;
                 }
@@ -256,7 +256,7 @@ public class Metrics {
 
         public JsonObjectBuilder appendField(String string, String string2) {
             if (string2 == null) {
-                throw new IllegalArgumentException("JSON value must not be null");
+                throw new IllegalArgumentException("La valeur JSON ne doit pas être null");
             }
             this.appendFieldUnescaped(string, "\"" + JsonObjectBuilder.escape(string2) + "\"");
             return this;
@@ -269,7 +269,7 @@ public class Metrics {
 
         public JsonObjectBuilder appendField(String string, JsonObject jsonObject) {
             if (jsonObject == null) {
-                throw new IllegalArgumentException("JSON object must not be null");
+                throw new IllegalArgumentException("L'objet JSON ne doit pas être null");
             }
             this.appendFieldUnescaped(string, jsonObject.toString());
             return this;
@@ -277,7 +277,7 @@ public class Metrics {
 
         public JsonObjectBuilder appendField(String string2, String[] stringArray) {
             if (stringArray == null) {
-                throw new IllegalArgumentException("JSON values must not be null");
+                throw new IllegalArgumentException("Les valeurs JSON ne doivent pas être null");
             }
             String string3 = Arrays.stream(stringArray).map(string -> "\"" + JsonObjectBuilder.escape(string) + "\"").collect(Collectors.joining(","));
             this.appendFieldUnescaped(string2, "[" + string3 + "]");
@@ -286,7 +286,7 @@ public class Metrics {
 
         public JsonObjectBuilder appendField(String string, int[] nArray) {
             if (nArray == null) {
-                throw new IllegalArgumentException("JSON values must not be null");
+                throw new IllegalArgumentException("Les valeurs JSON ne doivent pas être null");
             }
             String string2 = Arrays.stream(nArray).mapToObj(String::valueOf).collect(Collectors.joining(","));
             this.appendFieldUnescaped(string, "[" + string2 + "]");
@@ -295,7 +295,7 @@ public class Metrics {
 
         public JsonObjectBuilder appendField(String string, JsonObject[] jsonObjectArray) {
             if (jsonObjectArray == null) {
-                throw new IllegalArgumentException("JSON values must not be null");
+                throw new IllegalArgumentException("Les valeurs JSON ne doivent pas être null");
             }
             String string2 = Arrays.stream(jsonObjectArray).map(JsonObject::toString).collect(Collectors.joining(","));
             this.appendFieldUnescaped(string, "[" + string2 + "]");
@@ -304,10 +304,10 @@ public class Metrics {
 
         private void appendFieldUnescaped(String string, String string2) {
             if (this.builder == null) {
-                throw new IllegalStateException("JSON has already been built");
+                throw new IllegalStateException("L'objet JSON a déjà été construit");
             }
             if (string == null) {
-                throw new IllegalArgumentException("JSON key must not be null");
+                throw new IllegalArgumentException("La clé JSON ne doit pas être null");
             }
             if (this.hasAtLeastOneField) {
                 this.builder.append(",");
@@ -318,7 +318,7 @@ public class Metrics {
 
         public JsonObject build() {
             if (this.builder == null) {
-                throw new IllegalStateException("JSON has already been built");
+                throw new IllegalStateException("L'objet JSON a déjà été construit");
             }
             JsonObject jsonObject = new JsonObject(this.builder.append("}").toString());
             this.builder = null;
@@ -446,7 +446,7 @@ public class Metrics {
                     }
                     catch (Exception exception) {
                         if (!this.logErrors) break block2;
-                        this.errorLogger.accept("Could not submit bStats metrics data", exception);
+                        this.errorLogger.accept("Impossible d'envoyer les données de métriques bStats", exception);
                     }
                 }
             });
@@ -455,7 +455,7 @@ public class Metrics {
         private void sendData(JsonObjectBuilder.JsonObject jsonObject) {
             DataOutputStream dataOutputStream;
             if (this.logSentData) {
-                this.infoLogger.accept("Sent bStats metrics data: " + jsonObject.toString());
+                this.infoLogger.accept("Données de métriques bStats envoyées : " + jsonObject.toString());
             }
             String string = String.format(REPORT_URL, this.platform);
             HttpsURLConnection httpsURLConnection = (HttpsURLConnection)new URL(string).openConnection();
@@ -507,7 +507,7 @@ public class Metrics {
                 throw throwable;
             }
             if (this.logResponseStatusText) {
-                this.infoLogger.accept("Sent data to bStats and received response: " + String.valueOf(serializable));
+                this.infoLogger.accept("Données envoyées à bStats, réponse reçue : " + String.valueOf(serializable));
             }
         }
 
@@ -516,7 +516,7 @@ public class Metrics {
                 String string = new String(new byte[]{111, 114, 103, 46, 98, 115, 116, 97, 116, 115});
                 String string2 = new String(new byte[]{121, 111, 117, 114, 46, 112, 97, 99, 107, 97, 103, 101});
                 if (MetricsBase.class.getPackage().getName().startsWith(string) || MetricsBase.class.getPackage().getName().startsWith(string2)) {
-                    throw new IllegalStateException("bStats Metrics class has not been relocated correctly!");
+                    throw new IllegalStateException("La classe Metrics de bStats n'a pas été relocalisée correctement !");
                 }
             }
         }

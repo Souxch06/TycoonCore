@@ -1,7 +1,7 @@
 /*
- * Decompiled with CFR 0.152.
+ * Décompilé avec CFR 0.152.
  * 
- * Could not load the following classes:
+ * Impossible de charger les classes suivantes :
  *  org.bukkit.event.EventHandler
  *  org.bukkit.event.Listener
  *  org.bukkit.event.enchantment.EnchantItemEvent

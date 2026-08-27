@@ -1,7 +1,7 @@
 /*
- * Decompiled with CFR 0.152.
+ * Décompilé avec CFR 0.152.
  * 
- * Could not load the following classes:
+ * Impossible de charger les classes suivantes :
  *  lombok.Generated
  *  org.bukkit.Bukkit
  *  org.bukkit.Location
@@ -75,10 +75,10 @@ public record LocationsData(CopyOnWriteArrayList<GeneratorLocation> locations) {
 
     public GeneratorLocation createLocation(OfflinePlayer offlinePlayer, int n, Block block) {
         if (Config.DEVELOPER_OPTIONS.getBoolean()) {
-            GensPlus.getInstance().getLogger().info("[DEBUG] Creating generator location:");
-            GensPlus.getInstance().getLogger().info("[DEBUG] Player: " + offlinePlayer.getName());
-            GensPlus.getInstance().getLogger().info("[DEBUG] Generator tier: " + n);
-            GensPlus.getInstance().getLogger().info("[DEBUG] Location: " + String.valueOf(block.getLocation()));
+            GensPlus.getInstance().getLogger().info("[DEBUG] Création de l'emplacement du générateur :");
+            GensPlus.getInstance().getLogger().info("[DEBUG] Joueur : " + offlinePlayer.getName());
+            GensPlus.getInstance().getLogger().info("[DEBUG] Palier du générateur : " + n);
+            GensPlus.getInstance().getLogger().info("[DEBUG] Position : " + String.valueOf(block.getLocation()));
         }
         GeneratorLocation[] generatorLocationArray = new GeneratorLocation[]{this.getGeneratorLocation(block.getRelative(0, 1, 0)), this.getGeneratorLocation(block.getRelative(0, -1, 0)), this.getGeneratorLocation(block.getRelative(-1, 0, 0)), this.getGeneratorLocation(block.getRelative(1, 0, 0)), this.getGeneratorLocation(block.getRelative(0, 0, -1)), this.getGeneratorLocation(block.getRelative(0, 0, 1))};
         List<GeneratorLocation> list = Stream.of(generatorLocationArray).filter(Objects::nonNull).filter(generatorLocation -> generatorLocation.getGenerator() == n).filter(generatorLocation -> generatorLocation.getPlacedBy().equals(offlinePlayer)).toList();
@@ -139,9 +139,9 @@ public record LocationsData(CopyOnWriteArrayList<GeneratorLocation> locations) {
                 } else if (list.get(0) instanceof SimplifiedLocation) {
                     this.blockLocations = (ArrayList)list;
                 } else {
-                    throw new IllegalArgumentException("Invalid blockLocations type");
+                    throw new IllegalArgumentException("Type blockLocations invalide");
                 }
-                Material material = XMaterial.matchXMaterial(this.getGeneratorObject().blockType().getType().toString()).orElseThrow(() -> new RuntimeException("Invalid item stack")).parseItem().getType();
+                Material material = XMaterial.matchXMaterial(this.getGeneratorObject().blockType().getType().toString()).orElseThrow(() -> new RuntimeException("Pile d'items invalide")).parseItem().getType();
                 List list2 = GensPlus.getInstance().getConfig().getMapList("generators");
                 Map map2 = list2.stream().filter(map -> map.get("name").equals(this.getGeneratorObject().name())).findFirst().orElse(null);
                 if (map2 == null) {

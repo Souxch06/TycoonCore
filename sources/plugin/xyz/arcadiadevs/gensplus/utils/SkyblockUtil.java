@@ -1,7 +1,7 @@
 /*
- * Decompiled with CFR 0.152.
+ * Décompilé avec CFR 0.152.
  * 
- * Could not load the following classes:
+ * Impossible de charger les classes suivantes :
  *  com.bgsoftware.superiorskyblock.api.SuperiorSkyblockAPI
  *  com.bgsoftware.superiorskyblock.api.island.Island
  *  com.iridium.iridiumskyblock.api.IridiumSkyblockAPI

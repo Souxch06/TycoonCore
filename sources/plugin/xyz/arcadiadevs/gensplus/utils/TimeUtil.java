@@ -1,5 +1,5 @@
 /*
- * Decompiled with CFR 0.152.
+ * Décompilé avec CFR 0.152.
  */
 package xyz.arcadiadevs.gensplus.utils;
 
@@ -28,7 +28,7 @@ public class TimeUtil {
                     break;
                 }
                 default: {
-                    throw new IllegalArgumentException("Invalid unit specified in despawn time: " + c);
+                    throw new IllegalArgumentException("Unité invalide dans le délai de disparition : " + c);
                 }
             }
             ++n2;
@@ -67,7 +67,7 @@ public class TimeUtil {
                     break;
                 }
                 default: {
-                    throw new IllegalArgumentException("Invalid unit specified in despawn time: " + c);
+                    throw new IllegalArgumentException("Unité invalide dans le délai de disparition : " + c);
                 }
             }
             ++n2;

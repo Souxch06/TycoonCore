@@ -1,7 +1,7 @@
 /*
- * Decompiled with CFR 0.152.
+ * Décompilé avec CFR 0.152.
  * 
- * Could not load the following classes:
+ * Impossible de charger les classes suivantes :
  *  org.bukkit.Bukkit
  *  org.bukkit.Location
  *  org.bukkit.World
@@ -18,11 +18,11 @@ public record SimplifiedLocation(UUID world, double x, double y, double z) {
         World world = Bukkit.getWorld((UUID)this.world);
         if (world == null) {
             Bukkit.getLogger().severe("=============================================");
-            Bukkit.getLogger().severe("This is not a bug or crash. Please read below");
-            Bukkit.getLogger().severe("And make sure the world exists or remove block");
-            Bukkit.getLogger().severe("data/block_data.yml to reset your gens data.");
+            Bukkit.getLogger().severe("Ceci n'est ni un bug ni un crash. Veuillez lire ci-dessous");
+            Bukkit.getLogger().severe("Vérifiez que le monde existe ou supprimez le fichier");
+            Bukkit.getLogger().severe("data/block_data.yml pour réinitialiser vos données de générateurs.");
             Bukkit.getLogger().severe("=============================================");
-            Bukkit.getLogger().severe("World is null for generator location " + String.valueOf(this.world) + ", did you remove or rename your world? | Shutting down server...");
+            Bukkit.getLogger().severe("Le monde est null pour la position de générateur " + String.valueOf(this.world) + ", avez-vous supprimé ou renommé votre monde ? | Arrêt du serveur...");
             Bukkit.shutdown();
             return null;
         }

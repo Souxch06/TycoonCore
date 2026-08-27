@@ -1,7 +1,7 @@
 /*
- * Decompiled with CFR 0.152.
+ * Décompilé avec CFR 0.152.
  * 
- * Could not load the following classes:
+ * Impossible de charger les classes suivantes :
  *  lombok.Generated
  *  org.bukkit.configuration.file.FileConfiguration
  */
@@ -39,14 +39,14 @@ public enum Config {
     LIMIT_PER_PLAYER_USE_PERMISSIONS("limits.per-player.use-permissions", false),
     LIMIT_PER_PLAYER_USE_COMMANDS("limits.per-player.use-commands", true),
     LIMIT_PER_PLAYER_DEFAULT_LIMIT("limits.per-player.default-limit", 20),
-    LIMIT_PER_PLAYER_UNLIMITED_PLACEHOLDER("limits.per-player.unlimited-placeholder", "unlimited"),
+    LIMIT_PER_PLAYER_UNLIMITED_PLACEHOLDER("limits.per-player.unlimited-placeholder", "illimité"),
     CHUNK_RADIUS_ENABLED("radius.enabled", true),
     CHUNK_RADIUS_USE_PERMISSIONS("radius.use-permissions", true),
     CHUNK_RADIUS_DEFAULT_RADIUS("radius.default-radius", 1),
     MULTIPLIER_USE_PERMISSIONS("multiplier.use-permissions", true),
     MULTIPLIER_DEFAULT_MULTIPLIER("multiplier.default-multiplier", 1),
     GUIS_GENERATORS_GUI_ENABLED("guis.generators-gui.enabled", true),
-    GUIS_GENERATORS_GUI_TITLE("guis.generators-gui.title", "Generators"),
+    GUIS_GENERATORS_GUI_TITLE("guis.generators-gui.title", "Générateurs"),
     GUIS_GENERATORS_GUI_ROWS("guis.generators-gui.rows", 6),
     GUIS_GENERATORS_GUI_BORDER_ENABLED("guis.generators-gui.border.enabled", true),
     GUIS_GENERATORS_GUI_BORDER_MATERIAL("guis.generators-gui.border.material", "WHITE_STAINED_GLASS_PANE"),
@@ -55,14 +55,14 @@ public enum Config {
     GUIS_GENERATORS_GUI_PREVIOUS_PAGE_MATERIAL("guis.generators-gui.material.previous-page", "ARROW"),
     GUIS_GENERATORS_GUI_CLOSE_BUTTON_MATERIAL("guis.generators-gui.material.close-button", "BARRIER"),
     GUIS_UPGRADE_GUI_ENABLED("guis.upgrade-gui.enabled", true),
-    GUIS_UPGRADE_GUI_UPGRADE_ONE_FIRST_LINE("guis.upgrade-gui.upgradeOne.first-line", "&e\u300b &nClick to upgrade generator!&e \u300a"),
+    GUIS_UPGRADE_GUI_UPGRADE_ONE_FIRST_LINE("guis.upgrade-gui.upgradeOne.first-line", "&e\u300b &nCliquez pour améliorer le générateur !&e \u300a"),
     GUIS_UPGRADE_GUI_UPGRADE_ONE_LORE("guis.upgrade-gui.upgradeOne.lore", new ArrayList<E>()),
-    GUIS_UPGRADE_GUI_UPGRADE_ALL_FIRST_LINE("guis.upgrade-gui.upgradeAll.first-line", "&e\u300b &nClick to upgrade all generators!&e \u300a"),
+    GUIS_UPGRADE_GUI_UPGRADE_ALL_FIRST_LINE("guis.upgrade-gui.upgradeAll.first-line", "&e\u300b &nCliquez pour améliorer tous les générateurs !&e \u300a"),
     GUIS_UPGRADE_GUI_UPGRADE_ALL_LORE("guis.upgrade-gui.upgradeAll.lore", new ArrayList<E>()),
-    GUIS_UPGRADE_GUI_TITLE("guis.upgrade-gui.title", "Upgrade Generator"),
+    GUIS_UPGRADE_GUI_TITLE("guis.upgrade-gui.title", "Améliorer le générateur"),
     GUIS_UPGRADE_GUI_ROWS("guis.upgrade-gui.rows", 3),
     GUIS_SELL_GUI_ENABLED("guis.sell-gui.enabled", true),
-    GUIS_SELL_GUI_TITLE("guis.sell-gui.title", "Sell Items"),
+    GUIS_SELL_GUI_TITLE("guis.sell-gui.title", "Vendre les items"),
     GUIS_SELL_GUI_ROWS("guis.sell-gui.rows", 3),
     HOLOGRAMS_ENABLED("holograms.enabled", false),
     HOLOGRAMS_VIEW_DISTANCE("holograms.view-distance", 2000),
@@ -70,13 +70,13 @@ public enum Config {
     EVENTS_EVENT_DURATION("events.event-duration", "2m"),
     EVENTS_BROADCAST_ENABLED("events.broadcast.enabled", true),
     EVENTS_DROP_EVENT_ENABLED("events.drop-event.enabled", true),
-    EVENTS_DROP_EVENT_NAME("events.drop-event.name", "Drop Event"),
+    EVENTS_DROP_EVENT_NAME("events.drop-event.name", "Événement de drops"),
     EVENTS_DROP_EVENT_MULTIPLIER("events.drop-event.multiplier", 2),
     EVENTS_SELL_EVENT_ENABLED("events.sell-event.enabled", true),
-    EVENTS_SELL_EVENT_NAME("events.sell-event.name", "Sell Event"),
+    EVENTS_SELL_EVENT_NAME("events.sell-event.name", "Événement de vente"),
     EVENTS_SELL_EVENT_MULTIPLIER("events.sell-event.multiplier", 2),
     EVENTS_SPEED_EVENT_ENABLED("events.speed-event.enabled", true),
-    EVENTS_SPEED_EVENT_NAME("events.speed-event.name", "Speed Event"),
+    EVENTS_SPEED_EVENT_NAME("events.speed-event.name", "Événement de vitesse"),
     EVENTS_SPEED_EVENT_MULTIPLIER("events.speed-event.multiplier", 2),
     PARTICLES_ENABLED("particles.enabled", true),
     PARTICLES_TYPE("particles.type", "FIREWORKS_SPARK"),
@@ -103,7 +103,7 @@ public enum Config {
         }
         Object object = fileConfiguration.get(this.path);
         if (bl && !(object instanceof String)) {
-            throw new IllegalArgumentException("Cannot format non-string value!");
+            throw new IllegalArgumentException("Impossible de formater une valeur qui n'est pas une chaîne !");
         }
         return bl ? ChatUtil.translate(object.toString()) : object;
     }

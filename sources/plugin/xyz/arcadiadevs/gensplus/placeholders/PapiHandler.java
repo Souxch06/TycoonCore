@@ -1,7 +1,7 @@
 /*
- * Decompiled with CFR 0.152.
+ * Décompilé avec CFR 0.152.
  * 
- * Could not load the following classes:
+ * Impossible de charger les classes suivantes :
  *  lombok.Generated
  *  me.clip.placeholderapi.expansion.PlaceholderExpansion
  *  org.bukkit.OfflinePlayer
@@ -61,7 +61,7 @@ extends PlaceholderExpansion {
             }
             case "event_name" -> {
                 if (EventLoop.getActiveEvent().event() == null) {
-                    yield "No Events";
+                    yield "Aucun événement";
                 }
                 yield EventLoop.getActiveEvent().event().getName();
             }
@@ -79,7 +79,7 @@ extends PlaceholderExpansion {
             }
             case "gen_placed" -> this.locationsData.getGeneratorsCountByPlayer(offlinePlayer.getPlayer()).toString();
             case "sell_multiplier" -> PlayerUtil.getMultiplier(offlinePlayer.getPlayer()).toString();
-            default -> throw new IllegalStateException("Unexpected value: " + string);
+            default -> throw new IllegalStateException("Valeur inattendue : " + string);
         };
     }
 

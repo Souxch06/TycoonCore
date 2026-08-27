@@ -1,7 +1,7 @@
 /*
- * Decompiled with CFR 0.152.
+ * Décompilé avec CFR 0.152.
  * 
- * Could not load the following classes:
+ * Impossible de charger les classes suivantes :
  *  lombok.Generated
  *  org.bukkit.command.Command
  *  org.bukkit.command.CommandSender
@@ -53,7 +53,7 @@ implements TabCompleter {
                     return arrayList;
                 }
                 if (stringArray.length == 3) {
-                    return List.of("<limit>");
+                    return List.of("<limite>");
                 }
             }
             if (stringArray[0].equalsIgnoreCase("addlimit")) {
@@ -68,7 +68,7 @@ implements TabCompleter {
                     return arrayList;
                 }
                 if (stringArray.length == 3) {
-                    return List.of("<limit>");
+                    return List.of("<limite>");
                 }
             }
             if (stringArray[0].equalsIgnoreCase("startevent")) {
@@ -108,7 +108,7 @@ implements TabCompleter {
                     return list.stream().map(String::valueOf).toList();
                 }
                 if (stringArray.length == 4) {
-                    return List.of("[amount]");
+                    return List.of("[quantité]");
                 }
             }
             if (Arrays.stream(stringArray).anyMatch(string -> string.equalsIgnoreCase("giveall"))) {
@@ -120,7 +120,7 @@ implements TabCompleter {
                     return list.stream().map(String::valueOf).toList();
                 }
                 if (stringArray.length == 3) {
-                    return List.of("[amount]");
+                    return List.of("[quantité]");
                 }
             }
             if (Arrays.stream(stringArray).anyMatch(string -> string.equalsIgnoreCase("wand"))) {
@@ -138,10 +138,10 @@ implements TabCompleter {
                     return arrayList;
                 }
                 if (stringArray.length == 4) {
-                    return List.of("<uses>", "-1");
+                    return List.of("<utilisations>", "-1");
                 }
                 if (stringArray.length == 5) {
-                    return List.of("<multiplier>");
+                    return List.of("<multiplicateur>");
                 }
             }
             return null;

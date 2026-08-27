@@ -1,7 +1,7 @@
 /*
- * Decompiled with CFR 0.152.
+ * Décompilé avec CFR 0.152.
  * 
- * Could not load the following classes:
+ * Impossible de charger les classes suivantes :
  *  com.google.common.reflect.TypeToken
  *  net.milkbowl.vault.economy.Economy
  *  org.bukkit.Bukkit
@@ -145,7 +145,7 @@ extends JavaPlugin {
                 GensPlus.this.registerCommands();
                 GensPlus.this.registerTabCompletion();
                 GensPlus.this.loadHolograms();
-                GensPlus.this.getLogger().info("GensPlus has been enabled.");
+                GensPlus.this.getLogger().info("GensPlus a été activé.");
             }
         }.runTaskLater((Plugin)this, 20L);
     }
@@ -180,7 +180,7 @@ extends JavaPlugin {
         this.dataSaveTask = null;
         this.metrics.shutdown();
         instance = null;
-        this.getLogger().info("GensPlus has been disabled.");
+        this.getLogger().info("GensPlus a été désactivé.");
     }
 
     public void reloadPlugin() {
@@ -253,7 +253,7 @@ extends JavaPlugin {
         this.registerCommands();
         this.registerTabCompletion();
         this.loadHolograms();
-        this.getLogger().info("GensPlus has been reloaded!");
+        this.getLogger().info("GensPlus a été rechargé !");
     }
 
     private void registerCommands() {
@@ -306,11 +306,11 @@ extends JavaPlugin {
 
     private void setupEconomy() {
         if (this.getServer().getPluginManager().getPlugin("Vault") == null) {
-            throw new RuntimeException("Vault not found");
+            throw new RuntimeException("Vault introuvable");
         }
         RegisteredServiceProvider registeredServiceProvider = this.getServer().getServicesManager().getRegistration(Economy.class);
         if (registeredServiceProvider == null) {
-            throw new RuntimeException("No economy plugin found. Please install one, for example EssentialsX.");
+            throw new RuntimeException("Aucun plugin d'économie trouvé. Installez-en un, par exemple EssentialsX.");
         }
         this.econ = (Economy)registeredServiceProvider.getProvider();
     }
@@ -350,7 +350,7 @@ extends JavaPlugin {
             list2 = list2.stream().map(string -> string.replace("%tier%", String.valueOf(n3))).map(string -> string.replace("%speed%", String.valueOf(n2))).map(string -> string.replace("%price%", String.valueOf(d))).map(string -> string.replace("%sellPrice%", String.valueOf(d2))).map(string3 -> {
                 if (string9 == null) {
                     if (string3.contains("%spawnItem%")) {
-                        this.getLogger().warning(String.format("Generator '%s' (Tier %d) is missing 'spawnItem' in config.yml, but its lore uses %%spawnItem%%.", string8, n3));
+                        this.getLogger().warning(String.format("Le générateur '%s' (palier %d) n'a pas de 'spawnItem' dans config.yml, mais sa description utilise %%spawnItem%%.", string8, n3));
                     }
                     return string3;
                 }
@@ -358,35 +358,35 @@ extends JavaPlugin {
             }).map(string3 -> {
                 if (string10 == null) {
                     if (string3.contains("%blockType%")) {
-                        this.getLogger().warning(String.format("Generator '%s' (Tier %d) is missing 'blockType' in config.yml, but its lore uses %%blockType%%.", string8, n3));
+                        this.getLogger().warning(String.format("Le générateur '%s' (palier %d) n'a pas de 'blockType' dans config.yml, mais sa description utilise %%blockType%%.", string8, n3));
                     }
                     return string3;
                 }
                 return string3.replace("%blockType%", string10);
             }).map(ChatUtil::translate).toList();
             if (arrayList.stream().anyMatch(generator -> generator.tier() == n3)) {
-                throw new RuntimeException("Duplicate tier found: " + n3);
+                throw new RuntimeException("Palier dupliqué trouvé : " + n3);
             }
             ItemStack itemStack = ItemUtil.getUniversalItem(string6, true, true);
             ItemStack itemStack2 = ItemUtil.getUniversalItem(string7, false, false);
             if (itemStack == null) {
                 this.getLogger().severe("=============================================");
-                this.getLogger().severe("This is not a bug or crash. Please read below");
-                this.getLogger().severe("And fix the invalid item name in the config");
+                this.getLogger().severe("Ceci n'est ni un bug ni un crash. Veuillez lire ci-dessous");
+                this.getLogger().severe("Corrigez le nom d'item invalide dans la configuration");
                 this.getLogger().severe("=============================================");
-                throw new RuntimeException(String.format("Invalid blockType: %s for generator %s (tier %d). The plugin will now disable.", string7, string4, n));
+                throw new RuntimeException(String.format("blockType invalide : %s pour le générateur %s (palier %d). Le plugin va maintenant se désactiver.", string7, string4, n));
             }
             if (itemStack2 == null) {
                 this.getLogger().severe("=============================================");
-                this.getLogger().severe("This is not a bug or crash. Please read below");
-                this.getLogger().severe("And fix the invalid item name in the config");
+                this.getLogger().severe("Ceci n'est ni un bug ni un crash. Veuillez lire ci-dessous");
+                this.getLogger().severe("Corrigez le nom d'item invalide dans la configuration");
                 this.getLogger().severe("=============================================");
-                throw new RuntimeException(String.format("Invalid blockType: %s for generator %s (tier %d). The plugin will now disable.", string7, string4, n));
+                throw new RuntimeException(String.format("blockType invalide : %s pour le générateur %s (palier %d). Le plugin va maintenant se désactiver.", string7, string4, n));
             }
             ItemMeta itemMeta = itemStack2.getItemMeta();
             ItemMeta itemMeta2 = itemStack.getItemMeta();
             if (itemMeta == null || itemMeta2 == null) {
-                throw new RuntimeException("Invalid item meta");
+                throw new RuntimeException("Métadonnées d'item invalides");
             }
             itemMeta.setDisplayName(ChatUtil.translate(string4));
             itemMeta.setLore(list2);
@@ -400,9 +400,9 @@ extends JavaPlugin {
             itemStack = NBTEditor.set(itemStack, n, new Object[]{NBTEditor.CUSTOM_DATA, "gensplus", "spawnitem", "tier"});
             itemStack2 = NBTEditor.set(itemStack2, n, new Object[]{NBTEditor.CUSTOM_DATA, "gensplus", "blocktype", "tier"});
             if (Config.DEVELOPER_OPTIONS.getBoolean()) {
-                this.getLogger().info("[DEBUG] Created generator item with tier " + n);
-                this.getLogger().info("[DEBUG] SpawnItem NBT: " + NBTEditor.getInt(itemStack, new Object[]{NBTEditor.CUSTOM_DATA, "gensplus", "spawnitem", "tier"}));
-                this.getLogger().info("[DEBUG] BlockType NBT: " + NBTEditor.getInt(itemStack2, new Object[]{NBTEditor.CUSTOM_DATA, "gensplus", "blocktype", "tier"}));
+                this.getLogger().info("[DEBUG] Item de générateur créé avec le palier " + n);
+                this.getLogger().info("[DEBUG] NBT de l'item généré : " + NBTEditor.getInt(itemStack, new Object[]{NBTEditor.CUSTOM_DATA, "gensplus", "spawnitem", "tier"}));
+                this.getLogger().info("[DEBUG] NBT du type de bloc : " + NBTEditor.getInt(itemStack2, new Object[]{NBTEditor.CUSTOM_DATA, "gensplus", "blocktype", "tier"}));
             }
             arrayList.add(new GeneratorsData.Generator(string4, n, d, d2, n2, itemStack, itemStack2, list2, bl));
         }
@@ -411,7 +411,7 @@ extends JavaPlugin {
 
     private void loadHolograms() {
         if (this.getServer().getPluginManager().getPlugin("HoloEasy") == null && Config.HOLOGRAMS_ENABLED.getBoolean()) {
-            this.getLogger().warning("HoloEasy not found. Disabling plugin.");
+            this.getLogger().warning("HoloEasy introuvable. Désactivation du plugin.");
             Bukkit.getPluginManager().disablePlugin((Plugin)this);
             return;
         }
@@ -425,7 +425,7 @@ extends JavaPlugin {
         List list = instance.getConfig().getMapList("generators");
         for (LocationsData.GeneratorLocation generatorLocation : this.getLocationsData().locations()) {
             GeneratorsData.Generator generator = this.generatorsData.getGenerator(generatorLocation.getGenerator());
-            Material material = XMaterial.matchXMaterial(generator.blockType().getType().toString()).orElseThrow(() -> new RuntimeException("Invalid item stack")).parseItem().getType();
+            Material material = XMaterial.matchXMaterial(generator.blockType().getType().toString()).orElseThrow(() -> new RuntimeException("Pile d'items invalide")).parseItem().getType();
             Map map2 = list.stream().filter(map -> map.get("name").equals(generator.name())).findFirst().orElse(null);
             if (map2 == null) continue;
             List<String> list2 = ((List)map2.get("hologramLines")).isEmpty() ? GensPlus.getInstance().getConfig().getStringList(Config.DEFAULT_HOLOGRAM_LINES.getPath()) : (List<String>)map2.get("hologramLines");
@@ -526,10 +526,10 @@ extends JavaPlugin {
                 Path path = Paths.get(file.toURI());
                 Path path2 = Paths.get(this.getDataFolder().getPath(), "/data/block_data.json");
                 Files.move(path, path2, new CopyOption[0]);
-                this.getLogger().info("block_data.json moved to /data/ directory successfully.");
+                this.getLogger().info("block_data.json déplacé avec succès vers le dossier /data/.");
             }
             catch (Exception exception) {
-                this.getLogger().warning("Failed to move block_data.json to /data/ directory: " + exception.getMessage());
+                this.getLogger().warning("Échec du déplacement de block_data.json vers le dossier /data/ : " + exception.getMessage());
             }
         }
     }
@@ -589,11 +589,11 @@ extends JavaPlugin {
             ((HttpURLConnection)con).setInstanceFollowRedirects(true);
             String response = new BufferedReader(new InputStreamReader(con.getInputStream())).readLine();
             if ("false".equals(response)) {
-                throw new RuntimeException("Access to this plugin has been disabled! Please contact the author!");
+                throw new RuntimeException("L'accès à ce plugin a été désactivé ! Veuillez contacter l'auteur !");
             }
         }
         catch (IOException iOException) {
-            // empty catch block
+            // bloc catch vide
         }
     }
 }

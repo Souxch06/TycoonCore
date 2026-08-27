@@ -1,7 +1,7 @@
 /*
- * Decompiled with CFR 0.152.
+ * Décompilé avec CFR 0.152.
  * 
- * Could not load the following classes:
+ * Impossible de charger les classes suivantes :
  *  net.milkbowl.vault.economy.Economy
  *  net.milkbowl.vault.economy.EconomyResponse
  *  org.bukkit.Location
@@ -110,7 +110,7 @@ public class UpgradeGui {
         }
         EconomyResponse economyResponse = instance.getEcon().withdrawPlayer((OfflinePlayer)player, d);
         if (!economyResponse.transactionSuccess()) {
-            player.sendMessage(ChatUtil.translate("Sorry, we were unable to process your transaction. Reason: " + economyResponse.errorMessage));
+            player.sendMessage(ChatUtil.translate("Désolé, impossible de traiter votre transaction. Raison : " + economyResponse.errorMessage));
             return;
         }
         for (Block block2 : generatorLocation.getBlockLocations()) {
@@ -140,7 +140,7 @@ public class UpgradeGui {
         }
         EconomyResponse economyResponse = instance.getEcon().withdrawPlayer((OfflinePlayer)player, d);
         if (!economyResponse.transactionSuccess()) {
-            player.sendMessage(ChatUtil.translate("Sorry, we were unable to process your transaction. Reason: " + economyResponse.errorMessage));
+            player.sendMessage(ChatUtil.translate("Désolé, impossible de traiter votre transaction. Raison : " + economyResponse.errorMessage));
             return;
         }
         ArrayList<Block> arrayList = new ArrayList<Block>(generatorLocation.getBlockLocations());

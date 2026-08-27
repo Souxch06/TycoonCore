@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Verify that artifacts/extracted contains exactly the files from the original JAR."""
+"""Vérifie que artifacts/extracted contient tous les chemins de fichiers du JAR original."""
 
 from pathlib import Path
 from zipfile import ZipFile
@@ -51,4 +51,4 @@ if extra:
 if missing or extra:
     sys.exit(1)
 
-print("\nOK: artifacts/extracted correspond exactement au contenu fichier par fichier du JAR.")
+print("\nOK: artifacts/extracted contient tous les fichiers attendus du JAR.")
