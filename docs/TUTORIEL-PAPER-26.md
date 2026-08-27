@@ -207,14 +207,20 @@ fonctionnent aussi) :
 | --- | --- |
 | `/ah` | ouvre le marché (45 cases, 36 annonces par page) |
 | `/ah sell <prix> [quantité]` | met en vente l'item en main, **prix à la pièce** (défaut : la pile entière) |
+| `/ah returns` (ou `coffre`) | ouvre le **coffre de récupération** : objets des annonces expirées, retirées ou non livrées |
+| `/ah claim [tout]` | récupère un emplacement précis, ou tout ce qui rentre |
 | `/ah search <motif>` | filtre par nom d'item (`/ah search` seul = tout revoir) |
 | `/ah own` | ne voit que ses annonces |
 | `/ah cancel` / `/ah cancel <id>` | récupère tout, ou une annonce précise |
 | `/ah stats` | annonces totales, les tiennes, taxe, expiration, blacklist |
 | `/ah remove <id>`, `/ah reload` | administration (`valoriatycoon.ah.admin`) |
 
-Dans l'interface : **clic gauche = 1 pièce**, **clic droit = 1 stack**, **Maj = tout le lot** ;
-sur **tes** annonces, **Maj + clic = annuler et récupérer**. En bas : pages, filtre, tri
+Dans l'interface : **un clic sur une annonce = achat du lot entier** (tout ou rien : si le lot n'entre
+pas dans ton inventaire, rien n'est débité, rien n'est déplacé). Le **prix à la pièce reste affiché**
+dans la description — c'est le repère utile pour comparer à la moyenne du marché, mais il n'y a pas
+d'achat partiel. Sur **tes** annonces, **Maj + clic = annuler et récupérer**. La case
+**« Coffre de récupération »** (avec le nombre d'objets qui t'attendent) ouvre la vue du coffre : un clic
+sur un objet le rend, « Tout récupérer » vide le coffre autant que l'inventaire le permet. En bas : pages, filtre, tri
 (numéro / prix croissant / prix décroissant / plus récentes), bascule marché↔mes annonces, aide.
 
 Config (`plugins/ValoriaTycoon/config.yml`) :
@@ -255,7 +261,8 @@ Garanties de conception (c'est ce qui rend un marché utilisable en communauté)
   de `NoSuchMethodError` quand Minecraft renomme. Les contrôles du dépôt le vérifient dans le *code*
   (commentaires exclus) et sur le `.class` livré.
 
-Reste hors de ce module (à demander si besoin) : encherès, paniers, historique par joueur, notification
+Reste hors de ce module (à demander si besoin) : encherès, paniers, historique par joueur, purge
+automatique des vieux coffres (les objets y restent jusqu'à récupération, volontairement), notification
 de vente par mail/discord, recherche par texte libre côté GUI.
 
 ## Tableau de bord (`/sb`)

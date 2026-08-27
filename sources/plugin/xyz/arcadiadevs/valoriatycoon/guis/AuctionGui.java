@@ -39,7 +39,9 @@ public class AuctionGui implements InventoryHolder {
     private static final int SLOT_SORT = 40;
     private static final int SLOT_OWN = 42;
     private static final int SLOT_HELP = 41;
+    private static final int SLOT_RETURNS = 43;
     private static final int SLOT_NEXT = 44;
+    private static final int SLOT_BACK = 36;
 
     /** Une seule vue ouverte par joueur : c'est ce qui rend le rafraîchissement global simple et sûr. */
     private static final Map<UUID, AuctionGui> VIEWS = java.util.Collections.synchronizedMap(new HashMap<UUID, AuctionGui>());
@@ -48,6 +50,8 @@ public class AuctionGui implements InventoryHolder {
     private final Player player;
     private final List<Integer> shownIds = new ArrayList<Integer>();
     private Inventory inventory;
+    /** 0 = marché, 1 = coffre de récupération (objets expirés, retirés, non livrés). */
+    private int mode = 0;
     private int page = 0;
     private int sort = 0;
     private boolean ownOnly = false;
@@ -141,6 +145,10 @@ public class AuctionGui implements InventoryHolder {
 
     /** Reconstruit le contenu de la vue, en gardant la même {@link Inventory} pour ne pas faire clignoter. */
     private void render() {
+        if (this.mode == 1) {
+            this.renderReturns();
+            return;
+        }
         List<Integer> ids = this.currentIds();
         int pages = this.pages(ids);
         if (this.page > pages - 1) {
@@ -177,14 +185,18 @@ public class AuctionGui implements InventoryHolder {
         this.inventory.setItem(SLOT_REFRESH, this.button(Material.CLOCK, "&eActualiser",
                 "&7Recharge les prix et les quantités."));
         this.inventory.setItem(SLOT_HELP, this.button(Material.OAK_SIGN, "&aAide du marché",
-                "&8» &7Clic gauche : acheter &f1 pièce",
-                "&8» &7Clic droit : acheter &fun stack",
-                "&8» &7Maj + clic : acheter &ftout le lot",
+                "&8» &7Clic sur une annonce : acheter &ftout le lot",
+                "&8» &7Le prix affiché est &fà la pièce&7, pour comparer à la moyenne",
                 "&8» &7Sur &ftes propres &7objets, Maj + clic : &canuler",
                 "",
                 "&8» &7Mettre en vente : &f/ah sell <prix> [quantité]",
                 "&8» &7Récupérer tout : &f/ah cancel",
                 "&8» &7Statistiques : &f/ah stats"));
+        int pending = AuctionHouse.pendingReturns(this.player.getUniqueId());
+        this.inventory.setItem(SLOT_RETURNS, this.button(pending > 0 ? Material.CHEST : Material.TRAPPED_CHEST,
+                pending > 0 ? "&aCoffre de récupération &f(" + pending + ")" : "&eCoffre de récupération",
+                "&7Les objets des annonces expirées,", "&7retirées ou non livrées y attendent.",
+                "&7Clic sur un objet pour le récupérer."));
         if (ids.isEmpty()) {
             this.inventory.setItem(13, this.button(Material.CAULDRON, "&eRien sur le marché",
                     "&7Sois le premier : &f/ah sell 100", "&7avec l'item en main."));
@@ -231,7 +243,8 @@ public class AuctionGui implements InventoryHolder {
                 lore.add(AuctionHouse.color(left <= 0L ? "&cExpirée" : "&7Expire dans &f" + Math.max(1L, left / 3600000L) + "h"));
             }
             boolean mine = this.player.getUniqueId().equals(AuctionHouse.sellerIdOf(id));
-            lore.add(AuctionHouse.color(mine ? "&eMaj + clic : annuler et récupérer" : "&eClique pour acheter"));
+            lore.add(AuctionHouse.color(mine ? "&eMaj + clic : annuler et récupérer"
+                    : "&eClic : acheter &ftout le lot&e (" + AuctionHouse.amountAt(id) + "×)"));
             meta.setLore(lore);
             view.setItemMeta(meta);
         }
@@ -251,6 +264,62 @@ public class AuctionGui implements InventoryHolder {
             item.setItemMeta(meta);
         }
         return item;
+    }
+
+    /** Vue « coffre de récupération » : un clic sur un objet le rend ; rien ne se perd. */
+    private void renderReturns() {
+        this.inventory.clear();
+        this.shownIds.clear();
+        List<ItemStack> pending = AuctionHouse.returnItems(this.player.getUniqueId());
+        int slot = 0;
+        for (ItemStack stored : pending) {
+            if (slot >= LIST_SLOTS) {
+                break;
+            }
+            ItemStack view = stored.clone();
+            ItemMeta meta = view.getItemMeta();
+            if (meta != null) {
+                List<String> lore = meta.hasLore() ? new ArrayList<String>(meta.getLore()) : new ArrayList<String>();
+                lore.add("");
+                lore.add(AuctionHouse.color("&eClic : récupérer cet objet"));
+                meta.setLore(lore);
+                view.setItemMeta(meta);
+            }
+            this.inventory.setItem(slot, view);
+            slot++;
+        }
+        if (pending.isEmpty()) {
+            this.inventory.setItem(13, this.button(Material.CAULDRON, "&eCoffre vide",
+                    "&7Les objets des annonces expirées,", "&7retirées ou non livrées", "&7arrivent ici."));
+        }
+        this.inventory.setItem(SLOT_BACK, this.button(Material.ARROW, "&eRetour au marché",
+                "&7" + pending.size() + " objet(s) en attente"));
+        this.inventory.setItem(SLOT_NEXT, this.button(Material.HOPPER, "&aTout récupérer",
+                "&7Prend autant que l'inventaire le", "&7permet ; le reste reste au coffre."));
+    }
+
+    /** Bascule marché <-> coffre de récupération. */
+    public void toggleReturns() {
+        this.mode = this.mode == 0 ? 1 : 0;
+        this.page = 0;
+        this.render();
+    }
+
+    /** Ouvre directement le coffre (suite d'une notification en chat, par exemple). */
+    public static void openReturns(Player player) {
+        ensureHandler();
+        AuctionGui gui = VIEWS.get(player.getUniqueId());
+        if (gui == null) {
+            gui = new AuctionGui(player);
+            VIEWS.put(player.getUniqueId(), gui);
+        }
+        gui.mode = 1;
+        gui.render();
+        player.openInventory(gui.inventory);
+    }
+
+    int mode() {
+        return this.mode;
     }
 
     /** Gestionnaire unique pour toutes les vues, enregistré au premier accès au marché. */
@@ -276,19 +345,29 @@ public class AuctionGui implements InventoryHolder {
         }
 
         private static void handle(AuctionGui gui, Player player, int slot, int listing, boolean shift, boolean right) {
+            if (gui.mode() == 1) {
+                if (slot == SLOT_BACK) {
+                    gui.toggleReturns();
+                    return;
+                }
+                if (slot == SLOT_NEXT) {
+                    player.sendMessage(AuctionHouse.claimAll(player));
+                    gui.render();
+                    return;
+                }
+                if (slot >= 0 && slot < LIST_SLOTS) {
+                    player.sendMessage(AuctionHouse.claim(player, slot));
+                }
+                gui.render();
+                return;
+            }
             String message = null;
             if (listing > 0) {
                 boolean mine = player.getUniqueId().equals(AuctionHouse.sellerIdOf(listing));
-                if (mine && shift) {
+                if (mine && (shift || player.hasPermission("valoriatycoon.ah.admin"))) {
                     message = AuctionHouse.cancel(player, listing);
-                } else if (mine && player.hasPermission("valoriatycoon.ah.admin")) {
-                    message = AuctionHouse.cancel(player, listing);
-                } else if (right) {
-                    message = AuctionHouse.buy(player, listing, 64);
-                } else if (shift) {
-                    message = AuctionHouse.buy(player, listing, -1);
                 } else {
-                    message = AuctionHouse.buy(player, listing, 1);
+                    message = AuctionHouse.buy(player, listing);
                 }
             } else if (slot == SLOT_PREVIOUS) {
                 gui.page = Math.max(0, gui.page - 1);
@@ -307,13 +386,15 @@ public class AuctionGui implements InventoryHolder {
                 gui.page = 0;
                 gui.render();
                 return;
+            } else if (slot == SLOT_RETURNS) {
+                gui.toggleReturns();
+                return;
             } else if (slot == SLOT_REFRESH || slot == SLOT_SEARCH || slot == SLOT_HELP) {
-                gui.render();
                 message = slot == SLOT_HELP ? AuctionHouse.summary(player) : null;
+                gui.render();
             } else {
                 return;
             }
-            gui.render();
             if (message != null) {
                 player.sendMessage(message);
             }

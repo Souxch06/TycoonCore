@@ -26,7 +26,9 @@ implements Listener {
     public void onPlayerJoin(PlayerJoinEvent playerJoinEvent) {
         Player player = playerJoinEvent.getPlayer();
         ScoreboardService.show(player);
-        AuctionHouse.deliverReturns(player);
+        // Rien n'est déposé d'office au connect : le joueur voit ce qui l'attend dans le coffre du
+        // marché (case « Coffre de récupération », ou /ah returns) et vient le chercher lui-même.
+        AuctionHouse.notifyReturns(player);
     }
 
     @EventHandler
@@ -100,6 +102,20 @@ implements Listener {
                 AuctionGui.search(player, ahArgs.length > 2 ? ahArgs[2] : "");
                 return;
             }
+            if (ahAction.equals("returns") || ahAction.equals("coffre")) {
+                AuctionGui.openReturns(player);
+                return;
+            }
+            if (ahAction.equals("claim")) {
+                if (ahArgs.length > 2 && ahArgs[2].equalsIgnoreCase("all")) {
+                    player.sendMessage(AuctionHouse.claimAll(player));
+                } else if (ahArgs.length > 2) {
+                    player.sendMessage(AuctionHouse.claim(player, parseId(ahArgs[2])));
+                } else {
+                    player.sendMessage(AuctionHouse.claimAll(player));
+                }
+                return;
+            }
             if (ahAction.equals("own") || ahAction.equals("mes")) {
                 AuctionGui.openOwn(player);
                 return;
@@ -139,7 +155,7 @@ implements Listener {
                 return;
             }
             player.sendMessage(AuctionHouse.color("&8[&aAH&8] &f/ah&7 ouvrir · &f/ah sell <prix> [qté]&7 · "
-                    + "&f/ah cancel [id]&7 · &f/ah search <motif>&7 · &f/ah own&7 · &f/ah stats"));
+                    + "&f/ah cancel [id]&7 · &f/ah search <motif>&7 · &f/ah own&7 · &f/ah returns&7 · &f/ah claim [all]&7 · &f/ah stats"));
             return;
         }
 

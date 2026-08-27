@@ -216,12 +216,12 @@ public final class AuctionHouse {
     // ------------------------------------------------------------------ achat
 
     /**
-     * Achat. {@code wanted} = nombre de pièces voulues, ou {@code -1} pour tout le lot.
-     *
-     * <p>Ordre : débit, livraison, remboursement symétrique du non-livré, puis paiement du vendeur.
-     * Toute sortie anticipée laisse le joueur et l'annonce dans un état cohérent.</p>
+     * Achat du lot entier, tout ou rien. Le prix à la pièce reste affiché (repère face à la moyenne
+     * du marché) mais il n'y a pas d'achat partiel : un lot à moitié transféré est plus coûteux à
+     * expliquer qu'un lot non acheté. La capacité d'inventaire est vérifiée AVANT tout mouvement,
+     * puis débit, puis livraison : si ça ne rentre pas, inventaire, solde et annonce sont intacts.
      */
-    public static String buy(Player player, int id, int wanted) {
+    public static String buy(Player player, int id) {
         ensureStarted();
         if (!store.has(id)) {
             return color("&cCette annonce vient d'être vendue, annulée ou expirée.");
@@ -237,50 +237,42 @@ public final class AuctionHouse {
             AuctionGui.refreshAll();
             return color("&cAnnonce incomplète (item illisible) : retirée, rien ne t'est débité.");
         }
-        int available = store.amount(id);
-        if (available <= 0) {
-            available = lot.getAmount();
+        int size = store.amount(id);
+        if (size <= 0) {
+            size = lot.getAmount();
         }
-        int want = wanted <= 0 || wanted > available ? available : wanted;
-        double unit = store.unitPrice(id);
-        double total = unit * want;
+        lot.setAmount(size);
+        double total = store.total(id);
+        if (capacityFor(player, lot.getMaxStackSize()) < size) {
+            return color("&eCet achat demande &f" + size + "&e places libres : rien n'a été débité.");
+        }
         Economy economy = economy();
         OfflinePlayer buyer = Bukkit.getOfflinePlayer(player.getUniqueId());
         if (!economy.has(buyer, total)) {
-            return color("&cIl te faut " + money(total) + " pour " + want + "× " + materialName(lot.getType()) + ".");
+            return color("&cIl te faut " + money(total) + " pour " + size + "× " + materialName(lot.getType()) + ".");
         }
         EconomyResponse withdraw = economy.withdrawPlayer(buyer, total);
         if (!withdraw.transactionSuccess()) {
             return color("&cPaiement refusé par l'économie : " + withdraw.errorMessage);
         }
-        ItemStack batch = lot.clone();
-        batch.setAmount(want);
-        Collection<ItemStack> refused = player.getInventory().addItem(batch).values();
+        Collection<ItemStack> refused = player.getInventory().addItem(lot).values();
         int notDelivered = 0;
         for (ItemStack leftover : refused) {
             notDelivered += leftover.getAmount();
         }
-        int delivered = want - notDelivered;
-        if (delivered <= 0) {
-            // Rien n'a pu être remis : on rend l'intégralité et on ne touche pas à l'annonce.
-            economy.depositPlayer(buyer, total);
-            player.updateInventory();
-            return color("&eInventaire plein : achat annulé, &a" + money(total) + "&e rendu.");
-        }
         if (notDelivered > 0) {
-            // Le non-livré est remboursé et rendu à l'annonce. Si le remboursement était refusé par
-            // l'économie, les items sont posés aux pieds de l'acheteur : un objet ne se perd jamais,
-            // au prix d'une monnaie compensée et tracée dans le log.
-            EconomyResponse back = economy.depositPlayer(buyer, unit * notDelivered);
+            // Inatteignable après le contrôle de capacité, donc traité en sûreté : la part non livrée
+            // est remboursée et remise en vente, jamais lâchée au sol.
+            EconomyResponse back = economy.depositPlayer(buyer, store.unitPrice(id) * notDelivered);
             if (!back.transactionSuccess()) {
-                for (ItemStack leftover : refused) {
-                    player.getWorld().dropItemNaturally(player.getLocation(), leftover);
-                }
+                store.addReturn(player.getUniqueId(), new ItemStack(lot.getType(), notDelivered));
                 ValoriaTycoon.getInstance().getLogger().warning("[AH] remboursement refusé (" + back.errorMessage
-                        + ") pour " + player.getName() + ", items rendus au sol, annonce n°" + id);
+                        + ") : part non livrée déposée au coffre de récupération, annonce n°" + id);
             }
-            store.setAmount(id, available - delivered);
-            total = unit * delivered;
+            store.setAmount(id, notDelivered);
+            player.updateInventory();
+            AuctionGui.refreshAll();
+            return color("&eLivré partiellement (&f" + (size - notDelivered) + "&e), le reste est remboursé.");
         }
         double net = total - total * salesTax;
         if (sellerId != null) {
@@ -289,22 +281,19 @@ public final class AuctionHouse {
         player.updateInventory();
         Player onlineSeller = sellerId == null ? null : Bukkit.getPlayer(sellerId);
         if (onlineSeller != null && onlineSeller.isOnline()) {
-            onlineSeller.sendMessage(color("&a" + player.getName() + " achète " + delivered + "× "
+            onlineSeller.sendMessage(color("&a" + player.getName() + " achète ton lot de " + size + "× "
                     + materialName(lot.getType()) + " &7(+" + money(net) + ")"));
         }
-        store.recordSale(lot.getType(), unit, delivered, player.getName(), sellerName);
-        if (delivered >= available) {
-            store.remove(id);
-        }
+        store.recordSale(lot.getType(), size <= 0 ? 0.0D : total / size, size, player.getName(), sellerName);
+        store.remove(id);
         AuctionGui.refreshAll();
-        broadcast(player.getName() + " achète " + delivered + "× " + materialName(lot.getType())
-                + " à " + sellerName + " pour " + money(total));
-        return color("&aAcheté " + delivered + "× " + materialName(lot.getType()) + " pour " + money(total) + ".");
+        broadcast(player.getName() + " achète " + size + "× " + materialName(lot.getType()) + " à " + sellerName);
+        return color("&aAcheté " + size + "× " + materialName(lot.getType()) + " pour " + money(total) + ".");
     }
 
     // ------------------------------------------------------------------ annulation / admin
 
-    /** Annule une annonce précise (id > 0) ou toutes celles du joueur (id <= 0). */
+    /** Annule une annonce (id &gt; 0) ou toutes celles du joueur ; l'objet passe au coffre si besoin. */
     public static String cancel(Player player, int id) {
         ensureStarted();
         if (id > 0) {
@@ -315,26 +304,33 @@ public final class AuctionHouse {
                 return color("&cCette annonce ne t'appartient pas.");
             }
             ItemStack item = store.item(id);
-            deliver(player, item);
             store.remove(id);
+            boolean pending = giveBack(player, item);
             AuctionGui.refreshAll();
-            return color("&aAnnonce n°&f" + id + "&a annulée, item rendu.");
+            return color("&aAnnonce n°&f" + id + "&a annulée, " + (pending
+                    ? "objet déposé au &fcoffre de récupération" : "objet rendu") + "&a.");
         }
         List<Integer> owned = store.sellerListings(player.getUniqueId());
         if (owned.isEmpty()) {
             return color("&cTu n'as aucune annonce en cours.");
         }
+        int pending = 0;
         for (Integer entry : owned) {
-            deliver(player, store.item(entry.intValue()));
-            store.remove(entry.intValue());
+            int listing = entry.intValue();
+            ItemStack item = store.item(listing);
+            store.remove(listing);
+            if (giveBack(player, item)) {
+                pending++;
+            }
         }
         AuctionGui.refreshAll();
-        return color("&a" + owned.size() + " annonce(s) annulée(s), items rendus.");
+        return color("&a" + owned.size() + " annonce(s) annulée(s)" + (pending > 0
+                ? "&7, " + pending + " objet(s) au &fcoffre de récupération" : "&a, objets rendus") + "&a.");
     }
 
     /**
-     * Retrait administratif d'une annonce : l'objet revient au vendeur, en main propre s'il est
-     * connecté, sinon déposé dans sa boîte de rendus (rien n'est détruit, même pour un absent).
+     * Retrait administratif : l'objet part au coffre du vendeur, en ligne ou non. Un admin ne peut
+     * donc pas faire « disparaître » un objet, et le joueur le voit de lui-même.
      */
     public static String adminRemove(int id, Player admin) {
         ensureStarted();
@@ -344,34 +340,89 @@ public final class AuctionHouse {
         UUID seller = store.sellerId(id);
         ItemStack item = store.item(id);
         String name = store.sellerName(id);
+        store.remove(id);
         if (seller != null && item != null) {
+            store.addReturn(seller, item);
             Player online = Bukkit.getPlayer(seller);
             if (online != null && online.isOnline()) {
-                deliver(online, item);
-            } else {
-                store.addReturn(seller, item);
+                online.sendMessage(color("&eUn administrateur a retiré ton annonce n°&f" + id
+                        + "&e : objet au &fcoffre de récupération&7 (&f/ah returns&e)."));
             }
         }
-        store.remove(id);
         AuctionGui.refreshAll();
-        return color("&aAnnonce n°&f" + id + "&a retirée" + (seller == null ? "" : ", item renvoyé à &f" + name) + "&a.");
+        return color("&aAnnonce n°&f" + id + "&a retirée"
+                + (seller == null ? "" : ", objet déposé pour &f" + name) + "&a.");
     }
 
-    /** Rend les items en attente (expiration, retrait admin, vente interrompue). */
-    public static void deliverReturns(Player player) {
+    /** Objets en attente pour ce joueur (compteur du bouton du coffre). */
+    public static int pendingReturns(UUID player) {
         ensureStarted();
-        List<ItemStack> pending = store.takeReturns(player.getUniqueId());
-        if (pending.isEmpty()) {
-            return;
-        }
-        for (ItemStack item : pending) {
-            deliver(player, item);
-        }
-        player.sendMessage(color("&a" + pending.size() + " objet(s) du marché te "
-                + (pending.size() == 1 ? "sont rendus" : " sont rendus") + "&a."));
+        return store.returnItems(player).size();
     }
 
-    /** Cycle d'expiration : à appeler périodiquement ; n'affecte que les annonces réellement échues. */
+    /** Contenu du coffre de récupération, dans l'ordre des emplacements. */
+    public static List<ItemStack> returnItems(UUID player) {
+        ensureStarted();
+        return store.returnItems(player);
+    }
+
+    /** Au connect : on prévient, on ne dépose rien d'office — le joueur vient chercher lui-même. */
+    public static void notifyReturns(Player player) {
+        ensureStarted();
+        int pending = store.returnItems(player.getUniqueId()).size();
+        if (pending > 0) {
+            player.sendMessage(color("&8[&aAH&8] &f" + pending + " objet(s) t'attendent dans le "
+                    + "&fcoffre de récupération&7 (&f/ah returns&e, clic sur l'objet)."));
+        }
+    }
+
+    /** Récupère un emplacement précis ; si l'inventaire est plein, rien n'est déplacé. */
+    public static String claim(Player player, int slot) {
+        ensureStarted();
+        List<ItemStack> pending = store.returnItems(player.getUniqueId());
+        if (slot < 0 || slot >= pending.size()) {
+            return color("&cRien à cet emplacement.");
+        }
+        ItemStack item = pending.get(slot);
+        if (capacityFor(player, item.getMaxStackSize()) < item.getAmount()) {
+            int missing = item.getAmount() - capacityFor(player, item.getMaxStackSize());
+            int stacks = (missing + item.getMaxStackSize() - 1) / item.getMaxStackSize();
+            return color("&eInventaire plein : libère &f" + stacks + " emplacement(s)&e, "
+                    + "&erien ne bouge (&f/ah claim all&7 une fois la place faite).");
+        }
+        pending.remove(slot);
+        store.setReturnItems(player.getUniqueId(), pending);
+        player.getInventory().addItem(item);
+        player.updateInventory();
+        AuctionGui.refreshAll();
+        return color("&aObjet récupéré &7(" + pending.size() + " restant(s) au coffre).");
+    }
+
+    /** Vide le coffre tant que l'inventaire le permet, et s'arrête proprement sinon. */
+    public static String claimAll(Player player) {
+        ensureStarted();
+        List<ItemStack> pending = store.returnItems(player.getUniqueId());
+        int taken = 0;
+        while (!pending.isEmpty()) {
+            ItemStack next = pending.get(0);
+            if (capacityFor(player, next.getMaxStackSize()) < next.getAmount()) {
+                break;
+            }
+            pending.remove(0);
+            player.getInventory().addItem(next);
+            taken++;
+        }
+        store.setReturnItems(player.getUniqueId(), pending);
+        player.updateInventory();
+        AuctionGui.refreshAll();
+        if (taken == 0) {
+            return color("&cRien à récupérer, ou inventaire plein.");
+        }
+        return color("&a" + taken + " objet(s) récupéré(s)"
+                + (pending.isEmpty() ? "&a, coffre vide." : "&7, &f" + pending.size() + "&7 encore en attente."));
+    }
+
+    /** Expirations : l'objet part au coffre de récupération. Jamais au sol, jamais détruit. */
     public static void sweep() {
         if (store == null || expiryHours <= 0) {
             return;
@@ -386,12 +437,11 @@ public final class AuctionHouse {
             UUID seller = store.sellerId(id);
             ItemStack item = store.item(id);
             if (seller != null && item != null) {
+                store.addReturn(seller, item);
                 Player online = Bukkit.getPlayer(seller);
                 if (online != null && online.isOnline()) {
-                    deliver(online, item);
-                    online.sendMessage(color("&7Ton annonce n°&f" + id + "&7 a expiré : item rendu."));
-                } else {
-                    store.addReturn(seller, item);
+                    online.sendMessage(color("&7Annonce n°&f" + id + "&7 expirée : objet au "
+                            + "&fcoffre de récupération&7 (&f/ah returns&7)."));
                 }
             }
             store.remove(id.intValue());
@@ -519,15 +569,41 @@ public final class AuctionHouse {
         return plugin == null ? null : plugin.getEcon();
     }
 
-    private static void deliver(Player player, ItemStack item) {
+    /**
+     * Rend un objet : dans l'inventaire si ça tient, sinon au coffre de récupération du marché.
+     * Rien n'est jamais lâché au sol ici (un item qui tombe peut brûler, couler ou être ramassé).
+     * @return {@code true} si l'objet a dû être mis en attente
+     */
+    private static boolean giveBack(Player player, ItemStack item) {
         if (item == null) {
-            return;
+            return false;
         }
-        Collection<ItemStack> refused = player.getInventory().addItem(item).values();
-        for (ItemStack leftover : refused) {
-            player.getWorld().dropItemNaturally(player.getLocation(), leftover);
+        if (capacityFor(player, item.getMaxStackSize()) < item.getAmount()) {
+            store.addReturn(player.getUniqueId(), item);
+            player.updateInventory();
+            return true;
         }
+        player.getInventory().addItem(item);
         player.updateInventory();
+        return false;
+    }
+
+    /**
+     * Places vides × taille max d'un stack, sur les 36 cases de l'inventaire principal. Conservateur
+     * par design : seules les cases vides comptent, jamais les fusions possibles. On peut refuser un
+     * achat qui aurait « à peu près » tenu, jamais l'inverse, ce qui garantit qu'un lot n'est jamais
+     * à moitié transféré.
+     */
+    private static int capacityFor(Player player, int maxStackSize) {
+        int max = maxStackSize <= 0 ? 64 : Math.min(maxStackSize, 64);
+        int free = 0;
+        for (int slot = 0; slot < 36; ++slot) {
+            ItemStack current = player.getInventory().getItem(slot);
+            if (current == null || current.getType().isAir()) {
+                free++;
+            }
+        }
+        return free * max;
     }
 
     /** Un item porte-t-il une donnée posée par ce plugin (bloc/objet de générateur identifié) ? */
@@ -788,36 +864,53 @@ public final class AuctionHouse {
             return this.yaml.getInt("stats." + material.name() + ".sales", 0);
         }
 
+        /**
+         * Ajoute un objet au coffre. La liste est réécrite en bloc : les emplacements restent
+         * 0..n-1, donc le clic de l'interface ne peut pas viser le mauvais objet.
+         */
         void addReturn(UUID seller, ItemStack item) {
-            String base = "returns." + seller;
-            int index = this.yaml.getInt(base + "-size", 0);
-            if (index >= RETURN_KEEP_PER_PLAYER) {
-                ValoriaTycoon.getInstance().getLogger().warning("[AH] boîte de rendements pleine pour " + seller
-                        + " : un item a été écarté, à vérifier dans auction.yml");
+            List<ItemStack> pending = this.returnItems(seller);
+            if (pending.size() >= RETURN_KEEP_PER_PLAYER) {
+                ValoriaTycoon.getInstance().getLogger().warning("[AH] coffre de récupération plein pour " + seller
+                        + " : objet non ajouté, à traiter à la main dans auction.yml (rien n'est détruit)");
+                return;
             }
-            this.yaml.set(base + "." + index + ".item", item);
-            this.yaml.set(base + "-size", index + 1);
-            this.save();
+            pending.add(item);
+            this.setReturnItems(seller, pending);
         }
 
-        List<ItemStack> takeReturns(UUID seller) {
+        List<ItemStack> returnItems(UUID seller) {
             List<ItemStack> items = new ArrayList<ItemStack>();
-            String base = "returns." + seller;
-            ConfigurationSection section = this.yaml.getConfigurationSection(base);
-            if (section != null) {
-                for (String key : section.getKeys(false)) {
-                    ItemStack item = section.getItemStack(key + ".item");
-                    if (item != null) {
-                        items.add(item);
-                    }
+            ConfigurationSection section = this.yaml.getConfigurationSection("returns." + seller);
+            if (section == null) {
+                return items;
+            }
+            List<Integer> indexes = new ArrayList<Integer>();
+            for (String key : section.getKeys(false)) {
+                try {
+                    indexes.add(Integer.valueOf(Integer.parseInt(key)));
+                }
+                catch (NumberFormatException exception) {
+                    // clé inattendue : laissée sur le disque, ignorée à l'affichage
                 }
             }
-            if (!items.isEmpty()) {
-                this.yaml.set(base, null);
-                this.yaml.set(base + "-size", null);
-                this.save();
+            java.util.Collections.sort(indexes);
+            for (Integer index : indexes) {
+                ItemStack item = section.getItemStack(index + ".item");
+                if (item != null) {
+                    items.add(item);
+                }
             }
             return items;
+        }
+
+        void setReturnItems(UUID seller, List<ItemStack> items) {
+            String base = "returns." + seller;
+            this.yaml.set(base, null);
+            for (int index = 0; index < items.size(); ++index) {
+                this.yaml.set(base + "." + index + ".item", items.get(index));
+            }
+            this.save();
         }
     }
 }

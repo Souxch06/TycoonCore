@@ -235,12 +235,21 @@ def verify_tree():
           "ATOMIC_MOVE" in ah_src and '.tmp' in ah_src,
           "sans écriture atomique, un crash pendant la sauvegarde corromprait le marché")
     check("AuctionHouse : achats/annulations passent par le prix unitaire",
-          "unit-price" in ah_src and "unit * delivered" in ah_src)
+          'section.contains("unit-price")' in ah_src and "store.total(id)" in ah_src
+          and "store.unitPrice(id) * notDelivered" in ah_src,
+          "le débit doit venir du total stocké et le remboursement de la part non livrée du prix unitaire")
     check("AuctionHouse : annonces de l'ancien format (prix au lot) reprises sans perte ni gratuité",
           'section.contains("unit-price")' in ah_src and 'getDouble("price"' in ah_src,
           "sans ce repli, une annonce existante aurait un prix unitaire de 0 et serait achetable gratuitement")
-    check("AuctionHouse : retours hors-ligne (mailbox returns)",
-          "addReturn" in ah_src and "takeReturns" in ah_src and "deliverReturns" in ah_src)
+    check("AuctionHouse : coffre de récupération (retours indexés, claim, notification)",
+          "addReturn" in ah_src and "setReturnItems" in ah_src and "returnItems" in ah_src
+          and "public static String claim(" in ah_src and "notifyReturns" in ah_src)
+    check("AuctionHouse : rien n'est lâché au sol (tout passe par l'inventaire ou le coffre)",
+          "dropItemNaturally" not in ah_code and "dropItem" not in ah_code,
+          "un item tombé au sol peut brûler, couler ou être ramassé : interdit dans le module AH")
+    check("AuctionHouse : achat au lot entier, capacité vérifiée avant le débit",
+          "capacityFor(player, lot.getMaxStackSize()) < size" in ah_code
+          and "public static String buy(Player player, int id)" in ah_code)
     check("AuctionHouse : expiration traitée par tâche périodique", "sweep()" in ah_src and "runTaskTimer" in ah_src)
     check("AuctionHouse : bande de prix et blacklist appliquées à la mise en vente",
           "enforceBand" in ah_src and "blacklist.contains" in ah_src)
@@ -251,8 +260,8 @@ def verify_tree():
           "VIEWS.remove(gui.player.getUniqueId())" in ahgui and "static void forget" in ahgui)
     check("AuctionGui : aucun accès aux noms internes du serveur", "net.minecraft" not in strip_comments(ahgui))
     check("AuctionHouse : monnaie via Vault uniquement", "net.milkbowl.vault.economy.Economy" in ah_code)
-    check("AuctionHouse : l'admin ne peut pas faire disparaître un item (rendus + livraison)",
-          "store.addReturn(seller, item)" in ah_code and "deliver(online, item)" in ah_code)
+    check("AuctionHouse : un retrait admin va au coffre du vendeur, jamais à la poubelle",
+          "store.addReturn(seller, item)" in ah_code and "returnItems" in ah_code)
     check("AuctionHouse : aucun accès aux noms internes du serveur",
           "net.minecraft" not in ah_code and "NBTEditor" not in ah_code
           and "org.bukkit.craftbukkit" not in ah_code,
