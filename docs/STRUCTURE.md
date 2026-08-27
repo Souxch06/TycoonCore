@@ -35,6 +35,23 @@ précisément celui du module gson embarqué). Ce fichier vit donc dans
 `sources/shaded/com/google/gson/module-info.java`, en miroir de `META-INF/versions/9/module-info.class`
 du JAR ; il n'est jamais compilé. `scripts/verify-paper26-compat.py` contrôle cette invariant.
 
+## Économie interne (`ValoriaEconomy`)
+
+- `sources/economy/xyz/arcadiadevs/valoriaeconomy/` : `ValoriaEconomy` (JavaPlugin), `Balances`
+  (`plugins/ValoriaEconomy/economy.yml`, écriture atomique), `MoneyCommand` (`/bal`, `/pay`, `/baltop`,
+  `/eco`), `VaultEconomy` (fournisseur Vault, **généré**).
+- `resources-economy/` : `plugin.yml` (avec `load: STARTUP`) et `config.yml` du plugin d'économie ; ils
+  ne vont PAS dans le paquet de `ValoriaTycoon`.
+- `src/assembly/economy.xml` : assemble `target/ValoriaEconomy-v<version>.jar` à partir des classes
+  compilées et de `resources-economy/` ; le `pom.xml` exclut `xyz/arcadiadevs/valoriaeconomy/**` du jar
+  principal.
+- `docs/vault-economy-api.txt` : snapshot des 43 signatures de `net.milkbowl.vault.economy.Economy`
+  (VaultAPI 1.7) ; `scripts/generate-vault-economy.py` émet `VaultEconomy.java` depuis ce snapshot, et
+  `scripts/verify-economy-api.py` refuse tout écart (méthode oubliée, signature décalée, fichier non
+  régénéré, `load: STARTUP` absent).
+- `scripts/import-essentials-balances.py` : import ponctuel des soldes EssentialsX vers `economy.yml`
+  (`--dry-run` d'abord ; ne touche jamais un compte déjà présent).
+
 ## `sources/plugin/`
 
 Contient le code Java principal du plugin :

@@ -108,6 +108,12 @@
                         <!-- Détection de version serveur (Paper 26.x) : compilée depuis
                              sources/plugin, remplace la classe livrée dans le JAR. -->
                         <include>plugin/xyz/arcadiadevs/valoriatycoon/utils/ServerVersion.java</include>
+                        <!-- Économie interne (plugin séparé, même build) : la classe VaultEconomy est
+                             générée, les autres sont écrites à la main. -->
+                        <include>economy/xyz/arcadiadevs/valoriaeconomy/ValoriaEconomy.java</include>
+                        <include>economy/xyz/arcadiadevs/valoriaeconomy/Balances.java</include>
+                        <include>economy/xyz/arcadiadevs/valoriaeconomy/MoneyCommand.java</include>
+                        <include>economy/xyz/arcadiadevs/valoriaeconomy/VaultEconomy.java</include>
                         <!-- Pont NBT -> PersistentDataContainer : remplace la bibliothèque embarquée,
                              dont les cibles obfusquées ont disparu des serveurs Paper récents. Le repli
                              historique reste livré sous io.github...LegacyNbtBridge. -->
@@ -163,7 +169,31 @@
                     <archive>
                         <manifestFile>artifacts/extracted/META-INF/MANIFEST.MF</manifestFile>
                     </archive>
+                    <!-- Les classes de l'économie vivent dans leur propre paquet, pas dans celui-ci. -->
+                    <excludes>
+                        <exclude>xyz/arcadiadevs/valoriaeconomy/**</exclude>
+                    </excludes>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <version>3.7.1</version>
+                <executions>
+                    <execution>
+                        <id>economy-plugin-jar</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                        <configuration>
+                            <descriptors>
+                                <descriptor>src/assembly/economy.xml</descriptor>
+                            </descriptors>
+                            <appendAssemblyId>false</appendAssemblyId>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>

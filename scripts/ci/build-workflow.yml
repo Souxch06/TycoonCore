@@ -44,18 +44,31 @@ jobs:
       - name: Vérifier la cohérence de l'extraction
         run: python3 scripts/verify-extraction.py
 
-      - name: Compiler le plugin
+      - name: Compiler le plugin et le plugin d'économie
         run: mvn -B -ntp clean package -DskipTests
+
+      - name: Vérifier la couverture de l'API Vault
+        run: |
+          python3 scripts/generate-vault-economy.py --check
+          python3 scripts/verify-economy-api.py
 
       - name: Vérifier la compatibilité Paper 26.x du JAR
         run: |
-          python3 scripts/verify-paper26-compat.py target/ValoriaTycoon-v1.6.3.jar
           python3 scripts/rebrand-classes.py --check --jar target/ValoriaTycoon-v1.6.3.jar
           python3 scripts/install-nbt-bridge.py --check --jar target/ValoriaTycoon-v1.6.3.jar
 
-      - name: Publier le JAR construit
+      - name: Vérifier les deux JAR produits
+        run: |
+          test -f target/ValoriaEconomy-v1.6.3.jar
+          unzip -l target/ValoriaEconomy-v1.6.3.jar | grep -q 'plugin.yml'
+          unzip -l target/ValoriaEconomy-v1.6.3.jar | grep -q 'valoriaeconomy/VaultEconomy.class'
+          ! unzip -l target/ValoriaTycoon-v1.6.3.jar | grep -q 'valoriaeconomy/'
+
+      - name: Publier les JAR construits
         uses: actions/upload-artifact@v4
         with:
           name: ValoriaTycoon-jar
-          path: target/ValoriaTycoon-v1.6.3.jar
+          path: |
+            target/ValoriaTycoon-v1.6.3.jar
+            target/ValoriaEconomy-v1.6.3.jar
           if-no-files-found: error

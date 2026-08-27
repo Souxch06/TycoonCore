@@ -97,6 +97,8 @@ function analyze(source) {
 
 // Surface que le bytecode livré exige. Les descripteurs sont ceux relevés dans les classes de
 // artifacts/extracted (voir scripts/verify-paper26-compat.py) : ils ne doivent pas bouger.
+const E = 'sources/economy/xyz/arcadiadevs/valoriaeconomy/';
+
 const CONTRACTS = [
   {
     file: 'sources/shaded/io/github/bananapuncher714/nbteditor/NBTEditor.java',
@@ -182,6 +184,30 @@ const CONTRACTS = [
       { name: 'upgradeGenerator', returns: 'void', arity: 3, static: true },
       { name: 'fill', returns: 'List', arity: 5, static: true, private: true },
     ],
+  },
+  {
+    file: E + 'VaultEconomy.java',
+    why: "fournisseur Vault g\u00e9n\u00e9r\u00e9 : 43 m\u00e9thodes, banques en NOT_IMPLEMENTED",
+    mustNotContain: ['net.minecraft', 'System.out', 'printStackTrace'],
+    generated: true,
+  },
+  {
+    file: E + 'Balances.java',
+    why: "coffre des soldes \u00e9criture atomique, pas de solde n\u00e9gatif",
+    mustContain: ['ATOMIC_MOVE', 'economy.yml.tmp', 'Math.round(value * 100.0D)'],
+    mustNotContain: ['net.minecraft', 'System.out', 'printStackTrace', 'deleteBank('],
+  },
+  {
+    file: E + 'MoneyCommand.java',
+    why: "/bal /pay /baltop /eco \u2014 pay retire d'abord, d\u00e9pose ensuite, annule si \u00e9chec",
+    mustContain: ['withdraw(', 'deposit(', 'Solde insuffisant', 'Double.isFinite'],
+    mustNotContain: ['net.minecraft', 'System.out'],
+  },
+  {
+    file: E + 'ValoriaEconomy.java',
+    why: "enregistrement du service avant l'onEnable de ValoriaTycoon",
+    mustContain: ['ServicesManager', 'Economy.class', 'saveDefaultConfig'],
+    mustNotContain: ['net.minecraft', 'System.out'],
   },
   {
     file: 'sources/plugin/xyz/arcadiadevs/valoriatycoon/utils/ServerVersion.java',

@@ -1,0 +1,41 @@
+name: ValoriaEconomy
+version: '1.6.3'
+main: xyz.arcadiadevs.valoriaeconomy.ValoriaEconomy
+# STARTUP : activé avant les plugins POSTWORLD, donc le fournisseur Vault est déjà
+# enregistré quand ValoriaTycoon le cherche dans son onEnable.
+load: STARTUP
+api-version: '1.13'
+description: Économie interne du serveur (soldes, /pay, fournisseur Vault).
+authors:
+  - ArcadieDevs
+
+commands:
+  bal:
+    description: Afficher ton solde ou celui d'un joueur
+    usage: /<command> [joueur]
+    aliases: [balance, argent]
+  pay:
+    description: Envoyer de l'argent à un joueur
+    usage: /<command> <joueur> <montant>
+  baltop:
+    description: Classement des soldes
+    usage: /<command>
+    aliases: [topmoney]
+  eco:
+    description: Administration des soldes
+    usage: /<command> give|take|set|stats|reload [joueur] [montant]
+    permission: valoriaeconomy.eco
+
+permissions:
+  valoriaeconomy.bal:
+    description: Consulter un solde
+    default: true
+  valoriaeconomy.pay:
+    description: Envoyer de l'argent à un joueur
+    default: true
+  valoriaeconomy.top:
+    description: Voir le classement des soldes
+    default: true
+  valoriaeconomy.eco:
+    description: Donner, retirer ou fixer un solde
+    default: op

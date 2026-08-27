@@ -26,6 +26,20 @@ Les joueurs peuvent placer des générateurs, récupérer automatiquement des dr
   puis `python3 scripts/verify-paper26-compat.py target/ValoriaTycoon-v1.6.3.jar` (JAR compilé).
   Un workflow de validation pour les Pull Requests est fourni dans `scripts/ci/build-workflow.yml`.
 
+## Économie du serveur
+
+Le dépôt contient **deux** plugins, construits par le même build Maven :
+
+| plugin | rôle | livrable |
+| --- | --- | --- |
+| `ValoriaTycoon` | générateurs, marché `/ah`, tableau de bord `/sb`, interfaces | `target/ValoriaTycoon-v1.6.3.jar` |
+| `ValoriaEconomy` | soldes (`/bal`, `/pay`, `/baltop`, `/eco`) et fournisseur Vault | `target/ValoriaEconomy-v1.6.3.jar` |
+
+`ValoriaEconomy` est chargé en `STARTUP` pour que le service `Economy` existe avant l'`onEnable` de
+`ValoriaTycoon` (qui exige aussi un plugin nommé `Vault`, pont d'API). Installer les deux jars, enlever
+EssentialsX si on veut que la monnaie vienne d'ici : voir `docs/ECONOMIE.md`, et `docs/DEPLOY-2-JARS.md`
+pour la pipeline qui ne copiera pas qu'un seul jar.
+
 ## Fonctionnalités
 
 - Générateurs de ressources par paliers.
