@@ -124,6 +124,25 @@ Ton serveur doit tourner sur :
    - `/generators` → améliore le palier
 5. Sauvegarde/arrête le serveur.
 
+## Étape 8 bis — Le piège qui fait rougir le plugin (hologrammes)
+
+Le plugin **se désactive lui-même** si les hologrammes sont activés alors que HoloEasy n'est pas
+installé. Dans la console, ça donne exactement ceci :
+
+```
+[ValoriaTycoon] HoloEasy not found. Disabling plugin.
+[ValoriaTycoon] Disabling ValoriaTycoon v1.6.3
+```
+
+Deux issues, au choix :
+- **sans hologrammes** (le plus simple pour tester) : ouvre `plugins/ValoriaTycoon/config.yml`,
+  cherche la ligne `holograms:` et, en dessous, passe `enabled: true` à `enabled: false`, enregistre,
+  redémarre ;
+- **avec hologrammes** : installe le plugin **HoloEasy** (et ProtocolLib, qu'il utilise pour les
+  paquets), puis redémarre.
+
+Sans ce choix, `/plugins` affichera ValoriaTycoon en rouge même quand tout le reste va bien.
+
 ## Étape 9 — Comment savoir si c'est bon
 
 Dans la console de démarrage et de test :
@@ -133,7 +152,7 @@ Dans la console de démarrage et de test :
 | `ExceptionInInitializerError` | **absent** |
 | `Unknown Minecraft mapping` | **absent** |
 | stack-trace contenant `nbteditor` | **absent** (c'était le symptôme du générateur mort) |
-| `PersistentDataContainer indisponible` | absent sur 26.2 (ne viendrait que d'un serveur < 1.14) |
+| `PersistentDataContainer inutilisable (membres API manquants : …)` | **absent** sur 26.2. Si elle apparaît, la liste entre parenthèses dit exactement quel point de l'API Bukkit n'a pas été résolu : envoie-la moi telle quelle |
 
 Et en jeu : le générateur posé est **reconnu** (il produit, il est amélioré, ses drops se vendent).
 

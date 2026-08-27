@@ -202,6 +202,24 @@ for (const contract of CONTRACTS) {
     good ? ok(`${e.length} constantes : UNKNOWN d'abord, puis 1.7→1.22, puis V26_1 < V26_2 (ordinal() cohérent)`)
          : ko(`ordre des constantes à revoir : ${e.join(', ')}`);
   }
+  if (contract.file.endsWith("nbteditor/NBTEditor.java")) {
+    const bridgeSrc = readFileSync(path, "utf8");
+    if (/method\(CONTAINER, "get", 1\)/.test(bridgeSrc)) {
+      ko("lecture PDC sur get(NamespacedKey) : cette surcharge n'existe pas dans l'API du conteneur");
+    } else {
+      ok("lecture PDC via get(key, type) + has(key), les seules surcharges reellement exposees");
+    }
+    if (/TYPE_NAMES/.test(bridgeSrc) && /fieldType/.test(bridgeSrc)) {
+      ok("sonde par type + table de types partagee entre ecriture et lecture");
+    } else {
+      ko("la sonde par type (TYPE_NAMES/fieldType) est absente");
+    }
+    if (!/Bukkit\.MISSING/.test(bridgeSrc)) {
+      ko("le message de diagnostic ne liste pas les membres API manquants");
+    } else {
+      ok("diagnostic explicite des membres API manquants dans le log");
+    }
+  }
   for (const forbidden of contract.forbidImports ?? []) {
     new RegExp(`^import\\s+${forbidden.replace(/\./g, '\\.')}`, 'm').test(source)
       ? ko(`import ${forbidden} présent : la compilation exigerait un artifact serveur`)

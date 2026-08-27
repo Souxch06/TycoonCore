@@ -62,7 +62,7 @@ public final class NBTEditor {
             Object container = Bukkit.container(object);
             if (container != null) {
                 try {
-                    if (Bukkit.get(container, keys) != null) {
+                    if (Bukkit.has(container, keys)) {
                         return true;
                     }
                 }
@@ -274,13 +274,70 @@ public final class NBTEditor {
         private static final Method SET_ITEM_META = method(ITEM_STACK, "setItemMeta", 1);
         private static final Method CLONE = method(ITEM_STACK, "clone", 0);
         private static final Method GET_PDC = method(ITEM_META, "getPersistentDataContainer", 0);
-        private static final Method GET = method(CONTAINER, "get", 1);
+        // PersistentDataContainer n'expose PAS de get(NamespacedKey) simple : la lecture passe
+        // obligatoirement par get(NamespacedKey, PersistentDataType) (méthode héritée de
+        // io.papermc.paper.persistence.PersistentDataContainerView). Viser une surcharge à un seul
+        // argument donnait un membre introuvable, donc un PDC déclaré « indisponible », et le pont
+        // retombait sur l'ancien moteur NBT — inopérant sur un serveur Mojang-mappé. D'où la sonde
+        // par type ci-dessous, qui utilise exactement les surcharges publiées.
+        private static final Method GET = method(CONTAINER, "get", 2);
+        private static final Method HAS = method(CONTAINER, "has", 1);
         private static final Method SET = method(CONTAINER, "set", 3);
         private static final Method REMOVE = method(CONTAINER, "remove", 1);
         private static final Constructor<?> KEY_CTOR = constructor(NAMESPACED_KEY);
 
+        /** Types primitifs sondés à la lecture, du plus courant pour ce plugin au moins courant. */
+        private static final String[] TYPE_NAMES = new String[]{"INTEGER", "STRING", "LONG", "DOUBLE", "FLOAT", "BYTE", "SHORT", "INTEGER_ARRAY", "BYTE_ARRAY"};
+        private static final Object[] TYPES = dataTypes(TYPE_NAMES);
+        private static final String MISSING = missing();
+
         private static boolean available() {
-            return GET != null && KEY_CTOR != null && GET_ITEM_META != null && GET_PDC != null;
+            return GET != null && HAS != null && SET != null && KEY_CTOR != null && GET_ITEM_META != null && GET_PDC != null;
+        }
+
+        /** Noms des membres API manquants : le log dit quoi manque, au lieu d'un vague « indisponible ». */
+        private static String missing() {
+            StringBuilder builder = new StringBuilder();
+            appendIfMissing(builder, "ItemStack#getItemMeta", GET_ITEM_META);
+            appendIfMissing(builder, "ItemMeta#getPersistentDataContainer", GET_PDC);
+            appendIfMissing(builder, "PersistentDataContainer#get(key,type)", GET);
+            appendIfMissing(builder, "PersistentDataContainer#has(key)", HAS);
+            appendIfMissing(builder, "PersistentDataContainer#set(key,type,value)", SET);
+            appendIfMissing(builder, "PersistentDataContainer#remove(key)", REMOVE);
+            appendIfMissing(builder, "new NamespacedKey(String,String)", KEY_CTOR);
+            return builder.length() == 0 ? "aucun" : builder.toString();
+        }
+
+        private static void appendIfMissing(StringBuilder builder, String label, Object member) {
+            if (member != null) {
+                return;
+            }
+            if (builder.length() > 0) {
+                builder.append(", ");
+            }
+            builder.append(label);
+        }
+
+        private static Object[] dataTypes(String[] names) {
+            Object[] values = new Object[names.length];
+            for (int n = 0; n < names.length; ++n) {
+                values[n] = fieldType(names[n]);
+            }
+            return values;
+        }
+
+        private static Object fieldType(String name) {
+            if (PERSISTENT_DATA_TYPE == null) {
+                return null;
+            }
+            try {
+                Field field = PERSISTENT_DATA_TYPE.getField(name);
+                field.setAccessible(true);
+                return field.get(null);
+            }
+            catch (Throwable throwable) {
+                return null;
+            }
         }
 
         private static boolean isItem(Object object) {
@@ -297,8 +354,30 @@ public final class NBTEditor {
             }
         }
 
+        static boolean has(Object container, Keys keys) throws Throwable {
+            if (HAS != null) {
+                return Boolean.TRUE.equals(invoke(HAS, container, key(keys)));
+            }
+            return get(container, keys) != null;
+        }
+
+        /**
+         * Le conteneur ne révèle pas le type d'une clé sans qu'on le lui demande : on sonde donc les
+         * types primitifs connus et on renvoie la première valeur présente. Écriture et lecture
+         * partagent la même table, donc aucun désaccord possible entre les deux.
+         */
         static Object get(Object container, Keys keys) throws Throwable {
-            return invoke(GET, container, key(keys));
+            Object key = key(keys);
+            for (int n = 0; n < TYPES.length; ++n) {
+                if (TYPES[n] == null) {
+                    continue;
+                }
+                Object value = invoke(GET, container, key, TYPES[n]);
+                if (value != null) {
+                    return value;
+                }
+            }
+            return null;
         }
 
         static void set(Object container, Keys keys, Object dataType, Object value) throws Throwable {
@@ -373,14 +452,7 @@ public final class NBTEditor {
             } else {
                 return null;
             }
-            try {
-                Field field = PERSISTENT_DATA_TYPE.getField(string);
-                field.setAccessible(true);
-                return field.get(null);
-            }
-            catch (Throwable throwable) {
-                return null;
-            }
+            return fieldType(string);
         }
 
         private static Class<?> lookup(String string) {
@@ -517,7 +589,7 @@ public final class NBTEditor {
             try {
                 Object logger = Class.forName("org.bukkit.Bukkit").getMethod("getLogger", new Class[0]).invoke(null, new Object[0]);
                 if (logger != null) {
-                    logger.getClass().getMethod("warning", String.class).invoke(logger, "[ValoriaTycoon] PersistentDataContainer indisponible : repli sur l'ancienne lecture NBT (serveur trop ancien ?).");
+                    logger.getClass().getMethod("warning", String.class).invoke(logger, "[ValoriaTycoon] PersistentDataContainer inutilisable (membres API manquants : " + Bukkit.MISSING + ") ; repli sur l'ancienne lecture NBT, qui ne fonctionne que sur les serveurs antérieurs à 1.20.6.");
                 }
             }
             catch (Throwable throwable) {
