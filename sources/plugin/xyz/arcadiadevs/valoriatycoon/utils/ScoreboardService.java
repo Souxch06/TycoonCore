@@ -20,7 +20,8 @@ import xyz.arcadiadevs.valoriatycoon.ValoriaTycoon;
  *
  * <p>Le contenu des lignes vient de la configuration ({@code scoreboard.lines}) avec les
  * placeholders {@code %player%}, {@code %money%}, {@code %balance%}, {@code %generators%},
- * {@code %server%} : pour ajouter une information plus tard, on ajoute une ligne dans
+ * {@code %server%}, {@code %ping%} (les deux derniers ne sont plus dans les lignes par
+ * défaut, mais restent utilisables) : pour ajouter une information plus tard, on ajoute une ligne dans
  * {@code config.yml} et, si besoin, un placeholder dans {@link #placeholder} — sans rien brancher
  * ailleurs. Le module est volontairement sans dépendance externe (ni PlaceholderAPI, ni plugin de
  * scoreboard).</p>
@@ -66,7 +67,6 @@ public final class ScoreboardService {
         List<String> defaults = new ArrayList<String>();
         defaults.add("&7Joueur : &f%player%");
         defaults.add("&7Solde : &a%money%");
-        defaults.add("&7Générateurs : &e%generators%");
         defaults.add("&7Serveur : &f%server%");
         return defaults;
     }

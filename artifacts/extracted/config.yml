@@ -900,5 +900,4 @@ scoreboard:
   lines:
     - "&7Joueur : &f%player%"
     - "&7Solde : &a%money%"
-    - "&7Générateurs : &e%generators%"
     - "&7Connectés : &f%server%"

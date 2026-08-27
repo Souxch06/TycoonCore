@@ -265,7 +265,6 @@ scoreboard:
   lines:                      # 15 lignes max, dans l'ordre
     - "&7Joueur : &f%player%"
     - "&7Solde : &a%money%"
-    - "&7Générateurs : &e%generators%"
     - "&7Connectés : &f%server%"
 ```
 
