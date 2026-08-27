@@ -78,6 +78,8 @@ resources/
   data/                      # Fichiers de données par défaut
 
 docs/
+  TUTORIEL-COMPLET.md        # Tuto pas à pas, 100 % navigateur (coller le build, tester, livrer)
+  CI-A-COLLER.yml            # Contenu exact à coller dans .github/workflows/build.yml
   STRUCTURE.md               # Détails sur l'organisation du dépôt
   TUTORIEL-PAPER-26.md       # Tutoriel pas à pas (Paper 26.2)
   ECONOMIE.md                # ValoriaEconomy : /bal, /pay, /eco, marché /ah
