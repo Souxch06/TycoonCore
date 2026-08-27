@@ -147,6 +147,18 @@ const CONTRACTS = [
     mustNotContain: ['net.minecraft'],
   },
   {
+    file: 'sources/plugin/xyz/arcadiadevs/valoriatycoon/utils/ScoreboardService.java',
+    why: "sidebar : scores posés par réflexion (Signature Score#setScore changée en 1.21+)",
+    methods: [
+      { name: 'show', returns: 'void', arity: 1, static: true },
+      { name: 'hide', returns: 'void', arity: 1, static: true },
+      { name: 'toggle', returns: 'String', arity: 1, static: true },
+      { name: 'missing', returns: 'String', arity: 0, static: true },
+    ],
+    mustContain: ['getMethod("getScore", String.class)', 'resetScores', 'registerNewObjective', 'setDisplayName'],
+    mustNotContain: ['net.minecraft', 'NBTEditor'],
+  },
+  {
     file: 'sources/plugin/xyz/arcadiadevs/valoriatycoon/guis/UpgradeGui.java',
     why: "interface recompilée : un bouton d'action, une case statistiques, aucun bouton dupliqué",
     methods: [

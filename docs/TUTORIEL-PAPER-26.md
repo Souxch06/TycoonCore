@@ -246,6 +246,40 @@ Non fait volontairement dans cet increment (à demander si tu le veux) : expirat
 annonces, recherche par nom d'item, minimum/maximum par transaction, annulation forcee par un admin
 (`/ah remove <id>`), et sauvegarde asynchrone du fichier.
 
+## Tableau de bord (`/sb`)
+
+Une sidebar légère, dans le plugin (aucun plugin de scoreboard requis) :
+
+| commande | effet |
+| --- | --- |
+| (aucune) | elle s'affiche toute seule au connect |
+| `/sb` | l'active ou la coupe pour soi (`/scoreboard`, `/tableau` identiques) |
+
+Personnalisation, dans `plugins/ValoriaTycoon/config.yml` :
+
+```yaml
+scoreboard:
+  enabled: true
+  update-ticks: 40            # 2 s ; ne pas descendre sous 10
+  title: "&a&lValoriaTycoon"
+  lines:                      # 15 lignes max, dans l'ordre
+    - "&7Joueur : &f%player%"
+    - "&7Solde : &a%money%"
+    - "&7Générateurs : &e%generators%"
+    - "&7Connectés : &f%server%"
+```
+
+Placeholders disponibles : `%player%`, `%money%` (format de l'économie), `%balance%` (nombre brut),
+`%generators%` (blocs posés), `%server%` (joueurs connectés), `%ping%`. En ajouter un = une ligne de
+plus dans `ScoreboardService.placeholder(...)`. Permission : `valoriatycoon.scoreboard` (ouverte à tous).
+
+Robustesse : `Score#setScore(int)` a changé de type de retour en 1.21+ (méthode binairement
+incompatible) et `registerNewObjective`/`setDisplayName` ont oscillé entre `String` et `Component`
+Adventure selon les versions. Ces trois appels sont donc résolus **à l'exécution** : le tableau
+s'adapte au serveur au lieu de produire un `NoSuchMethodError`. Si un serveur refuse malgré tout
+l'affichage, rien d'autre du plugin n'est touché, et la liste de ce qui a manqué est lisible via
+`ScoreboardService.missing()`.
+
 ## Ce qu'il ne faut PAS faire
 
 - **Ne pas fusionner la PR #7** avant d'avoir eu ✅ à l'étape 5 **et** un test serveur concluant :

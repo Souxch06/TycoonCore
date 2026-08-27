@@ -53,3 +53,6 @@ permissions:
   valoriatycoon.ah.notify:
     description: Recevoir les annonces d'achat et de vente dans le chat.
     default: op
+  valoriatycoon.scoreboard:
+    description: Affiche le tableau de bord ValoriaTycoon.
+    default: true

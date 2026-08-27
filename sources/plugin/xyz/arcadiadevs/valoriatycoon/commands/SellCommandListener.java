@@ -7,6 +7,9 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
+import xyz.arcadiadevs.valoriatycoon.utils.ScoreboardService;
 import org.bukkit.inventory.Inventory;
 import xyz.arcadiadevs.valoriatycoon.guis.AuctionGui;
 import xyz.arcadiadevs.valoriatycoon.guis.SellGui;
@@ -17,6 +20,17 @@ import xyz.arcadiadevs.valoriatycoon.utils.config.message.Messages;
 
 public class SellCommandListener
 implements Listener {
+    /** Tableau de bord : même point d'ancrage que /sell, pour ne pas dépendre de la classe principale. */
+    @EventHandler(priority=EventPriority.MONITOR)
+    public void onPlayerJoin(PlayerJoinEvent playerJoinEvent) {
+        ScoreboardService.show(playerJoinEvent.getPlayer());
+    }
+
+    @EventHandler
+    public void onPlayerQuit(PlayerQuitEvent playerQuitEvent) {
+        ScoreboardService.hide(playerQuitEvent.getPlayer());
+    }
+
     @EventHandler(priority=EventPriority.HIGHEST)
     public void onPlayerCommandPreprocess(PlayerCommandPreprocessEvent playerCommandPreprocessEvent) {
         String string;
@@ -24,6 +38,14 @@ implements Listener {
 
         // Marché des joueurs (/ah) : intercepté ici comme /sell, pour ne pas dépendre d'une
         // inscription de commande dans la classe principale du plugin.
+        String[] sbArgs = playerCommandPreprocessEvent.getMessage().split(" ");
+        String sbLabel = sbArgs.length > 0 ? sbArgs[0].toLowerCase() : "";
+        if (sbLabel.equals("/sb") || sbLabel.equals("/scoreboard") || sbLabel.equals("/tableau")) {
+            playerCommandPreprocessEvent.setCancelled(true);
+            player.sendMessage(ScoreboardService.toggle(player));
+            return;
+        }
+
         String[] ahArgs = playerCommandPreprocessEvent.getMessage().split(" ");
         String ahLabel = ahArgs.length > 0 ? ahArgs[0].toLowerCase() : "";
         if (ahLabel.equals("/ah") || ahLabel.equals("/auctionhouse") || ahLabel.equals("/marche")) {

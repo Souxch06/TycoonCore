@@ -120,6 +120,9 @@
                         <include>plugin/xyz/arcadiadevs/valoriatycoon/commands/SellCommandListener.java</include>
                         <include>plugin/xyz/arcadiadevs/valoriatycoon/commands/AuctionHouse.java</include>
                         <include>plugin/xyz/arcadiadevs/valoriatycoon/guis/AuctionGui.java</include>
+                        <!-- Tableau de bord latéral : affichage résolu par réflexion (API scoreboard
+                             redéfinie en 1.21+), donc insensible aux suppressions de Paper 26.x. -->
+                        <include>plugin/xyz/arcadiadevs/valoriatycoon/utils/ScoreboardService.java</include>
                     </includes>
                 </configuration>
             </plugin>

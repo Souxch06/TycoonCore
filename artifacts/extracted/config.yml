@@ -890,3 +890,15 @@ auction-house:
   sell-fee: 0.02
   min-price: 1.0
   max-price: 1000000.0
+# Petit tableau de bord latéral (sidebar) : pseudo, solde, et lignes personnalisables.
+scoreboard:
+  enabled: true
+  # 40 ticks = 2 secondes. Rester au-dessus de 10 pour ne pas bombarder le client.
+  update-ticks: 40
+  title: "&a&lValoriaTycoon"
+  # Placeholders : %player% %money% %balance% %generators% %server% %ping%
+  lines:
+    - "&7Joueur : &f%player%"
+    - "&7Solde : &a%money%"
+    - "&7Générateurs : &e%generators%"
+    - "&7Connectés : &f%server%"

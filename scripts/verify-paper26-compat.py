@@ -226,6 +226,19 @@ def verify_tree():
     check("AuctionHouse : aucun accès aux noms internes du serveur", "net.minecraft" not in ah_src and "NBTEditor" not in ah_src)
     check("AuctionHouse : items de générateur refusés à la vente", "spawnitem.tier" in ah_src and "isPluginItem" in ah_src)
 
+    # 4e. tableau de bord
+    for cfg_name in ("resources/config.yml", "artifacts/extracted/config.yml"):
+        cfg_text = (ROOT / cfg_name).read_text(encoding="utf-8")
+        check(f"{cfg_name} : clés scoreboard présentes",
+              "scoreboard:" in cfg_text and "update-ticks:" in cfg_text and "%money%" in cfg_text)
+    sb = (ROOT / "sources/plugin/xyz/arcadiadevs/valoriatycoon/utils/ScoreboardService.java").read_text(encoding="utf-8")
+    check("ScoreboardService : aucun appel direct à Score#setScore (binaire-incompatible 1.21+)",
+          ".setScore(" not in sb, "passer par la réflexion pour poser un score")
+    check("ScoreboardService : lignes configurables et placeholders documentés",
+          'getStringList("scoreboard.lines")' in sb or "scoreboard.lines" in sb)
+    check("ScoreboardService branché sur le listener déjà enregistré",
+          "ScoreboardService.show" in (ROOT / "sources/plugin/xyz/arcadiadevs/valoriatycoon/commands/SellCommandListener.java").read_text(encoding="utf-8"))
+
     check("pont : repli historique livré", (NBT_DIR / "LegacyNbtBridge.class").is_file(),
           "artifacts/extracted/io/github/bananapuncher714/nbteditor/LegacyNbtBridge.class manquant")
 
@@ -273,6 +286,13 @@ def verify_jar(jar_path: Path):
                      "xyz/arcadiadevs/valoriatycoon/commands/SellCommandListener.class"):
         check(f"JAR : {ah_entry.split('/')[-1]} compilée", ah_entry in names,
               "le pom n'a pas compilé le marché des joueurs (voir <includes> du maven-compiler-plugin)")
+    for sb_entry in ("xyz/arcadiadevs/valoriatycoon/utils/ScoreboardService.class",):
+        check(f"JAR : {sb_entry.split('/')[-1]} compilée", sb_entry in names, "le pom ne compile pas le tableau de bord")
+    if "xyz/arcadiadevs/valoriatycoon/commands/SellCommandListener.class" in names:
+        listener_blob = jar.read("xyz/arcadiadevs/valoriatycoon/commands/SellCommandListener.class")
+        check("JAR : SellCommandListener branché sur /ah et le scoreboard",
+              b"AuctionGui" in listener_blob and b"ScoreboardService" in listener_blob,
+              "le .class livré ne référence ni AuctionGui ni ScoreboardService")
     if "xyz/arcadiadevs/valoriatycoon/guis/AuctionGui.class" in names:
         blob = jar.read("xyz/arcadiadevs/valoriatycoon/guis/AuctionGui.class")
         check("JAR : AuctionGui sans NMS", b"net/minecraft" not in blob and b"craftbukkit" not in blob)
