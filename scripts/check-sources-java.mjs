@@ -112,6 +112,41 @@ const CONTRACTS = [
     forbidImports: ['org.bukkit'],
   },
   {
+    file: 'sources/plugin/xyz/arcadiadevs/valoriatycoon/commands/AuctionHouse.java',
+    why: "séquestre du marché : écriture YAML immédiate, monnaie par Vault, items du plugin refusés",
+    methods: [
+      { name: 'isEnabled', returns: 'boolean', arity: 0, static: true },
+      { name: 'title', returns: 'String', arity: 0, static: true },
+      { name: 'list', returns: 'String', arity: 2, static: true },
+      { name: 'buy', returns: 'String', arity: 2, static: true },
+      { name: 'cancel', returns: 'String', arity: 1, static: true },
+      { name: 'count', returns: 'int', arity: 0, static: true },
+      { name: 'ids', returns: 'List', arity: 0, static: true },
+    ],
+    forbidImports: ['lombok'],
+    mustContain: ['class YamlData', 'getOfflinePlayer', 'setItemInMainHand'],
+    mustNotContain: ['net.minecraft', 'getNMSClass', 'NBTEditor'],
+  },
+  {
+    file: 'sources/plugin/xyz/arcadiadevs/valoriatycoon/guis/AuctionGui.java',
+    why: "vue partagée du marché : vue vanilla + redraw de toutes les vues ouvertes",
+    methods: [
+      { name: 'open', returns: 'void', arity: 2, static: true },
+      { name: 'refreshAll', returns: 'void', arity: 0, static: true, visibility: 'public' },
+      { name: 'getInventory', returns: 'Inventory', arity: 0, static: false, visibility: 'public' },
+      { name: 'listingIdAt', returns: 'int', arity: 1, static: false, visibility: 'package' },
+    ],
+    mustContain: ['implements InventoryHolder', 'class Handler implements Listener', 'setCancelled', 'runTask'],
+    mustNotContain: ['net.minecraft'],
+  },
+  {
+    file: 'sources/plugin/xyz/arcadiadevs/valoriatycoon/commands/SellCommandListener.java',
+    why: "point d'entrée /ah (interception de commande, comme /sell)",
+    methods: [{ name: 'onPlayerCommandPreprocess', returns: 'void', arity: 1, static: false }],
+    mustContain: ['"/ah"', 'AuctionGui.open', 'setCancelled'],
+    mustNotContain: ['net.minecraft'],
+  },
+  {
     file: 'sources/plugin/xyz/arcadiadevs/valoriatycoon/guis/UpgradeGui.java',
     why: "interface recompilée : un bouton d'action, une case statistiques, aucun bouton dupliqué",
     methods: [
@@ -181,8 +216,12 @@ for (const contract of CONTRACTS) {
     }
     const issues = [];
     if (found.private === true) { /* placeholder */ }
-    if (expected.private ? !found.modifiers.includes('private') : !found.modifiers.includes('public')) {
-      issues.push(expected.private ? 'devrait être privée' : 'non publique');
+    const wanted = expected.visibility ?? (expected.private ? 'private' : 'public');
+    if (wanted !== 'package' && !found.modifiers.includes(wanted)) {
+      issues.push(`visibilité ${found.modifiers.join('|') || 'package-private'} au lieu de ${wanted}`);
+    }
+    if (wanted === 'package' && found.modifiers.length > 0) {
+      issues.push(`devrait être sans modificateur, trouvé ${found.modifiers.join('|')}`);
     }
     const wantStatic = expected.static !== false;
     if (wantStatic !== found.modifiers.includes('static')) issues.push(wantStatic ? 'non statique' : 'statique (attendue d\'instance)');
@@ -215,6 +254,12 @@ for (const contract of CONTRACTS) {
       && e.indexOf('V26_2') === e.length - 1;
     good ? ok(`${e.length} constantes : UNKNOWN d'abord, puis 1.7→1.22, puis V26_1 < V26_2 (ordinal() cohérent)`)
          : ko(`ordre des constantes à revoir : ${e.join(', ')}`);
+  }
+  for (const needle of contract.mustContain ?? []) {
+    if (!readFileSync(path, 'utf8').includes(needle)) ko(`mustContain introuvable : ${needle}`);
+  }
+  for (const needle of contract.mustNotContain ?? []) {
+    if (readFileSync(path, 'utf8').includes(needle)) ko(`référence interdite présente : ${needle}`);
   }
   if (contract.file.endsWith("nbteditor/NBTEditor.java")) {
     const bridgeSrc = readFileSync(path, "utf8");
@@ -260,6 +305,17 @@ if (process.argv.includes('--audit')) {
   for (const b of broken) console.log(`   - ${b}`);
   console.log('   ⇒ c\'est pour cela que le pom.xml ne compile qu\'une liste explicite (<includes>).');
 }
+
+// cohérence pom <-> contrats : tout fichier que le build compile doit être contrôlé ici
+const pom = readFileSync(join(ROOT, 'pom.xml'), 'utf8');
+const included = [...pom.matchAll(/<include>([^<]+\.java)<\/include>/g)].map((m) => 'sources/' + m[1]);
+for (const file of included) {
+  if (!CONTRACTS.some((c) => c.file === file)) ko(`le pom compile ${file} mais aucun contrat ne le couvre`);
+}
+for (const contract of CONTRACTS) {
+  if (!included.includes(contract.file)) ko(`${contract.file} a un contrat mais n'est pas dans <includes> du pom`);
+}
+console.log(`Fichiers en compilation ciblée : ${included.length} (${included.map((f) => f.split('/').pop()).join(', ')})`);
 
 console.log(problems ? `\n${problems} problème(s) — la PR ne doit pas être mergée en l'état.` : '\nAucun problème : syntaxe et surface binaire conformes.');
 process.exit(problems ? 1 : 0);

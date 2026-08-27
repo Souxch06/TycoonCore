@@ -210,6 +210,22 @@ def verify_tree():
         check("pont NBTEditor : repli vers LegacyNbtBridge", "LegacyNbtBridge" in bridge)
     for relative in sorted(NBT_DIR.glob("NBTEditor*.class")) if NBT_DIR.is_dir() else []:
         check(f"pont : ancien nom retiré du JAR ({relative.name})", False, "devrait être LegacyNbtBridge.class")
+    # 4d. marché entre joueurs (/ah)
+    for cfg_name in ("resources/config.yml", "artifacts/extracted/config.yml"):
+        cfg_text = (ROOT / cfg_name).read_text(encoding="utf-8")
+        check(f"{cfg_name} : clés auction-house présentes",
+              "auction-house:" in cfg_text and "sell-fee:" in cfg_text and "min-price:" in cfg_text)
+    for yml_name in ("resources/plugin.yml", "artifacts/extracted/plugin.yml"):
+        yml_text = (ROOT / yml_name).read_text(encoding="utf-8")
+        check(f"{yml_name} : permissions valoriatycoon.ah.* déclarées",
+              all(node in yml_text for node in ("valoriatycoon.ah.use", "valoriatycoon.ah.sell", "valoriatycoon.ah.notify")),
+              "sans nœuds de permission par défaut, /ah est réservé aux OP par Bukkit")
+    ah_src = (ROOT / "sources/plugin/xyz/arcadiadevs/valoriatycoon/commands/AuctionHouse.java").read_text(encoding="utf-8")
+    check("AuctionHouse : séquestre écrit à chaque mutation", 'this.yaml.save(this.file)' in ah_src or "save()" in ah_src)
+    check("AuctionHouse : monnaie via Vault uniquement", "net.milkbowl.vault.economy.Economy" in ah_src)
+    check("AuctionHouse : aucun accès aux noms internes du serveur", "net.minecraft" not in ah_src and "NBTEditor" not in ah_src)
+    check("AuctionHouse : items de générateur refusés à la vente", "spawnitem.tier" in ah_src and "isPluginItem" in ah_src)
+
     check("pont : repli historique livré", (NBT_DIR / "LegacyNbtBridge.class").is_file(),
           "artifacts/extracted/io/github/bananapuncher714/nbteditor/LegacyNbtBridge.class manquant")
 
@@ -252,6 +268,14 @@ def verify_jar(jar_path: Path):
         {"getBukkitVersion", "getMinecraftVersion", "V26_2", "V26_1"},
         set(),
     )
+    for ah_entry in ("xyz/arcadiadevs/valoriatycoon/commands/AuctionHouse.class",
+                     "xyz/arcadiadevs/valoriatycoon/guis/AuctionGui.class",
+                     "xyz/arcadiadevs/valoriatycoon/commands/SellCommandListener.class"):
+        check(f"JAR : {ah_entry.split('/')[-1]} compilée", ah_entry in names,
+              "le pom n'a pas compilé le marché des joueurs (voir <includes> du maven-compiler-plugin)")
+    if "xyz/arcadiadevs/valoriatycoon/guis/AuctionGui.class" in names:
+        blob = jar.read("xyz/arcadiadevs/valoriatycoon/guis/AuctionGui.class")
+        check("JAR : AuctionGui sans NMS", b"net/minecraft" not in blob and b"craftbukkit" not in blob)
     upgrade_entry = "xyz/arcadiadevs/valoriatycoon/guis/UpgradeGui.class"
     if upgrade_entry in names:
         blob = jar.read(upgrade_entry)

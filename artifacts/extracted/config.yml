@@ -882,3 +882,11 @@ developer-options:
   # Active les logs de debug du plugin.
   enabled: false
 #YDVZZWN0hFVDhUVvZlUwgld4VkVPVTRWpUOrJGUSxGVKFTaUt0NP5GVJhFTOt0NP5GVJ92b
+# Marché entre joueurs (/ah) : les items sont gardés en séquestre dans plugins/ValoriaTycoon/auction.yml
+auction-house:
+  enabled: true
+  title: "&aMarché des joueurs"
+  # Commission prélevée à la mise en vente (0.02 = 2 %), et reversée au vendeur à l'achat.
+  sell-fee: 0.02
+  min-price: 1.0
+  max-price: 1000000.0

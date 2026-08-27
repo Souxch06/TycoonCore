@@ -198,6 +198,54 @@ case « améliorer » avant la correction : la substitution n'existait que pour 
 interface (méthode conservée dans le code). Si tu la veux, dis-le — soit on lui rend une case, soit on
 passe par `guis.upgrade-gui.enabled: false` + shift+clic droit sur le bloc.
 
+## Le marché entre joueurs (`/ah`)
+
+Commandes (interceptées comme `/sell`, donc pas besoin de les déclarer ailleurs ; `/auctionhouse`
+et `/marche` sont des équivalents) :
+
+| commande | effet |
+| --- | --- |
+| `/ah` | ouvre la interface du marché (18 annonces par page) |
+| `/ah sell <prix>` | met en vente **l'item tenu en main** |
+| `/ah cancel` | annule toutes tes annonces et te rend les items |
+
+Dans l'interface : clic sur une annonce = achat immédiat (débit de ton solde, versement au vendeur
+moins la commission) ; `Page précédente/suivante` pour naviguer ; `Récupérer mes annonces` pour
+tout annuler ; `Vendre ce que tu tiens` rappelle la commande. Toutes les interfaces ouvertes sont
+redessinées dès qu'une annonce bouge : personne ne peut acheter un item déjà vendu (le clic renvoie
+« cette annonce vient d'être vendue »).
+
+Config (`plugins/ValoriaTycoon/config.yml`, à la fin du fichier) :
+
+```yaml
+auction-house:
+  enabled: true
+  title: "&aMarché des joueurs"
+  sell-fee: 0.02      # commission prélevée à la mise en vente
+  min-price: 1.0
+  max-price: 1000000.0
+```
+
+Permissions (déclarées dans `plugin.yml`) : `valoriatycoon.ah.use` et `valoriatycoon.ah.sell`
+ouvertes à tous par défaut, `valoriatycoon.ah.notify` pour les annonces de vente dans le chat
+(OP par défaut).
+
+Choix de conception qui protègent contre la duplication et la perte d'objets :
+
+- **séquestre serveur** : l'item quittte l'inventaire du vendeur et est écrit dans
+  `plugins/ValoriaTycoon/auction.yml`, sauvegardé à chaque opération. Rien ne vit dans l'interface.
+- **achat = d'abord livraison, ensuite paiement** : inventaire plein → l'item tombe à tes pieds et
+  le paiement est annulé ; paiement refusé par Vault → l'item est retiré de nouveau. Aucun chemin
+  ne donne un item gratuit ou un solde créédité deux fois.
+- **items du plugin refusés** : un bloc/objet de générateur (marqué en `PersistentDataContainer`)
+  ne peut pas être mis en vente, pour ne pas créer de générateur hors sol sans propriétaire.
+- **aucun nom interne du serveur** : ni `net.minecraft`, ni paquet CraftBukkit — donc ce module ne
+  se casse pas quand Minecraft change de nommage, contrairement à l'ancienne bibliothèque NBT.
+
+Non fait volontairement dans cet increment (à demander si tu le veux) : expiration automatique des
+annonces, recherche par nom d'item, minimum/maximum par transaction, annulation forcee par un admin
+(`/ah remove <id>`), et sauvegarde asynchrone du fichier.
+
 ## Ce qu'il ne faut PAS faire
 
 - **Ne pas fusionner la PR #7** avant d'avoir eu ✅ à l'étape 5 **et** un test serveur concluant :

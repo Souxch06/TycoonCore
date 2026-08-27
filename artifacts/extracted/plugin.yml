@@ -43,3 +43,13 @@ commands:
     description: Vend les drops présents dans l'inventaire
     usage: /selldrops
     aliases: [ sell ]
+permissions:
+  valoriatycoon.ah.use:
+    description: Ouvrir le marché des joueurs.
+    default: true
+  valoriatycoon.ah.sell:
+    description: Mettre un item en vente sur le marché.
+    default: true
+  valoriatycoon.ah.notify:
+    description: Recevoir les annonces d'achat et de vente dans le chat.
+    default: op

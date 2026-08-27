@@ -115,6 +115,11 @@
                         <!-- Interface d'amélioration : un bouton d'action + une case statistiques,
                              et substitution de %upgradePrice% sur les deux cases. -->
                         <include>plugin/xyz/arcadiadevs/valoriatycoon/guis/UpgradeGui.java</include>
+                        <!-- Marché entre joueurs (/ah) : le listener est le point d'entrée des
+                             commandes, AuctionHouse garde le séquestre, AuctionGui la vue partagée. -->
+                        <include>plugin/xyz/arcadiadevs/valoriatycoon/commands/SellCommandListener.java</include>
+                        <include>plugin/xyz/arcadiadevs/valoriatycoon/commands/AuctionHouse.java</include>
+                        <include>plugin/xyz/arcadiadevs/valoriatycoon/guis/AuctionGui.java</include>
                     </includes>
                 </configuration>
             </plugin>
