@@ -4,6 +4,21 @@
 
 Les joueurs peuvent placer des générateurs, récupérer automatiquement des drops, améliorer leurs générateurs, vendre leurs ressources et progresser grâce à une économie configurable.
 
+## Compatibilité versions
+
+- Serveurs Bukkit / Spigot / Paper de **1.7 à 1.21.11** et versions **calendaires 26.1 / 26.2** (Paper 26.2 recommandé).
+- Depuis Minecraft 26.1, les numéros de version sont calendaires (`26.1`, `26.1.1`, `26.2`, ...). Paper n'expose
+  plus non plus de paquet CraftBukkit déplacé (`org.bukkit.craftbukkit.v1_20_R1`) ni de suffixe `-R0.1-SNAPSHOT` :
+  la version d'API vaut par exemple `26.2.build.112-stable`.
+- La détection de version (`utils/ServerVersion.java`) lit la version d'API Bukkit, puis la version Minecraft
+  exposée par Paper, et se rabat sur le nom du paquet CraftBukkit pour les serveurs plus anciens. Une version
+  inconnue plus récente que 26.2 est rattachée à la dernière version connue, afin de ne pas désactiver les
+  fonctionnalités modernes.
+- Les bibliothèques embarquées XSeries (`XMaterial`, `XReflection`) portent un correctif de parsing de version,
+  reproduit de façon déterministe par `scripts/patch-class-version-patterns.py` et vérifié par
+  `scripts/verify-paper26-compat.py`.
+- Le JAR est en bytecode Java 17 (exécutable sur Java 17+) ; un serveur 26.x exige Java 25.
+
 ## Fonctionnalités
 
 - Générateurs de ressources par paliers.

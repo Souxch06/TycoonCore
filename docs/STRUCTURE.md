@@ -70,3 +70,29 @@ Pour vérifier que tous les chemins de fichiers attendus sont présents :
 ```bash
 python3 scripts/verify-extraction.py
 ```
+
+## Correctifs de classes vendorisées et compatibilité Paper 26.x
+
+`scripts/patch-class-version-patterns.py` applique (ou vérifie avec `--check`) les correctifs de parsing
+de version dans les classes compilées tierces présentes dans `artifacts/extracted/` : `XMaterial$Data` et
+`XReflection`. Ces classes étant livrées précompilées, le correctif porte sur une constante du constant-pool
+et non sur du bytecode ; le remplacement est donc reproductible et auditable.
+
+```bash
+python3 scripts/patch-class-version-patterns.py           # applique si nécessaire
+python3 scripts/patch-class-version-patterns.py --check    # échoue si non appliqué
+```
+
+`scripts/verify-paper26-compat.py` contrôle l'état du dépôt, et, en lui passant un JAR, le contenu réel du
+paquet (classe `ServerVersion` recompilée, classes patchées, absence de l'API Bukkit embarquée) :
+
+```bash
+python3 scripts/verify-paper26-compat.py
+python3 scripts/verify-paper26-compat.py target/ValoriaTycoon-v1.6.3.jar
+```
+
+`scripts/classfile.py` est le lecteur de fichiers `.class` partagé par ces deux scripts.
+
+La compilation ciblée est déclarée dans `pom.xml` (`sourceDirectory` + `includes` du maven-compiler-plugin) :
+seule `sources/plugin/.../utils/ServerVersion.java` est recompilée, et sa sortie écrase la classe livrée dans
+`target/classes` avant la mise en JAR.

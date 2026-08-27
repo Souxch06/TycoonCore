@@ -11,12 +11,22 @@
     <description>Plugin ValoriaTycoon pour serveur Minecraft Tycoon et SkyBlock</description>
 
     <properties>
-        <maven.compiler.release>25</maven.compiler.release>
+        <!-- Bytecode 17 : c'est la version de classe déjà utilisée par les classes livrées dans
+             artifacts/extracted (major 61). Viser 25 rendrait le JAR inutilisable sur les
+             serveurs plus anciens, sans rien apporter sur Paper 26.2 (qui exige Java 25 au
+             runtime mais accepte une classe majeure 61). -->
+        <maven.compiler.release>17</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
     <build>
         <finalName>ValoriaTycoon-v1.6.3</finalName>
+        <!-- Le dépôt conserve les sources décompilées du JAR comme référence relisible : elles ne
+             sont pas toutes compilables en l'état. La compilation est donc ciblée (voir <includes>
+             du maven-compiler-plugin) sur les classes maintenues ici. La phase compile s'exécute
+             après process-resources, la classe produite écrase donc son équivalent précompilé copié
+             depuis artifacts/extracted et se retrouve dans le JAR final. -->
+        <sourceDirectory>${project.basedir}/sources</sourceDirectory>
         <resources>
             <resource>
                 <directory>artifacts/extracted</directory>
@@ -36,6 +46,11 @@
                 <version>3.13.0</version>
                 <configuration>
                     <release>${maven.compiler.release}</release>
+                    <includes>
+                        <!-- Détection de version serveur (Paper 26.x) : compilée depuis
+                             sources/plugin, remplace la classe livrée dans le JAR. -->
+                        <include>plugin/xyz/arcadiadevs/valoriatycoon/utils/ServerVersion.java</include>
+                    </includes>
                 </configuration>
             </plugin>
             <plugin>

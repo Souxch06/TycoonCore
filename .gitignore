@@ -18,3 +18,7 @@ dist/
 # Logs temporaires
 *.log
 *.tmp
+
+# Caches Python (scripts du dépôt)
+__pycache__/
+*.pyc
