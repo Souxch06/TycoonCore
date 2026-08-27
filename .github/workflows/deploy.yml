@@ -29,7 +29,7 @@ jobs:
         id: select-jar
         run: |
           mkdir -p target/deploy
-          # Recherche de l'unique JAR final du plugin en excluant les JARs annexes (original-*, sources, javadoc)
+          # Recherche du JAR final en excluant les JARs annexes (original-*, sources, javadoc)
           FINAL_JAR=$(find target -maxdepth 1 -type f -name "*.jar" \
             ! -name "original-*" \
             ! -name "*-sources.jar" \
