@@ -1,0 +1,859 @@
+# Indique le délai après lequel un item disparaît après son apparition.
+# Le délai peut être indiqué avec les formats suivants :
+# - "1h" pour 1 heure
+# - "5m" pour 5 minutes
+# - "1h 5m" pour 1 heure et 5 minutes
+# - "1h 5m 5s" pour 1 heure, 5 minutes et 5 secondes
+item-despawn-time: "5m"
+
+# Si false, les joueurs ne pourront pas placer les drops des générateurs.
+# Si un joueur place un drop de générateur, celui-ci perdra toutes ses
+# valeurs et deviendra un bloc normal.
+can-items-be-placed: false
+
+# Si false, les joueurs ne pourront pas utiliser les drops ou les blocs
+# de générateurs dans les recettes de craft.
+can-items-be-used-in-crafting: false
+
+# Si false, les joueurs ne pourront pas utiliser les drops ou les blocs
+# de générateurs dans les fours.
+can-items-be-used-in-smelting: false
+
+# Si false, les joueurs ne pourront pas utiliser les drops ou les blocs
+# de générateurs dans les enchantements.
+can-items-be-used-in-enchanting: false
+
+# Si true, les générateurs ne produiront pas de drops lorsque
+# le propriétaire du générateur est hors ligne.
+disable-generators-when-offline: true
+
+# Chaque monde listé ici aura les générateurs désactivés.
+# Si la liste est vide, les générateurs seront activés dans tous les mondes.
+disabled-worlds: []
+
+# Faut-il donner instantanément le générateur dans l'inventaire du joueur
+# quand il casse un générateur ? Si false, le générateur
+# sera déposé au sol.
+instant-pickup: false
+
+on-join:
+  # Si enabled vaut false, le joueur ne recevra pas
+  # le générateur à sa connexion.
+  enabled: true
+
+  # Palier du générateur donné au joueur à sa connexion.
+  generator-tier: 1
+
+  # Nombre de générateurs donnés au joueur à sa connexion.
+  generator-amount: 3
+
+sell-command:
+  # Si enabled vaut false, la commande ne sera pas enregistrée.
+  enabled: true
+
+  # Commandes/alias utilisés pour vendre tous les drops de l'inventaire.
+  aliases:
+    - "sell"
+
+limits:
+  # Limites de générateurs par joueur
+  per-player:
+    # Si enabled vaut false, la limite ne sera pas vérifiée.
+    enabled: false
+
+    # Faut-il utiliser les permissions pour la limite de générateurs ?
+    # Si true, vous pourrez définir des limites spécifiques
+    # pour chaque joueur. [valoriatycoon.limit.<montant>]
+    # (ex: valoriatycoon.limit.20)
+    use-permissions: false
+
+    # [REMPLACE USE-PERMISSIONS]
+    # Faut-il utiliser les commandes pour la limite de générateurs ?
+    # Si true, vous pourrez définir des limites spécifiques pour chaque joueur
+    # avec la commande /valoriatycoon setlimit <joueur> <limite>
+    # (ex: /valoriatycoon setlimit Notch 20).
+    use-commands: true
+
+    # Limite de générateurs par défaut pour tous les joueurs
+    default-limit: 20
+
+    # Placeholder utilisé pour afficher une limite illimitée
+    # si limit-settings.enabled vaut false.
+    unlimited-placeholder: "illimité"
+
+  # Limites de générateurs par île. Compatible avec IridiumSkyblock, SuperiorSkyblock,
+  # et BentoBox (uniquement avec l'addon BentoBox Levels).
+  per-island:
+    enabled: false
+
+    # Nombre de générateurs gagnés par niveau d'île.
+    # Format : "<niveauDébut>:<niveauFin>:<montant>"
+    # Exemple : "1:5:1" signifie qu'entre les niveaux 1 et 5, l'île gagne 1 générateur.
+    # Exemple : "6:10:2" signifie qu'entre les niveaux 6 et 10, l'île gagne 2 générateurs.
+    gens-per-level:
+      - "1:5:1"
+      - "6:10:2"
+
+# Le rayon définit à quelle distance autour du générateur le joueur
+# doit se trouver pour que le générateur soit actif.
+radius:
+  # Si désactivé, les générateurs seront toujours actifs, même si
+  # le joueur n'est pas dans le rayon configuré.
+  enabled: true
+
+  # Faut-il utiliser les permissions pour le rayon ?
+  # Si true, vous pourrez définir des limites spécifiques
+  # de rayon pour chaque joueur. [valoriatycoon.radius.<montant>]
+  # (ex: valoriatycoon.radius.5)
+  use-permissions: true
+
+  # Rayon par défaut si le joueur n'a pas de permission
+  # ou si use-permission vaut false.
+  default-radius: 50
+
+multiplier:
+  # Faut-il utiliser les permissions pour le multiplicateur ?
+  # Si true, vous pourrez définir des multiplicateurs spécifiques
+  # pour chaque joueur. [valoriatycoon.sell.multiplier.<montant>]
+  # (ex: valoriatycoon.sell.multiplier.2)
+  use-permissions: true
+
+  # Multiplicateur par défaut pour tous les joueurs
+  default-multiplier: 1
+
+wands:
+  sell-wand:
+    enabled: true
+
+    # Action qui ouvre l'interface si elle est activée, ou améliore le générateur si
+    # l'interface d'amélioration est désactivée. Actions disponibles (sensible à la casse !) :
+    # [LEFT_CLICK_BLOCK, RIGHT_CLICK_BLOCK]
+    action: "RIGHT_CLICK_BLOCK"
+
+    # Si sneak-required vaut true, le joueur devra s'accroupir pour
+    # ouvrir l'interface ou améliorer le générateur.
+    sneak-required: true
+
+    # Matériau de la baguette de vente
+    material: "BLAZE_ROD"
+
+    # Nom de la baguette de vente
+    name: "&e&lBaguette de vente"
+
+    # Préfixe pour les utilisations illimitées (si "uses" vaut -1 en jeu, il sera remplacé par ce préfixe)
+    unlimited-uses-prefix: "∞"
+
+    # Description de la baguette de vente
+    lore:
+      - ""
+      - "&7Clic droit sur un coffre ou un entonnoir pour vendre tous les drops !"
+      - "&e⌈ &fUtilisations : &a%uses%"
+      - "&e⌊ &fMultiplicateur : &a%multiplier%"
+      - ""
+
+guis:
+  # Interface pour voir les générateurs via une commande
+  generators-gui:
+    # Si enabled vaut false, la commande ne sera pas enregistrée.
+    enabled: true
+
+    # Titre de l'interface
+    title: "Générateurs"
+
+    # Nombre de lignes dans l'interface
+    rows: 6
+
+    # Matériau des boutons dans l'interface
+    material:
+      next-page: "ARROW"
+      previous-page: "ARROW"
+      close-button: "BARRIER"
+
+    border:
+      # Si enabled vaut false, la bordure ne sera pas affichée.
+      enabled: true
+
+      # Matériau de la bordure
+      material: "WHITE_STAINED_GLASS_PANE"
+
+      # Nom de la bordure
+      name: " "
+
+  # Interface d'amélioration des générateurs
+  upgrade-gui:
+    # Si enabled vaut false, l'interface d'amélioration ne sera pas affichée
+    # et le générateur sera amélioré instantanément avec Shift + clic droit.
+    # sur le générateur.
+    enabled: true
+
+    # Action qui ouvre l'interface si elle est activée, ou améliore le générateur si
+    # l'interface d'amélioration est désactivée. Actions disponibles (sensible à la casse !) :
+    # [LEFT_CLICK_BLOCK, RIGHT_CLICK_BLOCK]
+    action: "RIGHT_CLICK_BLOCK"
+
+    # Si sneak-required vaut true, le joueur devra s'accroupir pour
+    # ouvrir l'interface ou améliorer le générateur.
+    sneak-required: true
+
+    upgradeOne:
+      first-line: "&e》 &nCliquez pour améliorer le générateur !&e 《"
+      # Si aucune description n'est définie, la description par défaut sera utilisée.
+      # La description par défaut peut utiliser les placeholders suivants :
+      # - %tier% correspond au palier du générateur
+      # - %speed% correspond à la vitesse d'apparition des items
+      # - %price% correspond au prix du générateur
+      # - %sellPrice% correspond au prix de vente du drop du générateur
+      # - %spawnItem% correspond à l'item généré
+      # - %blockType% correspond au type de bloc du générateur
+      # - %nextTier% correspond au prochain palier du générateur
+      # - %nextSpeed% correspond à la prochaine vitesse du générateur
+      # - %nextPrice% correspond au prochain prix du générateur
+      # - %nextSellPrice% correspond au prochain prix de vente du générateur
+      # - %nextSpawnItem% correspond au prochain item généré
+      # - %nextBlockType% correspond au prochain type de bloc du générateur
+      lore:
+        - ""
+        - "&fArgent : &a%money%"
+        - "&fPrix d'amélioration : &a%upgradePrice%"
+        - ""
+        - "&eDétails actuels :"
+        - "&e⌈ &fPalier : &a%tier%"
+        - "&eⅠ &fVitesse : &a%speed%"
+        - "&eⅠ &fPrix : &a%price%"
+        - "&e⌊ &fPrix de vente : &a%sellPrice%"
+        - ""
+        - "&eDétails suivants :"
+        - "&e⌈ &fPalier : &a%nextTier%"
+        - "&eⅠ &fVitesse : &a%nextSpeed%"
+        - "&eⅠ &fPrix : &a%nextPrice%"
+        - "&e⌊ &fPrix de vente : &a%nextSellPrice%"
+        - ""
+
+    upgradeAll:
+        first-line: "&e》 &nCliquez pour améliorer tous les générateurs !&e 《"
+        # Si aucune description n'est définie, la description par défaut sera utilisée.
+        # La description par défaut peut utiliser les placeholders suivants :
+        # - %tier% correspond au palier du générateur
+        # - %speed% correspond à la vitesse d'apparition des items
+        # - %price% correspond au prix du générateur
+        # - %sellPrice% correspond au prix de vente du drop du générateur
+        # - %spawnItem% correspond à l'item généré
+        # - %blockType% correspond au type de bloc du générateur
+        # - %nextTier% correspond au prochain palier du générateur
+        # - %nextSpeed% correspond à la prochaine vitesse du générateur
+        # - %nextPrice% correspond au prochain prix du générateur
+        # - %nextSellPrice% correspond au prochain prix de vente du générateur
+        # - %nextSpawnItem% correspond au prochain item généré
+        # - %nextBlockType% correspond au prochain type de bloc du générateur
+        lore:
+            - ""
+            - "&fArgent : &a%money%"
+            - "&fPrix d'amélioration : &a%upgradePrice%"
+            - ""
+            - "&eDétails actuels :"
+            - "&e⌈ &fPalier : &a%tier%"
+            - "&eⅠ &fVitesse : &a%speed%"
+            - "&eⅠ &fPrix : &a%price%"
+            - "&e⌊ &fPrix de vente : &a%sellPrice%"
+            - ""
+            - "&eDétails suivants :"
+            - "&e⌈ &fPalier : &a%nextTier%"
+            - "&eⅠ &fVitesse : &a%nextSpeed%"
+            - "&eⅠ &fPrix : &a%nextPrice%"
+            - "&e⌊ &fPrix de vente : &a%nextSellPrice%"
+            - ""
+
+    # Titre de l'interface
+    title: "Améliorer le générateur"
+
+    # Nombre de lignes dans l'interface
+    rows: 3
+
+  sell-gui:
+    # Si enabled vaut false, la commande ne sera pas enregistrée.
+    enabled: true
+
+    # Titre de l'interface
+    title: "Vendre les drops"
+
+    # Nombre de lignes dans l'interface
+    rows: 3
+
+holograms:
+  # Si enabled vaut false, les hologrammes ne seront pas affichés.
+  enabled: true
+
+  # Distance d'affichage des hologrammes
+  view-distance: 300
+
+events:
+  # Le temps peut être indiqué avec les formats suivants :
+  # - "1h" pour 1 heure
+  # - "5m" pour 5 minutes
+  # - "1h 5m" pour 1 heure et 5 minutes
+  # - "1h 5m 5s" pour 1 heure, 5 minutes et 5 secondes
+
+  # Temps entre deux événements
+  time-between-events: "1h"
+
+  # Durée de chaque événement
+  event-duration: "2m"
+
+  broadcast:
+    # Si enabled vaut false, aucun message global ne sera envoyé.
+    enabled: true
+
+  drop-event:
+    # Si enabled vaut false, l'événement ne sera pas enregistré.
+    enabled: true
+
+    # Nom de l'événement de drops
+    name: "Événement de drops"
+
+    # Multiplicateur de l'événement
+    multiplier: 2
+
+  sell-event:
+    # Si enabled vaut false, l'événement ne sera pas enregistré.
+    enabled: true
+
+    # Nom de l'événement de vente
+    name: "Événement de vente"
+
+    # Multiplicateur de l'événement
+    multiplier: 2
+
+  speed-event:
+    # Si enabled vaut false, l'événement ne sera pas enregistré.
+    enabled: true
+
+    # Nom de l'événement de vitesse
+    name: "Événement de vitesse"
+
+    # Multiplicateur de l'événement
+    multiplier: 2
+
+particles:
+  # Si enabled vaut false, les particules ne seront pas affichées lors d'une amélioration.
+  enabled: true
+
+  # Type de particule. Assurez-vous d'utiliser une particule
+  # compatible avec la version de votre serveur, sinon
+  # les particules ne seront pas affichées. Vous pouvez trouver
+  # toutes les particules compatibles ici :
+  # https://hub.spigotmc.org/javadocs/spigot/org/bukkit/Particle.html
+  type: "FIREWORKS_SPARK"
+
+  # Son joué lors d'une amélioration.
+  # Vous pouvez trouver tous les sons compatibles ici :
+  # https://github.com/dieterblancke/DonatorJoinPlus/blob/master/spigot/src/main/java/com/dbsoftwares/djp/spigot/utils/XSound.java
+  sound: "ENTITY_FIREWORK_ROCKET_BLAST"
+
+# Si aucune description n'est définie, la description par défaut sera utilisée.
+# La description par défaut peut utiliser les placeholders suivants :
+# - %tier% correspond au palier du générateur
+# - %speed% correspond à la vitesse d'apparition des items
+# - %price% correspond au prix du générateur
+# - %sellPrice% correspond au prix de vente du drop du générateur
+# - %spawnItem% correspond à l'item généré
+# - %blockType% correspond au type de bloc du générateur
+default-lore:
+  - "&7Posez-le pour commencer à générer des items !"
+  - ""
+  - "&e&l⌈ &6Palier : &7%tier%"
+  - "&e&lⅠ &6Vitesse : &7%speed%"
+  - "&e&lⅠ &6Prix : &a%price%"
+  - "&e&l⌊ &6Prix de vente : &a%sellPrice%"
+  - ""
+  - "&e&l⌈ &6Item généré : &7%spawnItem%"
+  - "&e&l⌊ &6Type de bloc : &7%blockType%"
+
+# Si itemSpawnLore n'est pas défini, la description par défaut des drops sera utilisée.
+# La description par défaut des drops peut utiliser les placeholders suivants :
+# - %sellPrice% correspond au prix de vente du drop du générateur
+default-item-spawn-lore:
+  - "&7Écrivez &e/sell &7pour ouvrir le menu"
+  - "&7ou &e/sell &6hand&8/&6all &7pour vendre pour &e%sellPrice%"
+
+# Si hologramLines n'est pas défini, les lignes d'hologramme par défaut seront utilisées.
+# Les lignes d'hologramme par défaut peuvent utiliser les placeholders suivants :
+# Lignes affichées au-dessus du générateur
+# Les lignes peuvent utiliser le format suivant :
+# %name% sera remplacé par le nom du générateur
+# %tier% sera remplacé par le palier du générateur
+# %speed% sera remplacé par la vitesse du générateur
+# %spawnItem% sera remplacé par l'item généré
+# %sellPrice% sera remplacé par le prix de vente du générateur
+default-hologram-lines:
+  - "&a%name%"
+  - "&7Palier : &a%tier%"
+  - "&7Génère &a%spawnItem% &7toutes les &a%speed% &7secondes"
+  - "&7Se vend &a%sellPrice%"
+
+# generators représente les générateurs ajoutés dans l'interface,
+# name est le nom du générateur
+# tier est le palier du générateur (chaque palier doit être unique)
+# price est le prix du générateur
+# sellPrice est le prix de vente du drop du générateur
+# speed est la vitesse du générateur (fréquence d'apparition des items)
+# spawnItem est l'item généré par le générateur
+# blockType est le type de bloc du générateur
+# lore est la description du générateur (si vide, la description par défaut sera utilisée)
+# itemSpawnLore est la description du drop (si vide, la description de drop par défaut sera utilisée)
+# hologramLines correspond aux lignes d'hologramme du générateur (si vide, les lignes par défaut seront utilisées)
+# dropDisplayName est le nom affiché du drop du générateur
+# instantBreak indique si le générateur peut être cassé instantanément avec SHIFT + clic droit
+generators:
+  - name: "&e&lGénérateur de blé"
+    tier: 1
+    price: 1000.0
+    sellPrice: 10.0
+    speed: 20
+    spawnItem: "WHEAT"
+    blockType: "HAY_BLOCK"
+    lore: []
+    itemSpawnLore: []
+    hologramLines:
+      - "&e%name%"
+      - "&7Palier : &e%tier%"
+      - "&7Génère &e%spawnItem% &7toutes les &e%speed% &7secondes"
+      - "&7Se vend &e%sellPrice%"
+    dropDisplayName: "&e&lDrop de blé"
+    instantBreak: false
+  - name: "&a&lGénérateur de melon"
+    tier: 2
+    price: 2000.0
+    sellPrice: 20.0
+    speed: 20
+    spawnItem: "MELON_SLICE"
+    blockType: "MELON"
+    lore: []
+    itemSpawnLore: []
+    hologramLines:
+      - "&a%name%"
+      - "&7Palier : &a%tier%"
+      - "&7Génère &a%spawnItem% &7toutes les &a%speed% &7secondes"
+      - "&7Se vend &a%sellPrice%"
+    dropDisplayName: "&a&lDrop de melon"
+    instantBreak: false
+  - name: "&8&lGénérateur de charbon"
+    tier: 3
+    price: 3000.0
+    sellPrice: 25.0
+    speed: 20
+    spawnItem: "COAL"
+    blockType: "COAL_ORE"
+    lore: []
+    itemSpawnLore: []
+    hologramLines:
+      - "&8%name%"
+      - "&7Palier : &8%tier%"
+      - "&7Génère &8%spawnItem% &7toutes les &8%speed% &7secondes"
+      - "&7Se vend &8%sellPrice%"
+    dropDisplayName: "&8&lDrop de charbon"
+    instantBreak: false
+  - name: "&8&lGénérateur de bloc de charbon"
+    tier: 4
+    price: 4000.0
+    sellPrice: 50.0
+    speed: 20
+    spawnItem: "COAL_BLOCK"
+    blockType: "COAL_BLOCK"
+    lore: []
+    itemSpawnLore: []
+    hologramLines:
+      - "&8%name%"
+      - "&7Palier : &8%tier%"
+      - "&7Génère &8%spawnItem% &7toutes les &8%speed% &7secondes"
+      - "&7Se vend &8%sellPrice%"
+    dropDisplayName: "&8&lDrop de bloc de charbon"
+    instantBreak: false
+  - name: "&7&lGénérateur de fer"
+    tier: 5
+    price: 5000.0
+    sellPrice: 75.0
+    speed: 20
+    spawnItem: "IRON_INGOT"
+    blockType: "IRON_ORE"
+    lore: []
+    itemSpawnLore: []
+    hologramLines:
+      - "&7%name%"
+      - "&7Palier : &7%tier%"
+      - "&7Génère &7%spawnItem% &7toutes les &7%speed% &7secondes"
+      - "&7Se vend &7%sellPrice%"
+    dropDisplayName: "&7&lDrop de fer"
+    instantBreak: false
+  - name: "&7&lGénérateur de bloc de fer"
+    tier: 6
+    price: 6000.0
+    sellPrice: 100.0
+    speed: 20
+    spawnItem: "IRON_BLOCK"
+    blockType: "IRON_BLOCK"
+    lore: []
+    itemSpawnLore: []
+    hologramLines:
+      - "&7%name%"
+      - "&7Palier : &7%tier%"
+      - "&7Génère &7%spawnItem% &7toutes les &7%speed% &7secondes"
+      - "&7Se vend &7%sellPrice%"
+    dropDisplayName: "&f&lDrop de bloc de fer"
+    instantBreak: false
+  - name: "&6&lGénérateur d'or"
+    tier: 7
+    price: 7000.0
+    sellPrice: 150.0
+    speed: 20
+    spawnItem: "GOLD_INGOT"
+    blockType: "GOLD_ORE"
+    lore: []
+    itemSpawnLore: []
+    hologramLines:
+      - "&6%name%"
+      - "&7Palier : &6%tier%"
+      - "&7Génère &6%spawnItem% &7toutes les &6%speed% &7secondes"
+      - "&7Se vend &6%sellPrice%"
+    dropDisplayName: "&6&lDrop d'or"
+    instantBreak: false
+  - name: "&6&lGénérateur de bloc d'or"
+    tier: 8
+    price: 8000.0
+    sellPrice: 200.0
+    speed: 20
+    spawnItem: "GOLD_BLOCK"
+    blockType: "GOLD_BLOCK"
+    lore: []
+    itemSpawnLore: []
+    hologramLines:
+      - "&6%name%"
+      - "&7Palier : &6%tier%"
+      - "&7Génère &6%spawnItem% &7toutes les &6%speed% &7secondes"
+      - "&7Se vend &6%sellPrice%"
+    dropDisplayName: "&6&lDrop de bloc d'or"
+    instantBreak: false
+  - name: "&4&lGénérateur de redstone"
+    tier: 9
+    price: 9000.0
+    sellPrice: 300.0
+    speed: 20
+    spawnItem: "REDSTONE"
+    blockType: "REDSTONE_ORE"
+    lore: []
+    itemSpawnLore: []
+    hologramLines:
+      - "&4%name%"
+      - "&7Palier : &4%tier%"
+      - "&7Génère &4%spawnItem% &7toutes les &4%speed% &7secondes"
+      - "&7Se vend &4%sellPrice%"
+    dropDisplayName: "&4&lDrop de redstone"
+    instantBreak: false
+  - name: "&4&lGénérateur de bloc de redstone"
+    tier: 10
+    price: 10000.0
+    sellPrice: 400.0
+    speed: 20
+    spawnItem: "REDSTONE_BLOCK"
+    blockType: "REDSTONE_BLOCK"
+    lore: []
+    itemSpawnLore: []
+    hologramLines:
+      - "&4%name%"
+      - "&7Palier : &4%tier%"
+      - "&7Génère &4%spawnItem% &7toutes les &4%speed% &7secondes"
+      - "&7Se vend &4%sellPrice%"
+    dropDisplayName: "&4&lDrop de bloc de redstone"
+    instantBreak: false
+  - name: "&b&lGénérateur de lapis"
+    tier: 11
+    price: 11000.0
+    sellPrice: 500.0
+    speed: 20
+    spawnItem: "LAPIS_LAZULI"
+    blockType: "LAPIS_ORE"
+    lore: []
+    itemSpawnLore: []
+    hologramLines:
+      - "&b%name%"
+      - "&7Palier : &b%tier%"
+      - "&7Génère &b%spawnItem% &7toutes les &b%speed% &7secondes"
+      - "&7Se vend &b%sellPrice%"
+    dropDisplayName: "&b&lDrop de lapis"
+    instantBreak: false
+  - name: "&b&lGénérateur de bloc de lapis"
+    tier: 12
+    price: 12000.0
+    sellPrice: 600.0
+    speed: 20
+    spawnItem: "LAPIS_BLOCK"
+    blockType: "LAPIS_BLOCK"
+    lore: []
+    itemSpawnLore: []
+    hologramLines:
+      - "&b%name%"
+      - "&7Palier : &b%tier%"
+      - "&7Génère &b%spawnItem% &7toutes les &b%speed% &7secondes"
+      - "&7Se vend &b%sellPrice%"
+    dropDisplayName: "&b&lDrop de bloc de lapis"
+    instantBreak: false
+  - name: "&3&lGénérateur de diamant"
+    tier: 13
+    price: 13000.0
+    sellPrice: 700.0
+    speed: 20
+    spawnItem: "DIAMOND"
+    blockType: "DIAMOND_ORE"
+    lore: []
+    itemSpawnLore: []
+    hologramLines:
+      - "&3%name%"
+      - "&7Palier : &3%tier%"
+      - "&7Génère &3%spawnItem% &7toutes les &3%speed% &7secondes"
+      - "&7Se vend &3%sellPrice%"
+    dropDisplayName: "&3&lDrop de diamant"
+    instantBreak: false
+  - name: "&3&lGénérateur de bloc de diamant"
+    tier: 14
+    price: 14000.0
+    sellPrice: 800.0
+    speed: 20
+    spawnItem: "DIAMOND_BLOCK"
+    blockType: "DIAMOND_BLOCK"
+    lore: []
+    itemSpawnLore: []
+    hologramLines:
+      - "&3%name%"
+      - "&7Palier : &3%tier%"
+      - "&7Génère &3%spawnItem% &7toutes les &3%speed% &7secondes"
+      - "&7Se vend &3%sellPrice%"
+    dropDisplayName: "&3&lDrop de bloc de diamant"
+    instantBreak: false
+  - name: "&a&lGénérateur d'émeraude"
+    tier: 15
+    price: 15000.0
+    sellPrice: 900.0
+    speed: 20
+    spawnItem: "EMERALD"
+    blockType: "EMERALD_ORE"
+    lore: []
+    itemSpawnLore: []
+    hologramLines:
+      - "&a%name%"
+      - "&7Palier : &a%tier%"
+      - "&7Génère &a%spawnItem% &7toutes les &a%speed% &7secondes"
+      - "&7Se vend &a%sellPrice%"
+    dropDisplayName: "&a&lDrop d'émeraude"
+    instantBreak: false
+  - name: "&a&lGénérateur de bloc d'émeraude"
+    tier: 16
+    price: 16000.0
+    sellPrice: 1000.0
+    speed: 20
+    spawnItem: "EMERALD_BLOCK"
+    blockType: "EMERALD_BLOCK"
+    lore: []
+    itemSpawnLore: []
+    hologramLines:
+      - "&a%name%"
+      - "&7Palier : &a%tier%"
+      - "&7Génère &a%spawnItem% &7toutes les &a%speed% &7secondes"
+      - "&7Se vend &a%sellPrice%"
+    dropDisplayName: "&a&lDrop de bloc d'émeraude"
+    instantBreak: false
+  - name: "&d&lGénérateur de quartz"
+    tier: 17
+    price: 17000.0
+    sellPrice: 1100.0
+    speed: 20
+    spawnItem: "QUARTZ"
+    blockType: "NETHER_QUARTZ_ORE"
+    lore: []
+    itemSpawnLore: []
+    hologramLines:
+      - "&d%name%"
+      - "&7Palier : &d%tier%"
+      - "&7Génère &d%spawnItem% &7toutes les &d%speed% &7secondes"
+      - "&7Se vend &d%sellPrice%"
+    dropDisplayName: "&d&lDrop de quartz"
+    instantBreak: false
+  - name: "&d&lGénérateur de bloc de quartz"
+    tier: 18
+    price: 18000.0
+    sellPrice: 1200.0
+    speed: 20
+    spawnItem: "QUARTZ_BLOCK"
+    blockType: "QUARTZ_BLOCK"
+    lore: []
+    itemSpawnLore: []
+    hologramLines:
+      - "&d%name%"
+      - "&7Palier : &d%tier%"
+      - "&7Génère &d%spawnItem% &7toutes les &d%speed% &7secondes"
+      - "&7Se vend &d%sellPrice%"
+    dropDisplayName: "&d&lDrop de bloc de quartz"
+    instantBreak: false
+  - name: "&f&lGénérateur de fragment de Netherite"
+    tier: 19
+    price: 19000.0
+    sellPrice: 1300.0
+    speed: 20
+    spawnItem: "NETHERITE_SCRAP"
+    blockType: "ANCIENT_DEBRIS"
+    lore: []
+    itemSpawnLore: []
+    hologramLines:
+      - "&f%name%"
+      - "&7Palier : &f%tier%"
+      - "&7Génère &f%spawnItem% &7toutes les &f%speed% &7secondes"
+      - "&7Se vend &f%sellPrice%"
+    dropDisplayName: "&f&lDrop de fragment de Netherite"
+    instantBreak: false
+  - name: "&f&lGénérateur de lingot de Netherite"
+    tier: 20
+    price: 20000.0
+    sellPrice: 1400.0
+    speed: 20
+    spawnItem: "NETHERITE_INGOT"
+    blockType: "NETHERITE_BLOCK"
+    lore: []
+    itemSpawnLore: []
+    hologramLines:
+      - "&f%name%"
+      - "&7Palier : &f%tier%"
+      - "&7Génère &f%spawnItem% &7toutes les &f%speed% &7secondes"
+      - "&7Se vend &f%sellPrice%"
+    dropDisplayName: "&f&lDrop de lingot de Netherite"
+    instantBreak: false
+  - name: "&5&lGénérateur de débris antiques"
+    tier: 21
+    price: 21000.0
+    sellPrice: 1500.0
+    speed: 20
+    spawnItem: "ANCIENT_DEBRIS"
+    blockType: "ANCIENT_DEBRIS"
+    lore: []
+    itemSpawnLore: []
+    hologramLines:
+      - "&5%name%"
+      - "&7Palier : &5%tier%"
+      - "&7Génère &5%spawnItem% &7toutes les &5%speed% &7secondes"
+      - "&7Se vend &5%sellPrice%"
+    dropDisplayName: "&5&lDrop de débris antiques"
+    instantBreak: false
+  - name: "&5&lGénérateur d'étoile du Nether"
+    tier: 22
+    price: 22000.0
+    sellPrice: 1600.0
+    speed: 20
+    spawnItem: "NETHER_STAR"
+    blockType: "BEACON"
+    lore: []
+    itemSpawnLore: []
+    hologramLines:
+      - "&5%name%"
+      - "&7Palier : &5%tier%"
+      - "&7Génère &5%spawnItem% &7toutes les &5%speed% &7secondes"
+      - "&7Se vend &5%sellPrice%"
+    dropDisplayName: "&5&lDrop d'étoile du Nether"
+    instantBreak: false
+  - name: "&c&lGénérateur d'obsidienne pleureuse"
+    tier: 23
+    price: 23000.0
+    sellPrice: 1700.0
+    speed: 20
+    spawnItem: "CRYING_OBSIDIAN"
+    blockType: "CRYING_OBSIDIAN"
+    lore: []
+    itemSpawnLore: []
+    hologramLines:
+      - "&c%name%"
+      - "&7Palier : &c%tier%"
+      - "&7Génère &c%spawnItem% &7toutes les &c%speed% &7secondes"
+      - "&7Se vend &c%sellPrice%"
+    dropDisplayName: "&c&lDrop d'œuf de dragon"
+    instantBreak: false
+  - name: "&4&lGénérateur de rose d'obsidienne"
+    tier: 24
+    price: 24000.0
+    sellPrice: 1800.0
+    speed: 20
+    spawnItem: "WITHER_ROSE"
+    blockType: "RESPAWN_ANCHOR"
+    lore: []
+    itemSpawnLore: []
+    hologramLines:
+      - "&4%name%"
+      - "&7Palier : &4%tier%"
+      - "&7Génère &4%spawnItem% &7toutes les &4%speed% &7secondes"
+      - "&7Se vend &4%sellPrice%"
+    dropDisplayName: "&4&lDrop de crâne de Wither squelette"
+    instantBreak: false
+  - name: "&8&lGénérateur d'ardoise des abîmes renforcée"
+    tier: 25
+    price: 25000.0
+    sellPrice: 1900.0
+    speed: 20
+    spawnItem: "REINFORCED_DEEPSLATE"
+    blockType: "REINFORCED_DEEPSLATE"
+    lore: []
+    itemSpawnLore: []
+    hologramLines:
+      - "&8%name%"
+      - "&7Palier : &8%tier%"
+      - "&7Génère &8%spawnItem% &7toutes les &8%speed% &7secondes"
+      - "&7Se vend &8%sellPrice%"
+    dropDisplayName: "&8&lDrop d'ardoise des abîmes renforcée"
+    instantBreak: false
+  - name: "&6&lGénérateur de bloc de magma"
+    tier: 26
+    price: 26000.0
+    sellPrice: 2000.0
+    speed: 20
+    spawnItem: "MAGMA_BLOCK"
+    blockType: "MAGMA_BLOCK"
+    lore: []
+    itemSpawnLore: []
+    hologramLines:
+      - "&6%name%"
+      - "&7Palier : &6%tier%"
+      - "&7Génère &6%spawnItem% &7toutes les &6%speed% &7secondes"
+      - "&7Se vend &6%sellPrice%"
+    dropDisplayName: "&6&lDrop de bloc de magma"
+    instantBreak: false
+  - name: "&4&lGénérateur de bedrock"
+    tier: 27
+    price: 27000.0
+    sellPrice: 2100.0
+    speed: 20
+    spawnItem: "BEDROCK"
+    blockType: "BEDROCK"
+    lore: []
+    itemSpawnLore: []
+    hologramLines:
+      - "&4%name%"
+      - "&7Palier : &4%tier%"
+      - "&7Génère &4%spawnItem% &7toutes les &4%speed% &7secondes"
+      - "&7Se vend &4%sellPrice%"
+    dropDisplayName: "&4&lDrop de bedrock"
+    instantBreak: true
+  - name: "&e&lGénérateur d'œuf de dragon"
+    tier: 28
+    price: 28000.0
+    sellPrice: 2200.0
+    speed: 20
+    spawnItem: "DRAGON_EGG"
+    blockType: "DRAGON_EGG"
+    lore: []
+    itemSpawnLore: []
+    hologramLines:
+      - "&e%name%"
+      - "&7Palier : &e%tier%"
+      - "&7Génère &e%spawnItem% &7toutes les &e%speed% &7secondes"
+      - "&7Se vend &e%sellPrice%"
+    dropDisplayName: "&e&lDrop d'œuf de dragon"
+    instantBreak: true
+
+developer-options:
+  # Active les logs de debug du plugin.
+  enabled: false
+#YDVZZWN0hFVDhUVvZlUwgld4VkVPVTRWpUOrJGUSxGVKFTaUt0NP5GVJhFTOt0NP5GVJ92b

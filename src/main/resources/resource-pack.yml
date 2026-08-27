@@ -1,5 +1,0 @@
-# Les modèles sont fournis dans resource-pack/ et assemblés en ZIP avec Maven.
-# Désactiver cette option rend immédiatement tous les menus et objets en matériaux vanilla.
-item-models:
-  enabled: true
-  namespace: valoriatycoon

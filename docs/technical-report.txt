@@ -1,0 +1,82 @@
+Rapport technique ValoriaTycoon v1.6.3
+
+
+com.google.gson.internal.$Gson$Types
+----------------------------
+
+resolve(java.lang.reflect.Type java.lang.Class<?> java.lang.reflect.Type java.util.Map<java.lang.reflect.TypeVariable<?>, java.lang.reflect.Type> )
+  Impossible de restructurer complètement le code
+  Impossible de résoudre les conflits de types
+
+
+kotlin.collections.SlidingWindowKt
+----------------------------
+
+invokeSuspend(java.lang.Object )
+  Impossible de restructurer complètement le code
+
+
+kotlin.internal.PlatformImplementations
+----------------------------
+
+<clinit>()
+  Impossible de restructurer complètement le code
+
+
+kotlin.jvm.JvmClassMappingKt
+----------------------------
+
+getJavaObjectType(kotlin.reflect.KClass<T> )
+  Impossible de restructurer complètement le code
+  Impossible de résoudre les conflits de types
+
+
+kotlin.sequences.SequencesKt__SequencesKt
+----------------------------
+
+invokeSuspend(java.lang.Object )
+  Impossible de restructurer complètement le code
+invokeSuspend(java.lang.Object )
+  Impossible de restructurer complètement le code
+
+
+kotlin.sequences.SequencesKt___SequencesKt
+----------------------------
+
+invokeSuspend(java.lang.Object )
+  Impossible de restructurer complètement le code
+invokeSuspend(java.lang.Object )
+  Impossible de restructurer complètement le code
+invokeSuspend(java.lang.Object )
+  Impossible de restructurer complètement le code
+invokeSuspend(java.lang.Object )
+  Impossible de restructurer complètement le code
+invokeSuspend(java.lang.Object )
+  Impossible de restructurer complètement le code
+  Impossible de résoudre les conflits de types
+
+
+kotlin.text.DelimitedRangesSequence
+----------------------------
+
+calcNext()
+  Impossible de restructurer complètement le code
+
+
+kotlin.text.Regex
+----------------------------
+
+invoke(java.lang.Enum )
+  Signature de méthode ignorée, car elle ne peut pas être vérifiée avec le descripteur
+invokeSuspend(java.lang.Object )
+  Impossible de restructurer complètement le code
+
+
+kotlin.io.path.PathTreeWalk
+----------------------------
+
+invokeSuspend(java.lang.Object )
+  Impossible de restructurer complètement le code
+  Impossible de résoudre les conflits de types
+invokeSuspend(java.lang.Object )
+  Impossible de restructurer complètement le code

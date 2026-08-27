@@ -1,0 +1,35 @@
+name: ValoriaTycoon
+version: '1.6.3'
+main: xyz.arcadiadevs.valoriatycoon.ValoriaTycoon
+api-version: 1.13
+authors:
+  - Cuftica
+  - OpenSource
+
+depend:
+  - Vault
+  - ProtocolLib
+
+softdepend:
+  - Oraxen
+  - Essentials
+  - ItemsAdder
+  - IridiumSkyblock
+  - SuperiorSkyblock2
+  - ASkyBlock
+  - AcidIsland
+  - BentoBox
+  - HoloEasy
+
+commands:
+  valoriatycoon:
+    description: Commande principale de ValoriaTycoon
+    usage: /valoriatycoon
+  generators:
+    description: Affiche la liste des générateurs dans une interface
+    usage: /generators
+    aliases: [ gen ]
+  selldrops:
+    description: Vend les drops présents dans l'inventaire
+    usage: /selldrops
+    aliases: [ sell ]

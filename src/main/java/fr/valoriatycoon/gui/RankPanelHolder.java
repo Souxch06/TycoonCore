@@ -1,3 +1,0 @@
-package fr.valoriatycoon.gui;
-import org.bukkit.inventory.Inventory;import org.bukkit.inventory.InventoryHolder;import org.jetbrains.annotations.NotNull;
-public final class RankPanelHolder implements InventoryHolder{private Inventory inventory;public void bind(Inventory i){inventory=i;}@Override public @NotNull Inventory getInventory(){if(inventory==null)throw new IllegalStateException();return inventory;}}

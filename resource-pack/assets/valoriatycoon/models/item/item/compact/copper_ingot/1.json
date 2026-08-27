@@ -1,6 +1,0 @@
-{
-  "parent": "minecraft:item/generated",
-  "textures": {
-    "layer0": "valoriatycoon:item/item/compact/copper_ingot/1"
-  }
-}
