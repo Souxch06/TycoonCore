@@ -69,7 +69,7 @@ def top_list(text: str, key: str):
         if stripped.startswith("#") or not stripped:
             continue
         if stripped.startswith("- "):
-            items.append(stripped[2:].strip().strip("'""))
+            items.append(stripped[2:].strip().strip(chr(39) + chr(34)))
     return items
 
 
