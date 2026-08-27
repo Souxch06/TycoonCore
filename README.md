@@ -1,4 +1,4 @@
-# ValoriaTycoon v1.6.3
+# ValoriaTycoon v1.6.3 
 
 **ValoriaTycoon** est un plugin Minecraft Bukkit/Spigot/Paper basé sur un système de générateurs de ressources pour les serveurs Tycoon et SkyBlock.
 
