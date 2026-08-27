@@ -1,7 +1,7 @@
 # [général]
-default-message: '&9GensPlus> Ce serveur utilise GensPlus v%version%'
+default-message: '&9ValoriaTycoon> Ce serveur utilise ValoriaTycoon v%version%'
 no-permission: "&cErreur> &7Vous n'avez pas la permission de faire cela !"
-plugin-reloaded: "&9GensPlus> &7Plugin rechargé."
+plugin-reloaded: "&9ValoriaTycoon> &7Plugin rechargé."
 too-fast: "&cErreur> &7Vous faites cela trop vite !"
 player-not-found: "&cErreur> &7Joueur introuvable !"
 not-enough-arguments: "&cErreur> &7Arguments insuffisants !"
@@ -12,37 +12,37 @@ invalid-format: "&cErreur> &7Format invalide !"
 # [limites]
 limit-reached: "&cErreur> &7Vous avez atteint la limite de &c%limit% &7générateurs !"
 cannot-place-in-world: "&cErreur> &7Vous ne pouvez pas placer de générateurs dans ce monde !"
-limit-updated: "&9GensPlus> &7Vous avez défini la limite de générateurs de %player% à &a%limit%&7 !"
+limit-updated: "&9ValoriaTycoon> &7Vous avez défini la limite de générateurs de %player% à &a%limit%&7 !"
 
 # [événements]
-event-started: "&9GensPlus> &7%event% a commencé et se terminera dans &e&n%time%&7 !"
-event-ended: "&9GensPlus> &7%event% est terminé. Un nouvel événement commencera dans &e&n%time%&7 !"
+event-started: "&9ValoriaTycoon> &7%event% a commencé et se terminera dans &e&n%time%&7 !"
+event-ended: "&9ValoriaTycoon> &7%event% est terminé. Un nouvel événement commencera dans &e&n%time%&7 !"
 event-already-running: "&cErreur> &7Un événement est déjà en cours !"
-event-force-ended: "&9GensPlus> &7L'événement a été arrêté de force ! Un nouvel événement commencera dans &e&n%time%&7 !"
+event-force-ended: "&9ValoriaTycoon> &7L'événement a été arrêté de force ! Un nouvel événement commencera dans &e&n%time%&7 !"
 event-not-found: "&cErreur> &7Événement introuvable !"
 
 # [générateurs]
-successfully-upgraded: "&9GensPlus> &7Votre générateur a été amélioré au palier &a%tier% &7avec succès !"
-successfully-sold: "&9GensPlus> &7Drops vendus avec succès pour &a%price%"
+successfully-upgraded: "&9ValoriaTycoon> &7Votre générateur a été amélioré au palier &a%tier% &7avec succès !"
+successfully-sold: "&9ValoriaTycoon> &7Drops vendus avec succès pour &a%price%"
 successfully-sold-action-bar: "&cVous avez vendu &a%amount% &cdrops pour &a%price%&c !"
 not-enough-money: "&cErreur> &7Vous n'avez pas assez d'argent pour faire cela ! %currentBalance%/%price%"
 nothing-to-sell: "&cErreur> &7Vous n'avez aucun drop à vendre !"
 invalid-generator-tier: "&cErreur> &7Palier de générateur invalide !"
-successfully-destroyed: "&9GensPlus> &7Générateur détruit avec succès !"
-successfully-placed: "&9GensPlus> &7Générateur de palier %tier% placé avec succès !"
-successfully-bought: "&9GensPlus> &7Générateur de palier %tier% acheté avec succès pour %price% !"
+successfully-destroyed: "&9ValoriaTycoon> &7Générateur détruit avec succès !"
+successfully-placed: "&9ValoriaTycoon> &7Générateur de palier %tier% placé avec succès !"
+successfully-bought: "&9ValoriaTycoon> &7Générateur de palier %tier% acheté avec succès pour %price% !"
 reached-max-tier: "&cErreur> &7Vous avez atteint le palier maximum du générateur !"
 not-your-generator-destroy: "&cErreur> &7Vous ne pouvez pas détruire un générateur qui ne vous appartient pas !"
 not-your-generator-upgrade: "&cErreur> &7Vous ne pouvez pas améliorer un générateur qui ne vous appartient pas !"
 
 # [admin]
-generator-given: "&9GensPlus> &7Vous avez donné &a%amount% &7générateur(s) de palier &a%tier% &7à &a%targetPlayer%"
-generator-given-all: "&9GensPlus> &7Vous avez donné &a%amount% &7générateur(s) de palier &a%tier% &7à tous les joueurs ! (&a%count%&7)"
-generator-received: "&9GensPlus> &7Vous avez reçu &a%amount% &7générateur(s) de palier &a%tier%"
+generator-given: "&9ValoriaTycoon> &7Vous avez donné &a%amount% &7générateur(s) de palier &a%tier% &7à &a%targetPlayer%"
+generator-given-all: "&9ValoriaTycoon> &7Vous avez donné &a%amount% &7générateur(s) de palier &a%tier% &7à tous les joueurs ! (&a%count%&7)"
+generator-received: "&9ValoriaTycoon> &7Vous avez reçu &a%amount% &7générateur(s) de palier &a%tier%"
 
 # [baguettes]
-sell-wand-given: "&9GensPlus> &7Vous avez donné une baguette de vente !"
-sell-wand-received: "&9GensPlus> &7Vous avez reçu une baguette de vente !"
-upgrade-wand-given: "&9GensPlus> &7Vous avez donné une baguette d'amélioration !"
-upgrade-wand-received: "&9GensPlus> &7Vous avez reçu une baguette d'amélioration !"
+sell-wand-given: "&9ValoriaTycoon> &7Vous avez donné une baguette de vente !"
+sell-wand-received: "&9ValoriaTycoon> &7Vous avez reçu une baguette de vente !"
+upgrade-wand-given: "&9ValoriaTycoon> &7Vous avez donné une baguette d'amélioration !"
+upgrade-wand-received: "&9ValoriaTycoon> &7Vous avez reçu une baguette d'amélioration !"
 wand-broke: "&cErreur> &7Votre baguette s'est cassée !"

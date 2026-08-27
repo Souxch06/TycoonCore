@@ -1,12 +1,12 @@
-# GensPlus v1.6.3 — version française
+# ValoriaTycoon v1.6.3 — version française
 
-Ce dépôt contient une version organisée et francisée de **GensPlus v1.6.3**, un plugin Minecraft Bukkit/Spigot/Paper centré sur des générateurs de ressources.
+Ce dépôt contient une version organisée et francisée de **ValoriaTycoon v1.6.3**, un plugin Minecraft Bukkit/Spigot/Paper centré sur des générateurs de ressources.
 
 Le code a été relu à partir des sources décompilées afin d'identifier les fonctionnalités, les commandes, les messages et les fichiers utiles du plugin.
 
 ## Ce que fait le plugin
 
-GensPlus permet aux joueurs de placer des générateurs qui produisent automatiquement des drops. Le plugin gère notamment :
+ValoriaTycoon permet aux joueurs de placer des générateurs qui produisent automatiquement des drops. Le plugin gère notamment :
 
 - les générateurs par paliers ;
 - l'achat de générateurs via une interface ;
@@ -24,11 +24,11 @@ GensPlus permet aux joueurs de placer des générateurs qui produisent automatiq
 ```text
 artifacts/
   original/
-    GensPlus-v1.6.3.jar       # JAR original conservé
+    ValoriaTycoon-v1.6.3.jar       # JAR original conservé
   extracted/                  # Contenu extrait du JAR, avec les ressources principales traduites
 
 sources/
-  plugin/                     # Code principal décompilé du plugin GensPlus
+  plugin/                     # Code principal décompilé du plugin ValoriaTycoon
   shaded/                     # Librairies incluses dans le JAR
   module-info.java
 
@@ -67,16 +67,16 @@ Deux clés de configuration ont aussi été alignées sur les chemins réellemen
 
 | Commande | Utilité |
 | --- | --- |
-| `/gensplus` | Affiche la version du plugin. |
-| `/gensplus help` | Affiche l'aide des commandes. |
-| `/gensplus give <joueur> <palier> [quantité]` | Donne un générateur à un joueur. |
-| `/gensplus giveall <palier> [quantité]` | Donne un générateur à tous les joueurs. |
-| `/gensplus wand sell <joueur> <utilisations> <multiplicateur>` | Donne une baguette de vente. |
-| `/gensplus setlimit <joueur> <limite>` | Définit la limite de générateurs d'un joueur. |
-| `/gensplus addlimit <joueur> <limite>` | Ajoute une valeur à la limite d'un joueur. |
-| `/gensplus startevent <nom>` | Force le démarrage d'un événement. |
-| `/gensplus stopevent` | Arrête l'événement en cours. |
-| `/gensplus reload` | Recharge le plugin. |
+| `/valoriatycoon` | Affiche la version du plugin. |
+| `/valoriatycoon help` | Affiche l'aide des commandes. |
+| `/valoriatycoon give <joueur> <palier> [quantité]` | Donne un générateur à un joueur. |
+| `/valoriatycoon giveall <palier> [quantité]` | Donne un générateur à tous les joueurs. |
+| `/valoriatycoon wand sell <joueur> <utilisations> <multiplicateur>` | Donne une baguette de vente. |
+| `/valoriatycoon setlimit <joueur> <limite>` | Définit la limite de générateurs d'un joueur. |
+| `/valoriatycoon addlimit <joueur> <limite>` | Ajoute une valeur à la limite d'un joueur. |
+| `/valoriatycoon startevent <nom>` | Force le démarrage d'un événement. |
+| `/valoriatycoon stopevent` | Arrête l'événement en cours. |
+| `/valoriatycoon reload` | Recharge le plugin. |
 | `/generators` | Ouvre l'interface des générateurs. |
 | `/selldrops hand` | Vend les drops tenus en main. |
 | `/selldrops all` | Vend tous les drops de l'inventaire. |
@@ -86,22 +86,22 @@ Deux clés de configuration ont aussi été alignées sur les chemins réellemen
 
 | Permission | Utilité |
 | --- | --- |
-| `gensplus.admin` | Permission administrateur globale. |
-| `gensplus.generator.open` | Accès à l'interface des générateurs. |
-| `gensplus.admin.give` | Donner un générateur à un joueur. |
-| `gensplus.admin.give.all` | Donner un générateur à tous les joueurs. |
-| `gensplus.admin.reload` | Recharger le plugin. |
-| `gensplus.admin.startevent` | Démarrer un événement. |
-| `gensplus.admin.stopevent` | Arrêter un événement. |
-| `gensplus.drop.sell.all` | Vendre tous les drops de l'inventaire. |
-| `gensplus.drop.sell.hand` | Vendre les drops en main. |
-| `gensplus.drop.sell.gui` | Utiliser l'interface de vente. |
-| `gensplus.sell.multiplier.<montant>` | Multiplicateur de vente par permission. |
-| `gensplus.limit.<montant>` | Limite de générateurs par permission. |
-| `gensplus.radius.<montant>` | Rayon d'activation par permission. |
-| `gensplus.admin.setlimit` | Définir une limite de générateurs. |
-| `gensplus.admin.addlimit` | Ajouter une limite de générateurs. |
-| `gensplus.admin.givewand` | Donner une baguette de vente. |
+| `valoriatycoon.admin` | Permission administrateur globale. |
+| `valoriatycoon.generator.open` | Accès à l'interface des générateurs. |
+| `valoriatycoon.admin.give` | Donner un générateur à un joueur. |
+| `valoriatycoon.admin.give.all` | Donner un générateur à tous les joueurs. |
+| `valoriatycoon.admin.reload` | Recharger le plugin. |
+| `valoriatycoon.admin.startevent` | Démarrer un événement. |
+| `valoriatycoon.admin.stopevent` | Arrêter un événement. |
+| `valoriatycoon.drop.sell.all` | Vendre tous les drops de l'inventaire. |
+| `valoriatycoon.drop.sell.hand` | Vendre les drops en main. |
+| `valoriatycoon.drop.sell.gui` | Utiliser l'interface de vente. |
+| `valoriatycoon.sell.multiplier.<montant>` | Multiplicateur de vente par permission. |
+| `valoriatycoon.limit.<montant>` | Limite de générateurs par permission. |
+| `valoriatycoon.radius.<montant>` | Rayon d'activation par permission. |
+| `valoriatycoon.admin.setlimit` | Définir une limite de générateurs. |
+| `valoriatycoon.admin.addlimit` | Ajouter une limite de générateurs. |
+| `valoriatycoon.admin.givewand` | Donner une baguette de vente. |
 
 ## Dépendances plugin
 
@@ -117,5 +117,5 @@ Les sources dans `sources/` proviennent d'une décompilation. Elles sont utiles 
 Le JAR original est conservé dans :
 
 ```text
-artifacts/original/GensPlus-v1.6.3.jar
+artifacts/original/ValoriaTycoon-v1.6.3.jar
 ```

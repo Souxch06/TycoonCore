@@ -4,7 +4,7 @@
 
 Contient le fichier JAR original :
 
-- `GensPlus-v1.6.3.jar`
+- `ValoriaTycoon-v1.6.3.jar`
 
 ## `artifacts/extracted/`
 
@@ -29,7 +29,7 @@ Cette zone sert de référence de structure : elle permet de vérifier qu'aucun 
 
 Contient les sources Java décompilées du package principal :
 
-- `xyz.arcadiadevs.gensplus`
+- `xyz.arcadiadevs.valoriatycoon`
 
 C'est le dossier le plus utile pour modifier la logique du plugin.
 
@@ -46,7 +46,7 @@ Contient les dépendances intégrées dans le JAR puis décompilées :
 - `org.holoeasy`
 - `org.json`
 
-Ces fichiers sont séparés du code plugin pour éviter de mélanger le cœur de GensPlus avec les librairies embarquées.
+Ces fichiers sont séparés du code plugin pour éviter de mélanger le cœur de ValoriaTycoon avec les librairies embarquées.
 
 ## `resources/`
 

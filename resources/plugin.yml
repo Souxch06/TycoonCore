@@ -1,6 +1,6 @@
-name: GensPlus
+name: ValoriaTycoon
 version: '1.6.3'
-main: xyz.arcadiadevs.gensplus.GensPlus
+main: xyz.arcadiadevs.valoriatycoon.ValoriaTycoon
 api-version: 1.13
 authors:
   - Cuftica
@@ -22,9 +22,9 @@ softdepend:
   - HoloEasy
 
 commands:
-  gensplus:
-    description: Commande principale de GensPlus
-    usage: /gensplus
+  valoriatycoon:
+    description: Commande principale de ValoriaTycoon
+    usage: /valoriatycoon
     aliases: [ gens, gp ]
   generators:
     description: Affiche la liste des générateurs dans une interface

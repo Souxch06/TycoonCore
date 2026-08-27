@@ -63,15 +63,15 @@ limits:
 
     # Faut-il utiliser les permissions pour la limite de générateurs ?
     # Si true, vous pourrez définir des limites spécifiques
-    # pour chaque joueur. [gensplus.limit.<montant>]
-    # (ex: gensplus.limit.20)
+    # pour chaque joueur. [valoriatycoon.limit.<montant>]
+    # (ex: valoriatycoon.limit.20)
     use-permissions: false
 
     # [REMPLACE USE-PERMISSIONS]
     # Faut-il utiliser les commandes pour la limite de générateurs ?
     # Si true, vous pourrez définir des limites spécifiques pour chaque joueur
-    # avec la commande /gensplus setlimit <joueur> <limite>
-    # (ex: /gensplus setlimit Notch 20).
+    # avec la commande /valoriatycoon setlimit <joueur> <limite>
+    # (ex: /valoriatycoon setlimit Notch 20).
     use-commands: true
 
     # Limite de générateurs par défaut pour tous les joueurs
@@ -103,8 +103,8 @@ radius:
 
   # Faut-il utiliser les permissions pour le rayon ?
   # Si true, vous pourrez définir des limites spécifiques
-  # de rayon pour chaque joueur. [gensplus.radius.<montant>]
-  # (ex: gensplus.radius.5)
+  # de rayon pour chaque joueur. [valoriatycoon.radius.<montant>]
+  # (ex: valoriatycoon.radius.5)
   use-permissions: true
 
   # Rayon par défaut si le joueur n'a pas de permission
@@ -114,8 +114,8 @@ radius:
 multiplier:
   # Faut-il utiliser les permissions pour le multiplicateur ?
   # Si true, vous pourrez définir des multiplicateurs spécifiques
-  # pour chaque joueur. [gensplus.sell.multiplier.<montant>]
-  # (ex: gensplus.sell.multiplier.2)
+  # pour chaque joueur. [valoriatycoon.sell.multiplier.<montant>]
+  # (ex: valoriatycoon.sell.multiplier.2)
   use-permissions: true
 
   # Multiplicateur par défaut pour tous les joueurs
