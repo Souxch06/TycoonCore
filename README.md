@@ -18,6 +18,9 @@ Les joueurs peuvent placer des générateurs, récupérer automatiquement des dr
   reproduit de façon déterministe par `scripts/patch-class-version-patterns.py` et vérifié par
   `scripts/verify-paper26-compat.py`.
 - Le JAR est en bytecode Java 17 (exécutable sur Java 17+) ; un serveur 26.x exige Java 25.
+- Contrôle rapide, sans JDK ni serveur : `python3 scripts/verify-paper26-compat.py` (l'arbre du dépôt)
+  puis `python3 scripts/verify-paper26-compat.py target/ValoriaTycoon-v1.6.3.jar` (JAR compilé).
+  Un workflow de validation pour les Pull Requests est fourni dans `scripts/ci/build-workflow.yml`.
 
 ## Fonctionnalités
 

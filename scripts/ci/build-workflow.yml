@@ -1,7 +1,16 @@
 name: Build and Validate ValoriaTycoon
 
 # Workflow de validation pour les Pull Requests : il compile et contrôle le JAR sans jamais
-# déployer sur le serveur (le déploiement SFTP reste réservé à main, voir deploy.yml).
+# déployer sur le serveur (le déploiement SFTP reste réservé à main, voir .github/workflows/deploy.yml).
+#
+# IMPORTANT : ce fichier vit dans scripts/ci/ parce que le dépôt exige la permission
+# `workflows` pour créer ou modifier un fichier sous .github/workflows/. Pour l'activer :
+#
+#     cp scripts/ci/build-workflow.yml .github/workflows/build.yml
+#
+# Les mêmes étapes peuvent être ajoutées à deploy.yml avant le dépôt SFTP ; les scripts
+# invoqués (patch-class-version-patterns.py, rebrand-classes.py, verify-extraction.py,
+# verify-paper26-compat.py) s'exécutent aussi bien en local, sans JDK ni réseau.
 
 on:
   pull_request:

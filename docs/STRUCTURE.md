@@ -93,6 +93,17 @@ python3 scripts/verify-paper26-compat.py target/ValoriaTycoon-v1.6.3.jar
 
 `scripts/classfile.py` est le lecteur de fichiers `.class` partagé par ces deux scripts.
 
+## CI de validation
+
+`scripts/ci/build-workflow.yml` contient le workflow de validation des Pull Requests (compilation,
+contrôle des classes patchées et renommées, vérification du JAR produit, publication de l'artefact).
+Il est hors de `.github/workflows/` parce que la création d'un workflow demande la permission
+`workflows` côté GitHub : à activer avec
+
+```bash
+cp scripts/ci/build-workflow.yml .github/workflows/build.yml
+```
+
 La compilation ciblée est déclarée dans `pom.xml` (`sourceDirectory` + `includes` du maven-compiler-plugin) :
 seule `sources/plugin/.../utils/ServerVersion.java` est recompilée, et sa sortie écrase la classe livrée dans
 `target/classes` avant la mise en JAR.
