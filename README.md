@@ -50,7 +50,8 @@ artifacts/
 sources/
   plugin/                    # Code principal de ValoriaTycoon
   shaded/                    # Librairies incluses avec le plugin
-  module-info.java
+                             # (dont com/google/gson/module-info.java : descripteur décompilé, hors
+                             #  racine pour ne pas mettre javac en mode module)
 
 resources/
   config.yml                 # Configuration principale

@@ -112,6 +112,16 @@ def verify_tree():
     check("ServerVersion.java : plus de dépendance au paquet CraftBukkit pour la détection",
           "startsWith(serverVersion.name())" not in source)
 
+    # 4. invariant de build : une racine de compilation propre (sinon javac passe en mode module)
+    root_marker = ROOT / "sources" / "module-info.java"
+    check("racine de compilation sans module-info.java", not root_marker.exists(),
+          "sources/module-info.java ferait basculer javac en mode module (« module not found: com.google.gson ») ; "
+          "déplacer ce résidu sous sources/shaded/com/google/gson/")
+    pom = (ROOT / "pom.xml").read_text()
+    check("pom.xml : compilation limitée aux sources maintenues",
+          "<includes>" in pom and "ServerVersion.java" in pom and "nbteditor/NBTEditor.java" in pom,
+          "les <includes> du maven-compiler-plugin doivent lister les fichiers maintenus")
+
     # 4. pont NBT -> PersistentDataContainer (sans lui, les générateurs sont inertes sur 26.x)
     bridge = BRIDGE_SOURCE.read_text(encoding="utf-8") if BRIDGE_SOURCE.is_file() else ""
     check("pont NBTEditor.java présent", bool(bridge), f"attendu dans {BRIDGE_SOURCE.relative_to(ROOT)}")

@@ -46,6 +46,11 @@
                 <version>3.13.0</version>
                 <configuration>
                     <release>${maven.compiler.release}</release>
+                    <!-- Aucun fichier implicite ne doit être compilé au passage : la seule source
+                         reachable depuis les deux fichiers maintenus doit être le JDK. -->
+                    <compilerArgs>
+                        <arg>-implicit:none</arg>
+                    </compilerArgs>
                     <includes>
                         <!-- Détection de version serveur (Paper 26.x) : compilée depuis
                              sources/plugin, remplace la classe livrée dans le JAR. -->

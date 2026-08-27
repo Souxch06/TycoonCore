@@ -25,6 +25,16 @@ Contient le contenu complet du plugin organisé avec la même structure que cell
 
 Cette zone sert de référence de structure et permet de vérifier qu'aucun fichier attendu n'est absent.
 
+## Racine de compilation et `module-info.java`
+
+Le `pom.xml` compile uniquement une liste explicite de fichiers maintenus, avec `sources/` comme
+`sourceDirectory`. Conséquence à connaître : **aucun `module-info.java` ne doit rester à la racine de
+`sources/`**. javac y chercherait un descripteur de module et basculerait toute la compilation en mode
+module, ce qui échoue immédiatement (`module not found: com.google.gson`, le résidu décompilé étant
+précisément celui du module gson embarqué). Ce fichier vit donc dans
+`sources/shaded/com/google/gson/module-info.java`, en miroir de `META-INF/versions/9/module-info.class`
+du JAR ; il n'est jamais compilé. `scripts/verify-paper26-compat.py` contrôle cette invariant.
+
 ## `sources/plugin/`
 
 Contient le code Java principal du plugin :
