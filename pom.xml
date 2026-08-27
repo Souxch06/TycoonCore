@@ -10,6 +10,50 @@
     <name>ValoriaTycoon</name>
     <description>Plugin ValoriaTycoon pour serveur Minecraft Tycoon et SkyBlock</description>
 
+    <!-- Dépôt de l'API serveur et du bridge d'économie : uniquement en portée « provided »,
+         donc rien n'est embarqué dans le JAR (le serveur fournit déjà ces classes). -->
+    <repositories>
+        <repository>
+            <id>papermc</id>
+            <url>https://repo.papermc.io/repository/maven-public/</url>
+        </repository>
+        <repository>
+            <id>jitpack.io</id>
+            <url>https://jitpack.io</url>
+        </repository>
+    </repositories>
+
+    <dependencies>
+        <dependency>
+            <groupId>io.papermc.paper</groupId>
+            <artifactId>paper-api</artifactId>
+            <version>1.20.4-R0.1-SNAPSHOT</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.github.MilkBowl</groupId>
+            <artifactId>VaultAPI</artifactId>
+            <version>1.7</version>
+            <scope>provided</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>*</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <!-- Classes déjà livrées (GuiLib, XSeries, ChatUtil, classes du plugin) : generated
+             par scripts/build-reference-jar.py, pour compiler une classe isolément contre le
+             binaire réellement distribué. -->
+        <dependency>
+            <groupId>local.reference</groupId>
+            <artifactId>valoria-reference</artifactId>
+            <version>${project.version}</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/artifacts/reference/valoria-renamed.jar</systemPath>
+        </dependency>
+    </dependencies>
+
     <properties>
         <!-- Bytecode 17 : c'est la version de classe déjà utilisée par les classes livrées dans
              artifacts/extracted (major 61). Viser 25 rendrait le JAR inutilisable sur les
@@ -68,6 +112,9 @@
                              dont les cibles obfusquées ont disparu des serveurs Paper récents. Le repli
                              historique reste livré sous io.github...LegacyNbtBridge. -->
                         <include>shaded/io/github/bananapuncher714/nbteditor/NBTEditor.java</include>
+                        <!-- Interface d'amélioration : un bouton d'action + une case statistiques,
+                             et substitution de %upgradePrice% sur les deux cases. -->
+                        <include>plugin/xyz/arcadiadevs/valoriatycoon/guis/UpgradeGui.java</include>
                     </includes>
                 </configuration>
             </plugin>

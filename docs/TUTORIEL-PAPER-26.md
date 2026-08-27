@@ -168,6 +168,36 @@ Je corrige sur la même branche ; la PR se met à jour toute seule et tu relance
 
 ---
 
+## Interface d'amélioration (depuis la correction 26.2)
+
+L'interface `Améliorer le générateur` n'a plus qu'une case cliquable, plus une case de lecture seule :
+
+| case | rôle |
+| --- | --- |
+| 11 (au centre) | améliorer **ce** générateur — un clic, débit du prix, fermeture |
+| 15 | **statistiques** du générateur — aucun clic, aucune dépense possible |
+
+Le texte et la description sont configurables, sans toucher au code :
+
+```yaml
+guis:
+  upgrade-gui:
+    stats:
+      first-line: "&e》 &fStatistiques du générateur&e 《"
+      lore:
+        - "&fArgent : &a%money%"
+        - "&fProchaine amélioration : &a%upgradePrice%"
+```
+
+Placeholders disponibles dans les deux cases : `%money%`, `%upgradePrice%`, `%tier%`, `%speed%`,
+`%price%`, `%sellPrice%`, `%spawnItem%`, `%blockType%`, `%nextTier%`, `%nextSpeed%`, `%nextPrice%`,
+`%nextSellPrice%`, `%nextSpawnItem%`, `%nextBlockType%`. (`%upgradePrice%` était affiché brut sur la
+case « améliorer » avant la correction : la substitution n'existait que pour l'amélioration groupée.)
+
+À savoir : l'amélioration **groupée** de tous les générateurs connectés n'a plus de bouton dans cette
+interface (méthode conservée dans le code). Si tu la veux, dis-le — soit on lui rend une case, soit on
+passe par `guis.upgrade-gui.enabled: false` + shift+clic droit sur le bloc.
+
 ## Ce qu'il ne faut PAS faire
 
 - **Ne pas fusionner la PR #7** avant d'avoir eu ✅ à l'étape 5 **et** un test serveur concluant :

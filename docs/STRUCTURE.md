@@ -122,6 +122,22 @@ Le pont est recompilé par le build (voir `<includes>` du `pom.xml`) ; c'est lui
 `io/github/bananapuncher714/nbteditor/NBTEditor.class` et `NBTEditor$Type.class` dans le JAR, là où la
 bibliothèque d'origine les livrait précompilées.
 
+## Compilation ciblée : le classpath de référence
+
+Pour corriger une classe sans recompiler tout l'arbre décompilé (non compilable), le build compile
+une liste explicite de fichiers et résout le reste contre le binaire livré :
+
+- `scripts/build-reference-jar.py` emballe `artifacts/extracted/` dans
+  `artifacts/reference/valoria-renamed.jar` (1788 entrées) ; le `pom.xml` l'ajoute au classpath en
+  portée `system`. À relancer après toute modification de `artifacts/extracted/`
+  (`python3 scripts/verify-paper26-compat.py` échoue si le JAR est obsolète) ;
+- deux dépendances `provided` complètent le classpath : `io.papermc.paper:paper-api` (pour
+  `org.bukkit.*`) et `com.github.MilkBowl:VaultAPI` (pour `net.milkbowl.vault.economy`) — rien n'est
+  embarqué dans le JAR, mais le build a besoin de réseau pour les résoudre ;
+- fichiers concernés : `ServerVersion.java`, `NBTEditor.java` (pont NBT) et `UpgradeGui.java`.
+  Cette liste est celle des `<includes>` du `pom.xml` ; `scripts/check-sources-java.mjs` en vérifie
+  la surface publique.
+
 ## CI de validation
 
 `scripts/ci/build-workflow.yml` contient le workflow de validation des Pull Requests (compilation,

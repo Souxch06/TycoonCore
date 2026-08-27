@@ -35,6 +35,8 @@ patcher = SourceFileLoader(
 PATCHES = patcher.PATCHES
 
 SERVER_VERSION_SOURCE = ROOT / "sources/plugin/xyz/arcadiadevs/valoriatycoon/utils/ServerVersion.java"
+UPGRADE_GUI_SOURCE = ROOT / "sources/plugin/xyz/arcadiadevs/valoriatycoon/guis/UpgradeGui.java"
+REFERENCE_JAR = ROOT / "artifacts/reference/valoria-renamed.jar"
 SERVER_VERSION_ENTRY = "xyz/arcadiadevs/valoriatycoon/utils/ServerVersion.class"
 XMATERIAL_SOURCE = ROOT / "sources/shaded/com/cryptomorin/xseries/XMaterial.java"
 BRIDGE_SOURCE = ROOT / "sources/shaded/io/github/bananapuncher714/nbteditor/NBTEditor.java"
@@ -130,6 +132,45 @@ def verify_tree():
     check("ServerVersion.java : plus de dépendance au paquet CraftBukkit pour la détection",
           "startsWith(serverVersion.name())" not in source)
 
+    # 4b. interface d'amélioration : un bouton d'action + une case statistiques, placeholders complets
+    gui = UPGRADE_GUI_SOURCE.read_text(encoding="utf-8") if UPGRADE_GUI_SOURCE.is_file() else ""
+    check("UpgradeGui.java : case statistiques configurée", "guis.upgrade-gui.stats.lore" in gui)
+    check("UpgradeGui.java : %upgradePrice% substitué pour les deux cases",
+          '"%upgradePrice%"' in gui and "private static List<String> fill(" in gui)
+    check("UpgradeGui.java : plus de double bouton d'amélioration",
+          "GUIS_UPGRADE_GUI_UPGRADE_ALL_FIRST_LINE" not in gui
+          and "ORANGE_STAINED_GLASS_PANE" not in gui)
+    check("UpgradeGui.java : un seul GuiItem cliquable (case 11)",
+          gui.count("player.closeInventory()") == 1)
+    for cfg_name in ("resources/config.yml", "artifacts/extracted/config.yml"):
+        cfg = (ROOT / cfg_name).read_text(encoding="utf-8")
+        check(f"{cfg_name} : bloc stats de l'interface d'upgrade",
+              "stats:" in cfg and "Prochaine amélioration : &a%upgradePrice%" in cfg)
+
+    # 4c. classpath de compilation nécessaire à ces fichiers
+    if REFERENCE_JAR.is_file():
+        with zipfile.ZipFile(REFERENCE_JAR) as ref:
+            names = set(ref.namelist())
+        needed = ["xyz/arcadiadevs/valoriatycoon/guis/UpgradeGui.class",
+                  "xyz/arcadiadevs/valoriatycoon/ValoriaTycoon.class",
+                  "xyz/arcadiadevs/valoriatycoon/utils/ServerVersion.class",
+                  "io/github/bananapuncher714/nbteditor/LegacyNbtBridge.class",
+                  "xyz/arcadiadevs/valoriatycoon/utils/config/message/Messages.class"]
+        missing = [n for n in needed if n not in names]
+        check("artifacts/reference : classes de résolution présentes", not missing, f"manquants: {missing}")
+        check("artifacts/reference : pas de duplicata d'API serveur",
+              not any(n.startswith("org/bukkit/") for n in names))
+        check("artifacts/reference : sans manifest résiduel", "META-INF/MANIFEST.MF" not in names)
+        # le pont est produit par la compilation : il ne doit pas traîner dans le classpath de
+        # référence, sinon la vieille version masquerait la nouvelle dans target/classes
+        check("artifacts/reference : le pont NBT n'y est pas (fourni par javac)",
+              "io/github/bananapuncher714/nbteditor/NBTEditor.class" not in names)
+    else:
+        check("artifacts/reference/valoria-renamed.jar généré", False,
+              "lancer scripts/build-reference-jar.py : sans ce classpath, UpgradeGui.java ne peut pas compiler")
+    check("pom.xml : le JAR de référence est branché au build",
+          "valoria-renamed.jar" in (ROOT / "pom.xml").read_text(encoding="utf-8"))
+
     # 4. invariant de build : une racine de compilation propre (sinon javac passe en mode module)
     root_marker = ROOT / "sources" / "module-info.java"
     check("racine de compilation sans module-info.java", not root_marker.exists(),
@@ -211,6 +252,16 @@ def verify_jar(jar_path: Path):
         {"getBukkitVersion", "getMinecraftVersion", "V26_2", "V26_1"},
         set(),
     )
+    upgrade_entry = "xyz/arcadiadevs/valoriatycoon/guis/UpgradeGui.class"
+    if upgrade_entry in names:
+        blob = jar.read(upgrade_entry)
+        check("JAR : UpgradeGui.class recompilée (case statistiques câblée)",
+              b"guis.upgrade-gui.stats.lore" in blob,
+              "la classe livrée est encore l'ancienne (le build n'a pas compilé UpgradeGui.java)")
+        check("JAR : plus de remplissage aléatoire à deux couleurs",
+              b"ORANGE_STAINED_GLASS_PANE" not in blob)
+    else:
+        check("JAR : UpgradeGui.class recompilée", False, f"{upgrade_entry} absent du JAR")
     if values is not None:
         # l'ancienne classe se reconnaissait à son heuristic startsWith(toUpperCase()) sur le paquet
         check("JAR : ancien heuristic par paquet CraftBukkit retiré",

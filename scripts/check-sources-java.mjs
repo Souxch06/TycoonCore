@@ -112,6 +112,15 @@ const CONTRACTS = [
     forbidImports: ['org.bukkit'],
   },
   {
+    file: 'sources/plugin/xyz/arcadiadevs/valoriatycoon/guis/UpgradeGui.java',
+    why: "interface recompilée : un bouton d'action, une case statistiques, aucun bouton dupliqué",
+    methods: [
+      { name: 'open', returns: 'void', arity: 3, static: true },
+      { name: 'upgradeGenerator', returns: 'void', arity: 3, static: true },
+      { name: 'fill', returns: 'List', arity: 5, static: true, private: true },
+    ],
+  },
+  {
     file: 'sources/plugin/xyz/arcadiadevs/valoriatycoon/utils/ServerVersion.java',
     why: 'les appelants existants (events/, guis/, utils/) et les logs d\'admin utilisent ces membres',
     methods: [
@@ -171,12 +180,17 @@ for (const contract of CONTRACTS) {
       ko(`surcharge ${expected.name}/${expected.arity}${expected.varargs ? ' varargs' : ''} absente`); continue;
     }
     const issues = [];
-    if (!found.modifiers.includes('public')) issues.push('non publique');
+    if (found.private === true) { /* placeholder */ }
+    if (expected.private ? !found.modifiers.includes('private') : !found.modifiers.includes('public')) {
+      issues.push(expected.private ? 'devrait être privée' : 'non publique');
+    }
     const wantStatic = expected.static !== false;
     if (wantStatic !== found.modifiers.includes('static')) issues.push(wantStatic ? 'non statique' : 'statique (attendue d\'instance)');
     if (found.arity !== expected.arity) issues.push(`arité ${found.arity} au lieu de ${expected.arity}`);
     if (Boolean(expected.varargs) !== found.varargs) issues.push(`varargs ${found.varargs}`);
-    if (expected.returns && found.returns !== expected.returns) issues.push(`retour ${found.returns} au lieu de ${expected.returns}`);
+    if (expected.returns && !String(found.returns).startsWith(expected.returns)) {
+      issues.push(`retour ${found.returns} au lieu de ${expected.returns}*`);
+    }
     issues.length
       ? ko(`${expected.name}(${expected.arity} params) : ${issues.join(', ')}`)
       : ok(`${expected.name}(…) -> ${found.returns}${expected.varargs ? ' [varargs]' : ''}`);

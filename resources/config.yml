@@ -211,6 +211,7 @@ guis:
       # - %nextSellPrice% correspond au prochain prix de vente du générateur
       # - %nextSpawnItem% correspond au prochain item généré
       # - %nextBlockType% correspond au prochain type de bloc du générateur
+      # - %upgradePrice% correspond au coût d'amélioration de ce générateur
       lore:
         - ""
         - "&fArgent : &a%money%"
@@ -262,6 +263,30 @@ guis:
             - "&eⅠ &fPrix : &a%nextPrice%"
             - "&e⌊ &fPrix de vente : &a%nextSellPrice%"
             - ""
+
+    # Case « statistiques » : montre les caractéristiques du générateur, sans action au clic
+    # (aucune dépense d'argent possible depuis cette case).
+    # Placeholders disponibles : %money% %upgradePrice% %tier% %speed% %price% %sellPrice%
+    #                            %spawnItem% %blockType% %nextTier% %nextSpeed% %nextPrice% %nextSellPrice%
+    stats:
+      first-line: "&e》 &fStatistiques du générateur&e 《"
+      lore:
+        - ""
+        - "&fArgent : &a%money%"
+        - "&fProchaine amélioration : &a%upgradePrice%"
+        - ""
+        - "&eDétails actuels :"
+        - "&e⌈ &fPalier : &a%tier%"
+        - "&eⅠ &fVitesse : &a%speed%"
+        - "&eⅠ &fPrix : &a%price%"
+        - "&e⌊ &fPrix de vente : &a%sellPrice%"
+        - ""
+        - "&eDétails suivants :"
+        - "&e⌈ &fPalier : &a%nextTier%"
+        - "&eⅠ &fVitesse : &a%nextSpeed%"
+        - "&eⅠ &fPrix : &a%nextPrice%"
+        - "&e⌊ &fPrix de vente : &a%nextSellPrice%"
+        - ""
 
     # Titre de l'interface
     title: "Améliorer le générateur"
