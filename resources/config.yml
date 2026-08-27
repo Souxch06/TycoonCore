@@ -54,6 +54,14 @@ sell-command:
   # Commandes/alias utilisés pour vendre tous les drops de l'inventaire.
   aliases:
     - "sellall"
+    - "sa"
+    - "sellhand"
+    - "sh"
+    - "sellgui"
+    - "sg"
+    - "sell"
+    - "sd"
+    - "vendre"
 
 limits:
   # Limites de générateurs par joueur
@@ -372,7 +380,7 @@ default-lore:
 # La description par défaut des drops peut utiliser les placeholders suivants :
 # - %sellPrice% correspond au prix de vente du drop du générateur
 default-item-spawn-lore:
-  - "&7Écrivez &e/selldrops &6hand&8/&6all &7dans le chat"
+  - "&7Utilisez &e/sd &6h&8/&6a &7ou &e/sa"
   - "&7pour vendre les drops pour &e%sellPrice%"
 
 # Si hologramLines n'est pas défini, les lignes d'hologramme par défaut seront utilisées.
