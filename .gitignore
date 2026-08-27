@@ -25,3 +25,7 @@ __pycache__/
 
 # Dépendance optionnelle de scripts/check-sources-java.mjs
 node_modules/
+
+# Caches des scripts de verification
+__pycache__/
+*.pyc
