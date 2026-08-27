@@ -1,9 +1,3 @@
-/*
- * Décompilé avec CFR 0.152.
- * 
- * Impossible de charger les classes suivantes :
- *  org.bukkit.scheduler.BukkitRunnable
- */
 package xyz.arcadiadevs.valoriatycoon.tasks;
 
 import java.io.FileWriter;

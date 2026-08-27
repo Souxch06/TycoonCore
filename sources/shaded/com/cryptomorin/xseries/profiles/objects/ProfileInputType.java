@@ -1,10 +1,3 @@
-/*
- * Decompiled with CFR 0.152.
- * 
- * Could not load the following classes:
- *  com.mojang.authlib.GameProfile
- *  javax.annotation.Nonnull
- */
 package com.cryptomorin.xseries.profiles.objects;
 
 import com.cryptomorin.xseries.profiles.PlayerProfiles;

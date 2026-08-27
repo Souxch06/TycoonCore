@@ -1,9 +1,3 @@
-/*
- * Decompiled with CFR 0.152.
- * 
- * Could not load the following classes:
- *  org.bukkit.plugin.Plugin
- */
 package org.holoeasy.pool;
 
 import java.util.UUID;

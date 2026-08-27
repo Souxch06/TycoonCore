@@ -23,7 +23,7 @@ Les joueurs peuvent placer des générateurs, récupérer automatiquement des dr
 ```text
 artifacts/
   original/                  # Fichier JAR distribué
-  extracted/                 # Contenu du JAR organisé par packages et ressources
+  extracted/                 # Contenu complet organisé par packages et ressources
 
 sources/
   plugin/                    # Code principal de ValoriaTycoon
@@ -38,7 +38,7 @@ resources/
 
 docs/
   STRUCTURE.md               # Détails sur l'organisation du dépôt
-  decompilation-summary.txt  # Rapport technique
+  technical-report.txt       # Rapport technique
 
 scripts/
   verify-extraction.py       # Script de vérification des fichiers extraits

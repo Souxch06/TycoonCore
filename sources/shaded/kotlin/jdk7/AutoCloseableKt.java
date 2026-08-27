@@ -1,6 +1,3 @@
-/*
- * Decompiled with CFR 0.152.
- */
 package kotlin.jdk7;
 
 import kotlin.ExceptionsKt;

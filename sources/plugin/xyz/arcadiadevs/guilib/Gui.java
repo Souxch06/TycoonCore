@@ -1,15 +1,3 @@
-/*
- * Décompilé avec CFR 0.152.
- * 
- * Impossible de charger les classes suivantes :
- *  org.bukkit.entity.Player
- *  org.bukkit.event.EventHandler
- *  org.bukkit.event.Listener
- *  org.bukkit.event.inventory.InventoryAction
- *  org.bukkit.event.inventory.InventoryClickEvent
- *  org.bukkit.inventory.Inventory
- *  org.bukkit.plugin.Plugin
- */
 package xyz.arcadiadevs.guilib;
 
 import java.util.ArrayList;

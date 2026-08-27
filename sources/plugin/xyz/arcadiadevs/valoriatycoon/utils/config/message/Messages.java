@@ -1,10 +1,3 @@
-/*
- * Décompilé avec CFR 0.152.
- * 
- * Impossible de charger les classes suivantes :
- *  lombok.Generated
- *  org.bukkit.configuration.file.YamlConfiguration
- */
 package xyz.arcadiadevs.valoriatycoon.utils.config.message;
 
 import java.io.File;

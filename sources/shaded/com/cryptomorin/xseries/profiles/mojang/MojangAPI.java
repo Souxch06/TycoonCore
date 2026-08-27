@@ -1,15 +1,3 @@
-/*
- * Decompiled with CFR 0.152.
- * 
- * Could not load the following classes:
- *  com.google.common.cache.Cache
- *  com.google.common.cache.CacheBuilder
- *  com.google.common.collect.Iterables
- *  com.mojang.authlib.GameProfile
- *  com.mojang.authlib.properties.Property
- *  javax.annotation.Nonnull
- *  javax.annotation.Nullable
- */
 package com.cryptomorin.xseries.profiles.mojang;
 
 import com.cryptomorin.xseries.profiles.PlayerProfiles;

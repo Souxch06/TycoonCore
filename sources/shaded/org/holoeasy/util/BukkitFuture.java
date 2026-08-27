@@ -1,10 +1,3 @@
-/*
- * Decompiled with CFR 0.152.
- * 
- * Could not load the following classes:
- *  org.bukkit.Bukkit
- *  org.bukkit.plugin.Plugin
- */
 package org.holoeasy.util;
 
 import java.util.concurrent.CompletableFuture;

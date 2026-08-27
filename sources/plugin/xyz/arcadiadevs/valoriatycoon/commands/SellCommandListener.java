@@ -1,15 +1,3 @@
-/*
- * Décompilé avec CFR 0.152.
- * 
- * Impossible de charger les classes suivantes :
- *  org.bukkit.command.CommandSender
- *  org.bukkit.entity.Player
- *  org.bukkit.event.EventHandler
- *  org.bukkit.event.EventPriority
- *  org.bukkit.event.Listener
- *  org.bukkit.event.player.PlayerCommandPreprocessEvent
- *  org.bukkit.inventory.Inventory
- */
 package xyz.arcadiadevs.valoriatycoon.commands;
 
 import java.util.ArrayList;

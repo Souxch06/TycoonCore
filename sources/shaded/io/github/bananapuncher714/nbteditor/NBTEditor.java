@@ -1,16 +1,3 @@
-/*
- * Decompiled with CFR 0.152.
- * 
- * Could not load the following classes:
- *  org.bukkit.Bukkit
- *  org.bukkit.Location
- *  org.bukkit.Material
- *  org.bukkit.block.Block
- *  org.bukkit.entity.Entity
- *  org.bukkit.inventory.ItemStack
- *  org.bukkit.inventory.meta.ItemMeta
- *  org.bukkit.inventory.meta.SkullMeta
- */
 package io.github.bananapuncher714.nbteditor;
 
 import java.lang.reflect.Constructor;

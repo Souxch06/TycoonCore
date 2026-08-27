@@ -1,12 +1,3 @@
-/*
- * Décompilé avec CFR 0.152.
- * 
- * Impossible de charger les classes suivantes :
- *  lombok.Generated
- *  org.bukkit.event.EventHandler
- *  org.bukkit.event.Listener
- *  world.bentobox.bentobox.api.events.island.IslandDeleteEvent
- */
 package xyz.arcadiadevs.valoriatycoon.events.skyblock;
 
 import java.util.concurrent.CopyOnWriteArrayList;

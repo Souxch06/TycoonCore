@@ -1,20 +1,3 @@
-/*
- * Décompilé avec CFR 0.152.
- * 
- * Impossible de charger les classes suivantes :
- *  org.bukkit.block.BlockState
- *  org.bukkit.entity.Player
- *  org.bukkit.event.EventHandler
- *  org.bukkit.event.Listener
- *  org.bukkit.event.block.Action
- *  org.bukkit.event.inventory.InventoryClickEvent
- *  org.bukkit.event.inventory.InventoryDragEvent
- *  org.bukkit.event.inventory.InventoryMoveItemEvent
- *  org.bukkit.event.inventory.InventoryType
- *  org.bukkit.event.player.PlayerInteractEvent
- *  org.bukkit.inventory.InventoryHolder
- *  org.bukkit.inventory.ItemStack
- */
 package xyz.arcadiadevs.valoriatycoon.events;
 
 import com.cryptomorin.xseries.XMaterial;

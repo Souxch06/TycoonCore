@@ -1,9 +1,3 @@
-/*
- * Décompilé avec CFR 0.152.
- * 
- * Impossible de charger les classes suivantes :
- *  org.bukkit.OfflinePlayer
- */
 package xyz.arcadiadevs.valoriatycoon.utils;
 
 import org.bukkit.OfflinePlayer;

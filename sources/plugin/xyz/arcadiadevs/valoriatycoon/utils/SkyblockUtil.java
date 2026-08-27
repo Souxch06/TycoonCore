@@ -1,18 +1,3 @@
-/*
- * Décompilé avec CFR 0.152.
- * 
- * Impossible de charger les classes suivantes :
- *  com.bgsoftware.superiorskyblock.api.SuperiorSkyblockAPI
- *  com.bgsoftware.superiorskyblock.api.island.Island
- *  com.iridium.iridiumskyblock.api.IridiumSkyblockAPI
- *  com.iridium.iridiumskyblock.database.Island
- *  org.bukkit.Bukkit
- *  org.bukkit.Location
- *  org.bukkit.entity.Player
- *  world.bentobox.bentobox.BentoBox
- *  world.bentobox.bentobox.api.addons.request.AddonRequestBuilder
- *  world.bentobox.bentobox.database.objects.Island
- */
 package xyz.arcadiadevs.valoriatycoon.utils;
 
 import com.bgsoftware.superiorskyblock.api.SuperiorSkyblockAPI;

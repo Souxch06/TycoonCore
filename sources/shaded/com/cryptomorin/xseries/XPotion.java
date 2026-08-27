@@ -1,21 +1,3 @@
-/*
- * Decompiled with CFR 0.152.
- * 
- * Could not load the following classes:
- *  com.google.common.base.Strings
- *  javax.annotation.Nonnull
- *  javax.annotation.Nullable
- *  org.bukkit.Color
- *  org.bukkit.Material
- *  org.bukkit.entity.LivingEntity
- *  org.bukkit.entity.ThrownPotion
- *  org.bukkit.inventory.ItemStack
- *  org.bukkit.inventory.meta.ItemMeta
- *  org.bukkit.inventory.meta.PotionMeta
- *  org.bukkit.potion.PotionEffect
- *  org.bukkit.potion.PotionEffectType
- *  org.bukkit.potion.PotionType
- */
 package com.cryptomorin.xseries;
 
 import com.google.common.base.Strings;

@@ -1,9 +1,3 @@
-/*
- * Decompiled with CFR 0.152.
- * 
- * Could not load the following classes:
- *  org.bukkit.entity.Player
- */
 package com.cryptomorin.xseries.reflection.minecraft;
 
 import com.cryptomorin.xseries.reflection.XReflection;

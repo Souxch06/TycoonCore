@@ -1,10 +1,3 @@
-/*
- * Decompiled with CFR 0.152.
- * 
- * Could not load the following classes:
- *  org.bukkit.inventory.ItemStack
- *  org.bukkit.plugin.Plugin
- */
 package org.holoeasy.builder;
 
 import kotlin.Metadata;

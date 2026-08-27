@@ -1,6 +1,3 @@
-/*
- * Decompiled with CFR 0.152.
- */
 package marcono1234.gson.recordadapter;
 
 public class RecordTypeAdapterException

@@ -1,6 +1,3 @@
-/*
- * Decompiled with CFR 0.152.
- */
 package com.cryptomorin.xseries.profiles.builder;
 
 import com.cryptomorin.xseries.profiles.builder.ProfileInstruction;

@@ -1,6 +1,3 @@
-/*
- * Decompiled with CFR 0.152.
- */
 package kotlin.comparisons;
 
 import java.util.Comparator;

@@ -1,12 +1,3 @@
-/*
- * Decompiled with CFR 0.152.
- * 
- * Could not load the following classes:
- *  com.google.common.base.Strings
- *  javax.annotation.Nonnull
- *  javax.annotation.Nullable
- *  org.bukkit.Bukkit
- */
 package com.cryptomorin.xseries.profiles;
 
 import com.cryptomorin.xseries.profiles.ProfilesCore;

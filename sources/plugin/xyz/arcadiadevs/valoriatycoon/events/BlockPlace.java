@@ -1,18 +1,3 @@
-/*
- * Décompilé avec CFR 0.152.
- * 
- * Impossible de charger les classes suivantes :
- *  lombok.Generated
- *  org.bukkit.OfflinePlayer
- *  org.bukkit.command.CommandSender
- *  org.bukkit.configuration.file.FileConfiguration
- *  org.bukkit.entity.Player
- *  org.bukkit.event.EventHandler
- *  org.bukkit.event.EventPriority
- *  org.bukkit.event.Listener
- *  org.bukkit.event.block.BlockPlaceEvent
- *  org.bukkit.inventory.ItemStack
- */
 package xyz.arcadiadevs.valoriatycoon.events;
 
 import io.github.bananapuncher714.nbteditor.NBTEditor;

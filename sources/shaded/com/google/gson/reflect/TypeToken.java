@@ -1,6 +1,3 @@
-/*
- * Decompiled with CFR 0.152.
- */
 package com.google.gson.reflect;
 
 import com.google.gson.internal.$Gson$Types;

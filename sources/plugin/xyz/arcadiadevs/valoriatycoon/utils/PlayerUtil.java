@@ -1,11 +1,3 @@
-/*
- * Décompilé avec CFR 0.152.
- * 
- * Impossible de charger les classes suivantes :
- *  org.bukkit.configuration.file.FileConfiguration
- *  org.bukkit.entity.Player
- *  org.bukkit.inventory.ItemStack
- */
 package xyz.arcadiadevs.valoriatycoon.utils;
 
 import java.util.List;

@@ -1,12 +1,3 @@
-/*
- * Décompilé avec CFR 0.152.
- * 
- * Impossible de charger les classes suivantes :
- *  lombok.Generated
- *  org.bukkit.Location
- *  org.bukkit.entity.Player
- *  org.bukkit.inventory.ItemStack
- */
 package xyz.arcadiadevs.valoriatycoon.models;
 
 import java.util.List;

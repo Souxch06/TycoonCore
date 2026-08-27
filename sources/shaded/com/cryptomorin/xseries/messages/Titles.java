@@ -1,12 +1,3 @@
-/*
- * Decompiled with CFR 0.152.
- * 
- * Could not load the following classes:
- *  javax.annotation.Nonnull
- *  javax.annotation.Nullable
- *  org.bukkit.configuration.ConfigurationSection
- *  org.bukkit.entity.Player
- */
 package com.cryptomorin.xseries.messages;
 
 import com.cryptomorin.xseries.reflection.XReflection;

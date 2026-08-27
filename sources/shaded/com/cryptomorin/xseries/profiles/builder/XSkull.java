@@ -1,16 +1,3 @@
-/*
- * Decompiled with CFR 0.152.
- * 
- * Could not load the following classes:
- *  com.google.common.collect.Multimap
- *  com.mojang.authlib.GameProfile
- *  org.bukkit.block.Block
- *  org.bukkit.block.BlockState
- *  org.bukkit.block.Skull
- *  org.bukkit.inventory.ItemStack
- *  org.bukkit.inventory.meta.ItemMeta
- *  org.bukkit.inventory.meta.SkullMeta
- */
 package com.cryptomorin.xseries.profiles.builder;
 
 import com.cryptomorin.xseries.XMaterial;

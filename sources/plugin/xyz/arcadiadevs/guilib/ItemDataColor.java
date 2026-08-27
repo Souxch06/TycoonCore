@@ -1,6 +1,3 @@
-/*
- * Décompilé avec CFR 0.152.
- */
 package xyz.arcadiadevs.guilib;
 
 public enum ItemDataColor {

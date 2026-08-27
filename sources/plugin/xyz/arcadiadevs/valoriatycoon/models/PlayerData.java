@@ -1,9 +1,3 @@
-/*
- * Décompilé avec CFR 0.152.
- * 
- * Impossible de charger les classes suivantes :
- *  lombok.Generated
- */
 package xyz.arcadiadevs.valoriatycoon.models;
 
 import java.util.List;

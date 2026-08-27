@@ -1,6 +1,3 @@
-/*
- * Décompilé avec CFR 0.152.
- */
 package xyz.arcadiadevs.valoriatycoon.utils.config.objects;
 
 import java.util.ArrayList;

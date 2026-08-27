@@ -1,16 +1,3 @@
-/*
- * Decompiled with CFR 0.152.
- * 
- * Could not load the following classes:
- *  org.bukkit.Bukkit
- *  org.bukkit.Location
- *  org.bukkit.entity.Player
- *  org.bukkit.event.EventHandler
- *  org.bukkit.event.Listener
- *  org.bukkit.event.block.Action
- *  org.bukkit.event.player.PlayerInteractEvent
- *  org.bukkit.plugin.Plugin
- */
 package org.holoeasy.pool;
 
 import java.util.UUID;

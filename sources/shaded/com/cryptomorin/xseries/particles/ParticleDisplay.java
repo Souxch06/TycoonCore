@@ -1,26 +1,3 @@
-/*
- * Decompiled with CFR 0.152.
- * 
- * Could not load the following classes:
- *  javax.annotation.Nonnull
- *  javax.annotation.Nullable
- *  org.bukkit.Color
- *  org.bukkit.Location
- *  org.bukkit.Material
- *  org.bukkit.Note
- *  org.bukkit.Particle
- *  org.bukkit.Particle$DustOptions
- *  org.bukkit.Particle$DustTransition
- *  org.bukkit.World
- *  org.bukkit.block.data.BlockData
- *  org.bukkit.configuration.ConfigurationSection
- *  org.bukkit.entity.Entity
- *  org.bukkit.entity.Player
- *  org.bukkit.inventory.ItemStack
- *  org.bukkit.material.MaterialData
- *  org.bukkit.util.NumberConversions
- *  org.bukkit.util.Vector
- */
 package com.cryptomorin.xseries.particles;
 
 import com.cryptomorin.xseries.particles.XParticle;

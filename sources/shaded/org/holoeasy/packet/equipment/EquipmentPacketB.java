@@ -1,14 +1,3 @@
-/*
- * Decompiled with CFR 0.152.
- * 
- * Could not load the following classes:
- *  com.comphenix.protocol.PacketType
- *  com.comphenix.protocol.PacketType$Play$Server
- *  com.comphenix.protocol.events.PacketContainer
- *  com.comphenix.protocol.reflect.StructureModifier
- *  com.comphenix.protocol.wrappers.EnumWrappers$ItemSlot
- *  org.bukkit.inventory.ItemStack
- */
 package org.holoeasy.packet.equipment;
 
 import com.comphenix.protocol.PacketType;

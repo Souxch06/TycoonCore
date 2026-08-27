@@ -1,13 +1,3 @@
-/*
- * Décompilé avec CFR 0.152.
- * 
- * Impossible de charger les classes suivantes :
- *  org.bukkit.block.Block
- *  org.bukkit.event.EventHandler
- *  org.bukkit.event.EventPriority
- *  org.bukkit.event.Listener
- *  org.bukkit.event.entity.EntityExplodeEvent
- */
 package xyz.arcadiadevs.valoriatycoon.events;
 
 import java.util.List;

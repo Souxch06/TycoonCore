@@ -1,6 +1,3 @@
-/*
- * Decompiled with CFR 0.152.
- */
 package com.cryptomorin.xseries.reflection.constraint;
 
 import com.cryptomorin.xseries.reflection.ReflectiveHandle;

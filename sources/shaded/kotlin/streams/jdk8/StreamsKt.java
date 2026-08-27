@@ -1,6 +1,3 @@
-/*
- * Decompiled with CFR 0.152.
- */
 package kotlin.streams.jdk8;
 
 import java.util.Iterator;

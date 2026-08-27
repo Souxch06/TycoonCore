@@ -1,36 +1,3 @@
-/*
- * Decompiled with CFR 0.152.
- * 
- * Could not load the following classes:
- *  javax.annotation.Nonnull
- *  javax.annotation.Nullable
- *  org.bukkit.DyeColor
- *  org.bukkit.Material
- *  org.bukkit.SkullType
- *  org.bukkit.TreeSpecies
- *  org.bukkit.block.Banner
- *  org.bukkit.block.Block
- *  org.bukkit.block.BlockFace
- *  org.bukkit.block.BlockState
- *  org.bukkit.block.Skull
- *  org.bukkit.block.data.Ageable
- *  org.bukkit.block.data.BlockData
- *  org.bukkit.block.data.Directional
- *  org.bukkit.block.data.Levelled
- *  org.bukkit.block.data.Lightable
- *  org.bukkit.block.data.Openable
- *  org.bukkit.block.data.Powerable
- *  org.bukkit.block.data.Rotatable
- *  org.bukkit.block.data.type.Cake
- *  org.bukkit.block.data.type.EndPortalFrame
- *  org.bukkit.inventory.InventoryHolder
- *  org.bukkit.material.Cake
- *  org.bukkit.material.Colorable
- *  org.bukkit.material.Directional
- *  org.bukkit.material.MaterialData
- *  org.bukkit.material.Openable
- *  org.bukkit.material.Wool
- */
 package com.cryptomorin.xseries;
 
 import com.cryptomorin.xseries.XMaterial;

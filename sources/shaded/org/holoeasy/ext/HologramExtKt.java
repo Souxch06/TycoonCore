@@ -1,6 +1,3 @@
-/*
- * Decompiled with CFR 0.152.
- */
 package org.holoeasy.ext;
 
 import kotlin.Metadata;

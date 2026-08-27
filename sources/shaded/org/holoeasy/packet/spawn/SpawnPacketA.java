@@ -1,19 +1,3 @@
-/*
- * Decompiled with CFR 0.152.
- * 
- * Could not load the following classes:
- *  com.comphenix.protocol.PacketType
- *  com.comphenix.protocol.PacketType$Play$Server
- *  com.comphenix.protocol.events.PacketContainer
- *  com.comphenix.protocol.reflect.StructureModifier
- *  com.comphenix.protocol.wrappers.WrappedDataWatcher
- *  org.bukkit.Bukkit
- *  org.bukkit.Location
- *  org.bukkit.World
- *  org.bukkit.entity.Entity
- *  org.bukkit.entity.EntityType
- *  org.bukkit.plugin.Plugin
- */
 package org.holoeasy.packet.spawn;
 
 import com.comphenix.protocol.PacketType;

@@ -1,10 +1,3 @@
-/*
- * Décompilé avec CFR 0.152.
- * 
- * Impossible de charger les classes suivantes :
- *  lombok.Generated
- *  org.bukkit.configuration.file.FileConfiguration
- */
 package xyz.arcadiadevs.valoriatycoon.utils.config;
 
 import com.awaitquality.api.spigot.chat.ChatUtil;

@@ -1,6 +1,3 @@
-/*
- * Decompiled with CFR 0.152.
- */
 package com.awaitquality.api.spigot.chat.formatter;
 
 import com.awaitquality.api.spigot.chat.ChatUtil;

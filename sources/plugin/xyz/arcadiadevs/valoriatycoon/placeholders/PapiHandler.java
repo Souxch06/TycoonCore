@@ -1,12 +1,3 @@
-/*
- * Décompilé avec CFR 0.152.
- * 
- * Impossible de charger les classes suivantes :
- *  lombok.Generated
- *  me.clip.placeholderapi.expansion.PlaceholderExpansion
- *  org.bukkit.OfflinePlayer
- *  org.bukkit.plugin.Plugin
- */
 package xyz.arcadiadevs.valoriatycoon.placeholders;
 
 import lombok.Generated;

@@ -1,12 +1,3 @@
-/*
- * Décompilé avec CFR 0.152.
- * 
- * Impossible de charger les classes suivantes :
- *  com.iridium.iridiumskyblock.api.IslandDeleteEvent
- *  lombok.Generated
- *  org.bukkit.event.EventHandler
- *  org.bukkit.event.Listener
- */
 package xyz.arcadiadevs.valoriatycoon.events.skyblock;
 
 import com.iridium.iridiumskyblock.api.IslandDeleteEvent;

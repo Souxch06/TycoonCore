@@ -1,11 +1,3 @@
-/*
- * Décompilé avec CFR 0.152.
- * 
- * Impossible de charger les classes suivantes :
- *  lombok.Generated
- *  org.bukkit.block.Block
- *  org.bukkit.scheduler.BukkitRunnable
- */
 package xyz.arcadiadevs.valoriatycoon.tasks;
 
 import java.util.ArrayList;

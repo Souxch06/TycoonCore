@@ -1,11 +1,3 @@
-/*
- * Decompiled with CFR 0.152.
- * 
- * Could not load the following classes:
- *  com.google.common.base.Enums
- *  org.bukkit.entity.Entity
- *  org.bukkit.entity.EntityType
- */
 package com.cryptomorin.xseries;
 
 import com.google.common.base.Enums;

@@ -1,23 +1,3 @@
-/*
- * Décompilé avec CFR 0.152.
- * 
- * Impossible de charger les classes suivantes :
- *  com.google.common.reflect.TypeToken
- *  net.milkbowl.vault.economy.Economy
- *  org.bukkit.Bukkit
- *  org.bukkit.Location
- *  org.bukkit.Material
- *  org.bukkit.command.CommandExecutor
- *  org.bukkit.command.TabCompleter
- *  org.bukkit.entity.Player
- *  org.bukkit.event.HandlerList
- *  org.bukkit.inventory.ItemStack
- *  org.bukkit.inventory.meta.ItemMeta
- *  org.bukkit.plugin.Plugin
- *  org.bukkit.plugin.RegisteredServiceProvider
- *  org.bukkit.plugin.java.JavaPlugin
- *  org.bukkit.scheduler.BukkitRunnable
- */
 package xyz.arcadiadevs.valoriatycoon;
 
 import com.awaitquality.api.spigot.chat.ChatUtil;

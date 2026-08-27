@@ -1,10 +1,3 @@
-/*
- * Decompiled with CFR 0.152.
- * 
- * Could not load the following classes:
- *  com.comphenix.protocol.wrappers.WrappedDataWatcher$Registry
- *  com.comphenix.protocol.wrappers.WrappedDataWatcher$Serializer
- */
 package org.holoeasy.util;
 
 import com.comphenix.protocol.wrappers.WrappedDataWatcher;

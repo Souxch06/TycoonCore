@@ -1,12 +1,3 @@
-/*
- * Decompiled with CFR 0.152.
- * 
- * Could not load the following classes:
- *  com.comphenix.protocol.events.PacketContainer
- *  org.bukkit.Location
- *  org.bukkit.entity.EntityType
- *  org.bukkit.plugin.Plugin
- */
 package org.holoeasy.packet.spawn;
 
 import com.comphenix.protocol.events.PacketContainer;

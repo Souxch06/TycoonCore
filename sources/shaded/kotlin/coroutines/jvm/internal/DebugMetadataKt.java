@@ -1,6 +1,3 @@
-/*
- * Decompiled with CFR 0.152.
- */
 package kotlin.coroutines.jvm.internal;
 
 import java.lang.reflect.Field;

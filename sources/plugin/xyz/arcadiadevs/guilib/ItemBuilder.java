@@ -1,15 +1,3 @@
-/*
- * Décompilé avec CFR 0.152.
- * 
- * Impossible de charger les classes suivantes :
- *  org.bukkit.ChatColor
- *  org.bukkit.Material
- *  org.bukkit.enchantments.Enchantment
- *  org.bukkit.inventory.ItemFlag
- *  org.bukkit.inventory.ItemStack
- *  org.bukkit.inventory.meta.ItemMeta
- *  org.bukkit.inventory.meta.SkullMeta
- */
 package xyz.arcadiadevs.guilib;
 
 import java.util.Arrays;

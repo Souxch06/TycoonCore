@@ -1,10 +1,3 @@
-/*
- * Decompiled with CFR 0.152.
- * 
- * Could not load the following classes:
- *  com.mojang.authlib.GameProfile
- *  com.mojang.authlib.properties.Property
- */
 package com.cryptomorin.xseries.profiles.objects.transformer;
 
 import com.cryptomorin.xseries.profiles.PlayerProfiles;

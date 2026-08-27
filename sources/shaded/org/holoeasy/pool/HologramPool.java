@@ -1,18 +1,3 @@
-/*
- * Decompiled with CFR 0.152.
- * 
- * Could not load the following classes:
- *  com.google.common.collect.ImmutableList
- *  org.bukkit.Bukkit
- *  org.bukkit.Location
- *  org.bukkit.World
- *  org.bukkit.entity.Player
- *  org.bukkit.event.EventHandler
- *  org.bukkit.event.Listener
- *  org.bukkit.event.player.PlayerQuitEvent
- *  org.bukkit.event.player.PlayerRespawnEvent
- *  org.bukkit.plugin.Plugin
- */
 package org.holoeasy.pool;
 
 import com.google.common.collect.ImmutableList;

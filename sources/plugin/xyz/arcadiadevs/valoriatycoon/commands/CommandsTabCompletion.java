@@ -1,13 +1,3 @@
-/*
- * Décompilé avec CFR 0.152.
- * 
- * Impossible de charger les classes suivantes :
- *  lombok.Generated
- *  org.bukkit.command.Command
- *  org.bukkit.command.CommandSender
- *  org.bukkit.command.TabCompleter
- *  org.bukkit.entity.Player
- */
 package xyz.arcadiadevs.valoriatycoon.commands;
 
 import java.util.ArrayList;

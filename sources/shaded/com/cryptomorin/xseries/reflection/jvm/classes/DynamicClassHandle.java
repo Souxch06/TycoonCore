@@ -1,10 +1,3 @@
-/*
- * Decompiled with CFR 0.152.
- * 
- * Could not load the following classes:
- *  com.google.common.base.Strings
- *  javax.annotation.Nonnull
- */
 package com.cryptomorin.xseries.reflection.jvm.classes;
 
 import com.cryptomorin.xseries.reflection.ReflectiveNamespace;

@@ -1,10 +1,3 @@
-/*
- * Décompilé avec CFR 0.152.
- * 
- * Impossible de charger les classes suivantes :
- *  org.bukkit.entity.Player
- *  org.bukkit.plugin.Plugin
- */
 package xyz.arcadiadevs.valoriatycoon.guis;
 
 import com.awaitquality.api.spigot.chat.ChatUtil;

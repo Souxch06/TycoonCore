@@ -1,9 +1,3 @@
-/*
- * Decompiled with CFR 0.152.
- * 
- * Could not load the following classes:
- *  com.google.errorprone.annotations.CanIgnoreReturnValue
- */
 package com.cryptomorin.xseries.profiles.mojang;
 
 import com.google.errorprone.annotations.CanIgnoreReturnValue;

@@ -1,13 +1,3 @@
-/*
- * Decompiled with CFR 0.152.
- * 
- * Could not load the following classes:
- *  com.google.common.base.Strings
- *  com.google.common.cache.LoadingCache
- *  com.mojang.authlib.GameProfile
- *  com.mojang.authlib.yggdrasil.ProfileActionType
- *  com.mojang.authlib.yggdrasil.ProfileResult
- */
 package com.cryptomorin.xseries.profiles.mojang;
 
 import com.cryptomorin.xseries.profiles.PlayerProfiles;

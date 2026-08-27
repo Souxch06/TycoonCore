@@ -1,14 +1,3 @@
-/*
- * Decompiled with CFR 0.152.
- * 
- * Could not load the following classes:
- *  com.google.common.cache.LoadingCache
- *  com.mojang.authlib.GameProfile
- *  com.mojang.authlib.minecraft.MinecraftSessionService
- *  com.mojang.authlib.properties.Property
- *  org.apache.logging.log4j.LogManager
- *  org.apache.logging.log4j.Logger
- */
 package com.cryptomorin.xseries.profiles;
 
 import com.cryptomorin.xseries.reflection.ReflectiveHandle;

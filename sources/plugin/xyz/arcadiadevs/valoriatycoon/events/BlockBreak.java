@@ -1,17 +1,3 @@
-/*
- * Décompilé avec CFR 0.152.
- * 
- * Impossible de charger les classes suivantes :
- *  lombok.Generated
- *  org.bukkit.OfflinePlayer
- *  org.bukkit.block.Block
- *  org.bukkit.command.CommandSender
- *  org.bukkit.entity.Player
- *  org.bukkit.event.EventHandler
- *  org.bukkit.event.EventPriority
- *  org.bukkit.event.Listener
- *  org.bukkit.event.block.BlockBreakEvent
- */
 package xyz.arcadiadevs.valoriatycoon.events;
 
 import com.cryptomorin.xseries.XMaterial;

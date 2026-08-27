@@ -1,20 +1,3 @@
-/*
- * Décompilé avec CFR 0.152.
- * 
- * Impossible de charger les classes suivantes :
- *  lombok.Generated
- *  org.bukkit.Bukkit
- *  org.bukkit.Location
- *  org.bukkit.Material
- *  org.bukkit.OfflinePlayer
- *  org.bukkit.World
- *  org.bukkit.block.Block
- *  org.bukkit.entity.Entity
- *  org.bukkit.entity.Item
- *  org.bukkit.entity.Player
- *  org.bukkit.plugin.Plugin
- *  org.bukkit.util.Vector
- */
 package xyz.arcadiadevs.valoriatycoon.models;
 
 import com.awaitquality.api.spigot.chat.ChatUtil;

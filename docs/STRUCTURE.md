@@ -2,13 +2,13 @@
 
 ## `artifacts/original/`
 
-Contient le fichier JAR original :
+Contient le fichier JAR distribué :
 
 - `ValoriaTycoon-v1.6.3.jar`
 
 ## `artifacts/extracted/`
 
-Contient tous les fichiers extraits du JAR. La structure reste identique à celle visible dans une application comme ZArchiver. Les ressources principales (`config.yml`, `messages.yml`, `plugin.yml`) ont été francisées pour garder le dépôt cohérent :
+Contient le contenu complet du plugin organisé avec la même structure que celle visible dans une archive JAR :
 
 - `com/`
 - `data/`
@@ -23,19 +23,19 @@ Contient tous les fichiers extraits du JAR. La structure reste identique à cell
 - `module-info.class`
 - `plugin.yml`
 
-Cette zone sert de référence de structure : elle permet de vérifier qu'aucun fichier du JAR n'a été perdu.
+Cette zone sert de référence de structure et permet de vérifier qu'aucun fichier attendu n'est absent.
 
 ## `sources/plugin/`
 
-Contient les sources Java décompilées du package principal :
+Contient le code Java principal du plugin :
 
 - `xyz.arcadiadevs.valoriatycoon`
 
-C'est le dossier le plus utile pour modifier la logique du plugin.
+C'est le dossier à utiliser en priorité pour lire ou modifier la logique de ValoriaTycoon.
 
 ## `sources/shaded/`
 
-Contient les dépendances intégrées dans le JAR puis décompilées :
+Contient les librairies embarquées avec le plugin :
 
 - `com.awaitquality`
 - `com.cryptomorin.xseries`
@@ -50,7 +50,7 @@ Ces fichiers sont séparés du code plugin pour éviter de mélanger le cœur de
 
 ## `resources/`
 
-Copie pratique des fichiers de configuration principaux du plugin :
+Contient les fichiers de configuration principaux :
 
 - `config.yml`
 - `messages.yml`
@@ -59,15 +59,13 @@ Copie pratique des fichiers de configuration principaux du plugin :
 - `data/player_data.json`
 - `data/wands_data.json`
 
-Les mêmes fichiers existent aussi dans `artifacts/extracted/`. Les ressources principales y sont également en français afin que le dépôt reste homogène.
+## `docs/technical-report.txt`
 
-## `docs/decompilation-summary.txt`
-
-Résumé généré par CFR pendant la décompilation. Il liste les classes/méthodes que le décompilateur n'a pas pu restituer parfaitement.
+Rapport technique lié aux sources et aux fichiers générés.
 
 ## Vérification
 
-Pour vérifier que tous les chemins de fichiers du JAR sont présents dans l'extraction :
+Pour vérifier que tous les chemins de fichiers attendus sont présents :
 
 ```bash
 python3 scripts/verify-extraction.py

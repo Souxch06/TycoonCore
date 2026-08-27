@@ -1,17 +1,3 @@
-/*
- * Decompiled with CFR 0.152.
- * 
- * Could not load the following classes:
- *  com.comphenix.protocol.ProtocolLibrary
- *  com.comphenix.protocol.events.PacketContainer
- *  com.comphenix.protocol.utility.MinecraftVersion
- *  com.comphenix.protocol.wrappers.WrappedDataValue
- *  com.comphenix.protocol.wrappers.WrappedDataWatcher
- *  com.comphenix.protocol.wrappers.WrappedDataWatcher$WrappedDataWatcherObject
- *  com.comphenix.protocol.wrappers.WrappedWatchableObject
- *  com.google.common.collect.Lists
- *  org.bukkit.entity.Player
- */
 package org.holoeasy.ext;
 
 import com.comphenix.protocol.ProtocolLibrary;

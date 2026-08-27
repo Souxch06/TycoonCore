@@ -1,21 +1,3 @@
-/*
- * Décompilé avec CFR 0.152.
- * 
- * Impossible de charger les classes suivantes :
- *  net.milkbowl.vault.economy.Economy
- *  net.milkbowl.vault.economy.EconomyResponse
- *  org.bukkit.Location
- *  org.bukkit.OfflinePlayer
- *  org.bukkit.Particle
- *  org.bukkit.block.Block
- *  org.bukkit.command.CommandSender
- *  org.bukkit.configuration.file.FileConfiguration
- *  org.bukkit.entity.Entity
- *  org.bukkit.entity.Player
- *  org.bukkit.inventory.ItemStack
- *  org.bukkit.inventory.meta.ItemMeta
- *  org.bukkit.plugin.Plugin
- */
 package xyz.arcadiadevs.valoriatycoon.guis;
 
 import com.awaitquality.api.spigot.chat.ChatUtil;

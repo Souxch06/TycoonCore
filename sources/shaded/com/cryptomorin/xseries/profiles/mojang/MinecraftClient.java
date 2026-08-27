@@ -1,13 +1,3 @@
-/*
- * Decompiled with CFR 0.152.
- * 
- * Could not load the following classes:
- *  com.google.common.base.Charsets
- *  com.google.common.io.CharStreams
- *  javax.annotation.Nonnull
- *  javax.annotation.Nullable
- *  org.bukkit.Bukkit
- */
 package com.cryptomorin.xseries.profiles.mojang;
 
 import com.cryptomorin.xseries.profiles.ProfilesCore;

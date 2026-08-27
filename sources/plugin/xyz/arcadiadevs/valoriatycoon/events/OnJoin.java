@@ -1,15 +1,3 @@
-/*
- * Décompilé avec CFR 0.152.
- * 
- * Impossible de charger les classes suivantes :
- *  lombok.Generated
- *  org.bukkit.configuration.file.FileConfiguration
- *  org.bukkit.entity.Player
- *  org.bukkit.event.EventHandler
- *  org.bukkit.event.Listener
- *  org.bukkit.event.player.PlayerJoinEvent
- *  org.bukkit.inventory.Inventory
- */
 package xyz.arcadiadevs.valoriatycoon.events;
 
 import lombok.Generated;

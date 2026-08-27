@@ -1,6 +1,3 @@
-/*
- * Decompiled with CFR 0.152.
- */
 package com.cryptomorin.xseries.reflection.jvm.classes;
 
 import com.cryptomorin.xseries.reflection.ReflectiveHandle;

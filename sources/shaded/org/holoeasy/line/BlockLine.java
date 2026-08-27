@@ -1,13 +1,3 @@
-/*
- * Decompiled with CFR 0.152.
- * 
- * Could not load the following classes:
- *  org.bukkit.Location
- *  org.bukkit.entity.EntityType
- *  org.bukkit.entity.Player
- *  org.bukkit.inventory.ItemStack
- *  org.bukkit.plugin.Plugin
- */
 package org.holoeasy.line;
 
 import java.util.Collection;

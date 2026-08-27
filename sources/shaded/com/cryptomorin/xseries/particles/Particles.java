@@ -1,20 +1,3 @@
-/*
- * Decompiled with CFR 0.152.
- * 
- * Could not load the following classes:
- *  org.bukkit.Bukkit
- *  org.bukkit.Color
- *  org.bukkit.Location
- *  org.bukkit.Particle$DustOptions
- *  org.bukkit.World
- *  org.bukkit.block.BlockFace
- *  org.bukkit.entity.Player
- *  org.bukkit.plugin.Plugin
- *  org.bukkit.scheduler.BukkitRunnable
- *  org.bukkit.scheduler.BukkitTask
- *  org.bukkit.util.NumberConversions
- *  org.bukkit.util.Vector
- */
 package com.cryptomorin.xseries.particles;
 
 import com.cryptomorin.xseries.particles.ParticleDisplay;

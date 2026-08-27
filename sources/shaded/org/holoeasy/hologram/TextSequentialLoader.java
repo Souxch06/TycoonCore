@@ -1,10 +1,3 @@
-/*
- * Decompiled with CFR 0.152.
- * 
- * Could not load the following classes:
- *  org.bukkit.Location
- *  org.bukkit.entity.Player
- */
 package org.holoeasy.hologram;
 
 import java.util.Collection;

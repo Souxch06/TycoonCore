@@ -1,15 +1,3 @@
-/*
- * Décompilé avec CFR 0.152.
- * 
- * Impossible de charger les classes suivantes :
- *  org.bukkit.Bukkit
- *  org.bukkit.command.Command
- *  org.bukkit.command.CommandExecutor
- *  org.bukkit.command.CommandSender
- *  org.bukkit.entity.Player
- *  org.bukkit.inventory.Inventory
- *  org.bukkit.inventory.ItemStack
- */
 package xyz.arcadiadevs.valoriatycoon.commands;
 
 import com.awaitquality.api.spigot.chat.ChatUtil;

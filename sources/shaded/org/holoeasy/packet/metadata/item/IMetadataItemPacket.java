@@ -1,10 +1,3 @@
-/*
- * Decompiled with CFR 0.152.
- * 
- * Could not load the following classes:
- *  com.comphenix.protocol.events.PacketContainer
- *  org.bukkit.inventory.ItemStack
- */
 package org.holoeasy.packet.metadata.item;
 
 import com.comphenix.protocol.events.PacketContainer;

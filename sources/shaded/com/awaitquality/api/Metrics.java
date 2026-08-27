@@ -1,13 +1,3 @@
-/*
- * Decompiled with CFR 0.152.
- * 
- * Could not load the following classes:
- *  org.bukkit.Bukkit
- *  org.bukkit.configuration.file.YamlConfiguration
- *  org.bukkit.entity.Player
- *  org.bukkit.plugin.Plugin
- *  org.bukkit.plugin.java.JavaPlugin
- */
 package com.awaitquality.api;
 
 import java.io.BufferedReader;

@@ -1,10 +1,3 @@
-/*
- * Decompiled with CFR 0.152.
- * 
- * Could not load the following classes:
- *  com.comphenix.protocol.PacketType
- *  com.comphenix.protocol.events.PacketContainer
- */
 package org.holoeasy.packet;
 
 import com.comphenix.protocol.PacketType;

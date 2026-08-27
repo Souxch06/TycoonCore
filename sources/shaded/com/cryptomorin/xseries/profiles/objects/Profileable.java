@@ -1,19 +1,3 @@
-/*
- * Decompiled with CFR 0.152.
- * 
- * Could not load the following classes:
- *  com.google.common.base.Function
- *  com.google.common.base.Strings
- *  com.mojang.authlib.GameProfile
- *  javax.annotation.Nonnull
- *  org.bukkit.OfflinePlayer
- *  org.bukkit.block.Block
- *  org.bukkit.block.BlockState
- *  org.bukkit.block.Skull
- *  org.bukkit.inventory.ItemStack
- *  org.bukkit.inventory.meta.ItemMeta
- *  org.bukkit.inventory.meta.SkullMeta
- */
 package com.cryptomorin.xseries.profiles.objects;
 
 import com.cryptomorin.xseries.profiles.PlayerProfiles;

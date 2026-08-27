@@ -1,16 +1,3 @@
-/*
- * Decompiled with CFR 0.152.
- * 
- * Could not load the following classes:
- *  com.google.common.cache.Cache
- *  com.google.common.cache.CacheBuilder
- *  javax.annotation.Nonnull
- *  javax.annotation.Nullable
- *  org.bukkit.Bukkit
- *  org.bukkit.Material
- *  org.bukkit.inventory.ItemStack
- *  org.bukkit.inventory.meta.SpawnEggMeta
- */
 package com.cryptomorin.xseries;
 
 import com.google.common.cache.Cache;

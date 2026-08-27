@@ -1,9 +1,3 @@
-/*
- * Decompiled with CFR 0.152.
- * 
- * Could not load the following classes:
- *  javax.annotation.Nonnull
- */
 package com.cryptomorin.xseries.profiles.mojang;
 
 import com.cryptomorin.xseries.profiles.ProfilesCore;

@@ -1,19 +1,3 @@
-/*
- * Decompiled with CFR 0.152.
- * 
- * Could not load the following classes:
- *  com.google.common.base.Enums
- *  javax.annotation.Nonnull
- *  javax.annotation.Nullable
- *  org.bukkit.Material
- *  org.bukkit.NamespacedKey
- *  org.bukkit.Registry
- *  org.bukkit.enchantments.Enchantment
- *  org.bukkit.entity.EntityType
- *  org.bukkit.inventory.ItemStack
- *  org.bukkit.inventory.meta.EnchantmentStorageMeta
- *  org.bukkit.inventory.meta.ItemMeta
- */
 package com.cryptomorin.xseries;
 
 import com.google.common.base.Enums;

@@ -1,17 +1,3 @@
-/*
- * Decompiled with CFR 0.152.
- * 
- * Could not load the following classes:
- *  com.google.common.base.Enums
- *  javax.annotation.Nonnull
- *  javax.annotation.Nullable
- *  org.bukkit.Chunk
- *  org.bukkit.Location
- *  org.bukkit.World
- *  org.bukkit.World$Environment
- *  org.bukkit.block.Biome
- *  org.bukkit.block.Block
- */
 package com.cryptomorin.xseries;
 
 import com.cryptomorin.xseries.XMaterial;

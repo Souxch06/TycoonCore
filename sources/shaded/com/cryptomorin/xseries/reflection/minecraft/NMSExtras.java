@@ -1,17 +1,3 @@
-/*
- * Decompiled with CFR 0.152.
- * 
- * Could not load the following classes:
- *  javax.annotation.Nullable
- *  org.bukkit.Chunk
- *  org.bukkit.DyeColor
- *  org.bukkit.Location
- *  org.bukkit.Material
- *  org.bukkit.block.Block
- *  org.bukkit.entity.Entity
- *  org.bukkit.entity.LivingEntity
- *  org.bukkit.entity.Player
- */
 package com.cryptomorin.xseries.reflection.minecraft;
 
 import com.cryptomorin.xseries.XSound;

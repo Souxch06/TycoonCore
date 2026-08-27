@@ -1,21 +1,3 @@
-/*
- * Decompiled with CFR 0.152.
- * 
- * Could not load the following classes:
- *  com.google.common.base.Strings
- *  javax.annotation.Nonnull
- *  javax.annotation.Nullable
- *  org.bukkit.Instrument
- *  org.bukkit.Location
- *  org.bukkit.Note
- *  org.bukkit.Note$Tone
- *  org.bukkit.Sound
- *  org.bukkit.entity.Entity
- *  org.bukkit.entity.Player
- *  org.bukkit.plugin.Plugin
- *  org.bukkit.scheduler.BukkitRunnable
- *  org.bukkit.scheduler.BukkitTask
- */
 package com.cryptomorin.xseries;
 
 import com.cryptomorin.xseries.XSound;

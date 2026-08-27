@@ -1,6 +1,3 @@
-/*
- * Decompiled with CFR 0.152.
- */
 package org.intellij.lang.annotations;
 
 import org.intellij.lang.annotations.Pattern;

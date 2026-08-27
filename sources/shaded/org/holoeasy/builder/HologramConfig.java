@@ -1,10 +1,3 @@
-/*
- * Decompiled with CFR 0.152.
- * 
- * Could not load the following classes:
- *  org.bukkit.Location
- *  org.bukkit.plugin.Plugin
- */
 package org.holoeasy.builder;
 
 import java.util.ArrayList;

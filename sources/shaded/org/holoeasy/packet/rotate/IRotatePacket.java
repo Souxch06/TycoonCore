@@ -1,9 +1,3 @@
-/*
- * Decompiled with CFR 0.152.
- * 
- * Could not load the following classes:
- *  com.comphenix.protocol.events.PacketContainer
- */
 package org.holoeasy.packet.rotate;
 
 import com.comphenix.protocol.events.PacketContainer;

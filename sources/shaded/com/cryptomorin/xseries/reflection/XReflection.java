@@ -1,11 +1,3 @@
-/*
- * Decompiled with CFR 0.152.
- * 
- * Could not load the following classes:
- *  javax.annotation.Nonnull
- *  javax.annotation.Nullable
- *  org.bukkit.Bukkit
- */
 package com.cryptomorin.xseries.reflection;
 
 import com.cryptomorin.xseries.reflection.AggregateReflectiveHandle;

@@ -1,6 +1,3 @@
-/*
- * Decompiled with CFR 0.152.
- */
 package com.cryptomorin.xseries.profiles.objects.cache;
 
 import com.cryptomorin.xseries.profiles.objects.cache.CacheableProfileable;

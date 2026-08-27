@@ -1,13 +1,3 @@
-/*
- * Decompiled with CFR 0.152.
- * 
- * Could not load the following classes:
- *  net.md_5.bungee.api.ChatColor
- *  net.md_5.bungee.api.CommandSender
- *  net.md_5.bungee.api.chat.BaseComponent
- *  net.md_5.bungee.api.chat.TextComponent
- *  net.md_5.bungee.api.connection.ProxiedPlayer
- */
 package com.awaitquality.api.bungee.chat;
 
 import java.util.Objects;

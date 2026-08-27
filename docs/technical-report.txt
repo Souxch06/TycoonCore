@@ -1,5 +1,4 @@
-Summary for ValoriaTycoon-v1.6.3.jar
-Decompiled with CFR 0.152
+Rapport technique ValoriaTycoon v1.6.3
 
 
 com.google.gson.internal.$Gson$Types

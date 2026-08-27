@@ -1,15 +1,3 @@
-/*
- * Décompilé avec CFR 0.152.
- * 
- * Impossible de charger les classes suivantes :
- *  net.milkbowl.vault.economy.Economy
- *  org.bukkit.Material
- *  org.bukkit.OfflinePlayer
- *  org.bukkit.command.CommandSender
- *  org.bukkit.entity.Player
- *  org.bukkit.inventory.Inventory
- *  org.bukkit.inventory.ItemStack
- */
 package xyz.arcadiadevs.valoriatycoon.utils;
 
 import io.github.bananapuncher714.nbteditor.NBTEditor;

@@ -1,6 +1,3 @@
-/*
- * Decompiled with CFR 0.152.
- */
 package org.json;
 
 import java.util.Locale;

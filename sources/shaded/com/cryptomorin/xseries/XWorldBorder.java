@@ -1,22 +1,3 @@
-/*
- * Decompiled with CFR 0.152.
- * 
- * Could not load the following classes:
- *  javax.annotation.Nonnull
- *  javax.annotation.Nullable
- *  org.bukkit.Bukkit
- *  org.bukkit.Location
- *  org.bukkit.World
- *  org.bukkit.WorldBorder
- *  org.bukkit.entity.Player
- *  org.bukkit.event.EventHandler
- *  org.bukkit.event.EventPriority
- *  org.bukkit.event.Listener
- *  org.bukkit.event.player.PlayerChangedWorldEvent
- *  org.bukkit.event.player.PlayerJoinEvent
- *  org.bukkit.event.player.PlayerMoveEvent
- *  org.bukkit.util.Vector
- */
 package com.cryptomorin.xseries;
 
 import com.cryptomorin.xseries.reflection.XReflection;

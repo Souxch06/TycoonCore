@@ -1,6 +1,3 @@
-/*
- * Decompiled with CFR 0.152.
- */
 package com.cryptomorin.xseries.abstractions;
 
 import org.jetbrains.annotations.ApiStatus;

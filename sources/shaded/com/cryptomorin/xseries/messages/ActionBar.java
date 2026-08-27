@@ -1,17 +1,3 @@
-/*
- * Decompiled with CFR 0.152.
- * 
- * Could not load the following classes:
- *  com.google.common.base.Strings
- *  javax.annotation.Nonnull
- *  javax.annotation.Nullable
- *  net.md_5.bungee.api.ChatMessageType
- *  net.md_5.bungee.api.chat.TextComponent
- *  org.bukkit.Bukkit
- *  org.bukkit.entity.Player
- *  org.bukkit.plugin.Plugin
- *  org.bukkit.scheduler.BukkitRunnable
- */
 package com.cryptomorin.xseries.messages;
 
 import com.cryptomorin.xseries.reflection.XReflection;

@@ -1,17 +1,3 @@
-/*
- * Décompilé avec CFR 0.152.
- * 
- * Impossible de charger les classes suivantes :
- *  dev.lone.itemsadder.api.CustomStack
- *  io.th0rgal.oraxen.api.OraxenItems
- *  org.bukkit.Bukkit
- *  org.bukkit.Material
- *  org.bukkit.configuration.file.FileConfiguration
- *  org.bukkit.inventory.Inventory
- *  org.bukkit.inventory.ItemStack
- *  org.bukkit.inventory.meta.ItemMeta
- *  org.bukkit.inventory.meta.SkullMeta
- */
 package xyz.arcadiadevs.valoriatycoon.utils;
 
 import com.awaitquality.api.spigot.chat.formatter.Formatter;

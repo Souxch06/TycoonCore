@@ -1,6 +1,3 @@
-/*
- * Decompiled with CFR 0.152.
- */
 package kotlin.text.jdk8;
 
 import kotlin.Metadata;

@@ -1,12 +1,3 @@
-/*
- * Decompiled with CFR 0.152.
- * 
- * Could not load the following classes:
- *  net.md_5.bungee.api.ChatColor
- *  org.bukkit.Bukkit
- *  org.bukkit.ChatColor
- *  org.bukkit.command.CommandSender
- */
 package com.awaitquality.api.spigot.chat;
 
 import java.util.List;

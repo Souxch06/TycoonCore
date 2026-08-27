@@ -1,12 +1,3 @@
-/*
- * Decompiled with CFR 0.152.
- * 
- * Could not load the following classes:
- *  com.comphenix.protocol.PacketType
- *  com.comphenix.protocol.PacketType$Play$Server
- *  com.comphenix.protocol.events.PacketContainer
- *  com.comphenix.protocol.reflect.StructureModifier
- */
 package org.holoeasy.packet.delete;
 
 import com.comphenix.protocol.PacketType;

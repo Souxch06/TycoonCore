@@ -1,9 +1,3 @@
-/*
- * Décompilé avec CFR 0.152.
- * 
- * Impossible de charger les classes suivantes :
- *  org.bukkit.inventory.ItemStack
- */
 package xyz.arcadiadevs.guilib;
 
 import org.bukkit.inventory.ItemStack;

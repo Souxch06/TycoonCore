@@ -1,11 +1,3 @@
-/*
- * Decompiled with CFR 0.152.
- * 
- * Could not load the following classes:
- *  com.comphenix.protocol.PacketType$Play$Server
- *  com.comphenix.protocol.events.PacketContainer
- *  com.comphenix.protocol.wrappers.WrappedDataWatcher
- */
 package org.holoeasy.packet.metadata.text;
 
 import com.comphenix.protocol.PacketType;

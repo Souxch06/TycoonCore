@@ -1,14 +1,3 @@
-/*
- * Décompilé avec CFR 0.152.
- * 
- * Impossible de charger les classes suivantes :
- *  org.bukkit.Bukkit
- *  org.bukkit.configuration.file.YamlConfiguration
- *  org.bukkit.entity.Player
- *  org.bukkit.plugin.Plugin
- *  org.bukkit.plugin.java.JavaPlugin
- *  org.bukkit.scheduler.BukkitTask
- */
 package xyz.arcadiadevs.valoriatycoon.utils;
 
 import java.io.BufferedReader;

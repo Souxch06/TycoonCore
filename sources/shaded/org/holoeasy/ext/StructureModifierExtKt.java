@@ -1,9 +1,3 @@
-/*
- * Decompiled with CFR 0.152.
- * 
- * Could not load the following classes:
- *  com.comphenix.protocol.reflect.StructureModifier
- */
 package org.holoeasy.ext;
 
 import com.comphenix.protocol.reflect.StructureModifier;
