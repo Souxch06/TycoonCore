@@ -1,0 +1,45 @@
+# [general]
+default-message: '&9GensPlus> This server is running GensPlus v%version%'
+no-permission: "&cError> &7You don't have permission to do that!"
+plugin-reloaded: "&9GensPlus> &7Plugin reloaded."
+too-fast: "&cError> &7You are doing that too fast!"
+player-not-found: "&cError> &7Player not found!"
+not-enough-arguments: "&cError> &7Not enough arguments!"
+only-player-can-execute-command: "&cError> &7Only player can execute this command!"
+invalid-format: "&cError> &7Invalid format!"
+
+# [limit-settings]
+limit-reached: "&cError> &7You have reached the limit of &c%limit% &7generators!"
+cannot-place-in-world: "&cError> &7You cannot place generators in this world!"
+limit-updated: "&9GensPlus> &7You have changed %player%'s gens limit to &a%limit%&7!"
+
+# [events]
+event-started: "&9GensPlus> &7%event% has started and will end in &e&n%time%!"
+event-ended: "&9GensPlus> &7%event% has ended and new event will be started in &e&n%time%!"
+event-already-running: "&cError> &7An event is already running!"
+event-force-ended: "&9GensPlus> &7Event has been force ended! New event will be started in &e&n%time%!"
+event-not-found: "&cError> &7Event not found!"
+
+# [generators]
+successfully-upgraded: "&9GensPlus> &7Successfully upgraded your generator to tier &a%tier%!"
+successfully-sold: "&9GensPlus> &7Successfully sold drops for &a%price%"
+not-enough-money: "&cError> &7You don't have enough money to do that! %currentBalance%/%price%"
+nothing-to-sell: "&cError> &7You don't have any drops to sell!"
+invalid-generator-tier: "&cError> &7Invalid generator tier!"
+successfully-destroyed: "&9GensPlus> &7Successfully destroyed generator!"
+successfully-placed: "&9GensPlus> &7Successfully placed generator tier %tier%!"
+successfully-bought: "&9GensPlus> &7Successfully bought generator tier %tier% for %price%!"
+reached-max-tier: "&cError> &7You have reached the maximum tier of generator!"
+not-your-generator-destroy: "&cError> &7You cannot destroy generator that is not yours!"
+not-your-generator-upgrade: "&cError> &7You cannot upgrade generator that is not yours!"
+
+# [admin]
+generator-given: "&9GensPlus> &7You gave &a%amount% &7generator(s) of tier &a%tier% &7to &a%targetPlayer%"
+generator-given-all: "&9GensPlus> &7You gave &a%amount% &7generator of tier &a%tier% &7to all players! (&a%count%&7)"
+generator-received: "&9GensPlus> &7You received &a%amount% &7generator(s) of tier &a%tier%"
+
+# [wands]
+sell-wand-given: "&9GensPlus> &7You have been given a sell wand!"
+sell-wand-received: "&9GensPlus> &7You have received a sell wand!"
+wand-broke: "&cError> &7Your wand broke!"
+#sWTCRHaup3NVtEV5J2R1pUbKVlWFJVVadFaV5USWdkUXpFSSNHdIVTZWJkdENHdIVTZW1Wb

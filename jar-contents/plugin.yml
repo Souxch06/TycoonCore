@@ -1,0 +1,35 @@
+name: GensPlus
+version: '1.6.3'
+main: xyz.arcadiadevs.gensplus.GensPlus
+api-version: 1.13
+authors:
+  - Cuftica
+  - OpenSource
+
+depend:
+  - Vault
+  - ProtocolLib
+
+softdepend:
+  - Oraxen
+  - Essentials
+  - ItemsAdder
+  - IridiumSkyblock
+  - SuperiorSkyblock2
+  - ASkyBlock
+  - AcidIsland
+  - BentoBox
+  - HoloEasy
+
+commands:
+  gensplus:
+    description: Main command
+    usage: /gensplus
+    aliases: [ gens, gp ]
+  generators:
+    description: List all generators in gui
+    usage: /generators
+  selldrops:
+    description: Sell all drops in inventory
+    usage: /selldrops
+#sENuZzcElnQyATVw81TyRFMBR0TaxmRPZFcVR1SoR1VWpFWXFzcK1EOVBjdZFzcK1EOVJmY

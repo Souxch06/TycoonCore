@@ -1,0 +1,2280 @@
+/*
+ * Decompiled with CFR 0.152.
+ * 
+ * Could not load the following classes:
+ *  com.google.common.base.Enums
+ *  com.google.common.base.Strings
+ *  javax.annotation.Nonnull
+ *  javax.annotation.Nullable
+ *  org.bukkit.Bukkit
+ *  org.bukkit.Location
+ *  org.bukkit.Sound
+ *  org.bukkit.SoundCategory
+ *  org.bukkit.entity.Entity
+ *  org.bukkit.entity.LivingEntity
+ *  org.bukkit.entity.Player
+ */
+package com.cryptomorin.xseries;
+
+import com.google.common.base.Enums;
+import com.google.common.base.Strings;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Random;
+import java.util.Set;
+import java.util.UUID;
+import java.util.WeakHashMap;
+import java.util.function.Consumer;
+import java.util.regex.Pattern;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import org.bukkit.Bukkit;
+import org.bukkit.Location;
+import org.bukkit.Sound;
+import org.bukkit.SoundCategory;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.LivingEntity;
+import org.bukkit.entity.Player;
+import org.jetbrains.annotations.Unmodifiable;
+
+public enum XSound {
+    AMBIENT_BASALT_DELTAS_ADDITIONS(new String[0]),
+    AMBIENT_BASALT_DELTAS_LOOP(new String[0]),
+    AMBIENT_BASALT_DELTAS_MOOD(new String[0]),
+    AMBIENT_CAVE("AMBIENCE_CAVE"),
+    AMBIENT_CRIMSON_FOREST_ADDITIONS(new String[0]),
+    AMBIENT_CRIMSON_FOREST_LOOP(new String[0]),
+    AMBIENT_CRIMSON_FOREST_MOOD(new String[0]),
+    AMBIENT_NETHER_WASTES_ADDITIONS(new String[0]),
+    AMBIENT_NETHER_WASTES_LOOP(new String[0]),
+    AMBIENT_NETHER_WASTES_MOOD(new String[0]),
+    AMBIENT_SOUL_SAND_VALLEY_ADDITIONS(new String[0]),
+    AMBIENT_SOUL_SAND_VALLEY_LOOP(new String[0]),
+    AMBIENT_SOUL_SAND_VALLEY_MOOD(new String[0]),
+    AMBIENT_UNDERWATER_ENTER(new String[0]),
+    AMBIENT_UNDERWATER_EXIT(new String[0]),
+    AMBIENT_UNDERWATER_LOOP("AMBIENT_UNDERWATER_EXIT"),
+    AMBIENT_UNDERWATER_LOOP_ADDITIONS("AMBIENT_UNDERWATER_EXIT"),
+    AMBIENT_UNDERWATER_LOOP_ADDITIONS_RARE("AMBIENT_UNDERWATER_EXIT"),
+    AMBIENT_UNDERWATER_LOOP_ADDITIONS_ULTRA_RARE("AMBIENT_UNDERWATER_EXIT"),
+    AMBIENT_WARPED_FOREST_ADDITIONS(new String[0]),
+    AMBIENT_WARPED_FOREST_LOOP(new String[0]),
+    AMBIENT_WARPED_FOREST_MOOD(new String[0]),
+    BLOCK_AMETHYST_BLOCK_BREAK(new String[0]),
+    BLOCK_AMETHYST_BLOCK_CHIME(new String[0]),
+    BLOCK_AMETHYST_BLOCK_FALL(new String[0]),
+    BLOCK_AMETHYST_BLOCK_HIT(new String[0]),
+    BLOCK_AMETHYST_BLOCK_PLACE(new String[0]),
+    BLOCK_AMETHYST_BLOCK_RESONATE(new String[0]),
+    BLOCK_AMETHYST_BLOCK_STEP(new String[0]),
+    BLOCK_AMETHYST_CLUSTER_BREAK(new String[0]),
+    BLOCK_AMETHYST_CLUSTER_FALL(new String[0]),
+    BLOCK_AMETHYST_CLUSTER_HIT(new String[0]),
+    BLOCK_AMETHYST_CLUSTER_PLACE(new String[0]),
+    BLOCK_AMETHYST_CLUSTER_STEP(new String[0]),
+    BLOCK_ANCIENT_DEBRIS_BREAK(new String[0]),
+    BLOCK_ANCIENT_DEBRIS_FALL(new String[0]),
+    BLOCK_ANCIENT_DEBRIS_HIT(new String[0]),
+    BLOCK_ANCIENT_DEBRIS_PLACE(new String[0]),
+    BLOCK_ANCIENT_DEBRIS_STEP(new String[0]),
+    BLOCK_ANVIL_BREAK("ANVIL_BREAK"),
+    BLOCK_ANVIL_DESTROY(new String[0]),
+    BLOCK_ANVIL_FALL(new String[0]),
+    BLOCK_ANVIL_HIT("BLOCK_ANVIL_FALL"),
+    BLOCK_ANVIL_LAND("ANVIL_LAND"),
+    BLOCK_ANVIL_PLACE("BLOCK_ANVIL_FALL"),
+    BLOCK_ANVIL_STEP("BLOCK_ANVIL_FALL"),
+    BLOCK_ANVIL_USE("ANVIL_USE"),
+    BLOCK_AZALEA_BREAK(new String[0]),
+    BLOCK_AZALEA_FALL(new String[0]),
+    BLOCK_AZALEA_HIT(new String[0]),
+    BLOCK_AZALEA_LEAVES_BREAK(new String[0]),
+    BLOCK_AZALEA_LEAVES_FALL(new String[0]),
+    BLOCK_AZALEA_LEAVES_HIT(new String[0]),
+    BLOCK_AZALEA_LEAVES_PLACE(new String[0]),
+    BLOCK_AZALEA_LEAVES_STEP(new String[0]),
+    BLOCK_AZALEA_PLACE(new String[0]),
+    BLOCK_AZALEA_STEP(new String[0]),
+    BLOCK_BAMBOO_BREAK(new String[0]),
+    BLOCK_BAMBOO_FALL(new String[0]),
+    BLOCK_BAMBOO_HIT(new String[0]),
+    BLOCK_BAMBOO_PLACE(new String[0]),
+    BLOCK_BAMBOO_SAPLING_BREAK(new String[0]),
+    BLOCK_BAMBOO_SAPLING_HIT(new String[0]),
+    BLOCK_BAMBOO_SAPLING_PLACE(new String[0]),
+    BLOCK_BAMBOO_STEP(new String[0]),
+    BLOCK_BAMBOO_WOOD_BREAK(new String[0]),
+    BLOCK_BAMBOO_WOOD_BUTTON_CLICK_OFF(new String[0]),
+    BLOCK_BAMBOO_WOOD_BUTTON_CLICK_ON(new String[0]),
+    BLOCK_BAMBOO_WOOD_DOOR_CLOSE(new String[0]),
+    BLOCK_BAMBOO_WOOD_DOOR_OPEN(new String[0]),
+    BLOCK_BAMBOO_WOOD_FALL(new String[0]),
+    BLOCK_BAMBOO_WOOD_FENCE_GATE_CLOSE(new String[0]),
+    BLOCK_BAMBOO_WOOD_FENCE_GATE_OPEN(new String[0]),
+    BLOCK_BAMBOO_WOOD_HANGING_SIGN_BREAK(new String[0]),
+    BLOCK_BAMBOO_WOOD_HANGING_SIGN_FALL(new String[0]),
+    BLOCK_BAMBOO_WOOD_HANGING_SIGN_HIT(new String[0]),
+    BLOCK_BAMBOO_WOOD_HANGING_SIGN_PLACE(new String[0]),
+    BLOCK_BAMBOO_WOOD_HANGING_SIGN_STEP(new String[0]),
+    BLOCK_BAMBOO_WOOD_HIT(new String[0]),
+    BLOCK_BAMBOO_WOOD_PLACE(new String[0]),
+    BLOCK_BAMBOO_WOOD_PRESSURE_PLATE_CLICK_OFF(new String[0]),
+    BLOCK_BAMBOO_WOOD_PRESSURE_PLATE_CLICK_ON(new String[0]),
+    BLOCK_BAMBOO_WOOD_STEP(new String[0]),
+    BLOCK_BAMBOO_WOOD_TRAPDOOR_CLOSE(new String[0]),
+    BLOCK_BAMBOO_WOOD_TRAPDOOR_OPEN(new String[0]),
+    BLOCK_BARREL_CLOSE(new String[0]),
+    BLOCK_BARREL_OPEN(new String[0]),
+    BLOCK_BASALT_BREAK(new String[0]),
+    BLOCK_BASALT_FALL(new String[0]),
+    BLOCK_BASALT_HIT(new String[0]),
+    BLOCK_BASALT_PLACE(new String[0]),
+    BLOCK_BASALT_STEP(new String[0]),
+    BLOCK_BEACON_ACTIVATE(new String[0]),
+    BLOCK_BEACON_AMBIENT(new String[0]),
+    BLOCK_BEACON_DEACTIVATE("BLOCK_BEACON_AMBIENT"),
+    BLOCK_BEACON_POWER_SELECT("BLOCK_BEACON_AMBIENT"),
+    BLOCK_BEEHIVE_DRIP(new String[0]),
+    BLOCK_BEEHIVE_ENTER(new String[0]),
+    BLOCK_BEEHIVE_EXIT(new String[0]),
+    BLOCK_BEEHIVE_SHEAR(new String[0]),
+    BLOCK_BEEHIVE_WORK(new String[0]),
+    BLOCK_BELL_RESONATE(new String[0]),
+    BLOCK_BELL_USE(new String[0]),
+    BLOCK_BIG_DRIPLEAF_BREAK(new String[0]),
+    BLOCK_BIG_DRIPLEAF_FALL(new String[0]),
+    BLOCK_BIG_DRIPLEAF_HIT(new String[0]),
+    BLOCK_BIG_DRIPLEAF_PLACE(new String[0]),
+    BLOCK_BIG_DRIPLEAF_STEP(new String[0]),
+    BLOCK_BIG_DRIPLEAF_TILT_DOWN(new String[0]),
+    BLOCK_BIG_DRIPLEAF_TILT_UP(new String[0]),
+    BLOCK_BLASTFURNACE_FIRE_CRACKLE(new String[0]),
+    BLOCK_BONE_BLOCK_BREAK(new String[0]),
+    BLOCK_BONE_BLOCK_FALL(new String[0]),
+    BLOCK_BONE_BLOCK_HIT(new String[0]),
+    BLOCK_BONE_BLOCK_PLACE(new String[0]),
+    BLOCK_BONE_BLOCK_STEP(new String[0]),
+    BLOCK_BREWING_STAND_BREW(new String[0]),
+    BLOCK_BUBBLE_COLUMN_BUBBLE_POP(new String[0]),
+    BLOCK_BUBBLE_COLUMN_UPWARDS_AMBIENT(new String[0]),
+    BLOCK_BUBBLE_COLUMN_UPWARDS_INSIDE(new String[0]),
+    BLOCK_BUBBLE_COLUMN_WHIRLPOOL_AMBIENT(new String[0]),
+    BLOCK_BUBBLE_COLUMN_WHIRLPOOL_INSIDE(new String[0]),
+    BLOCK_CAKE_ADD_CANDLE(new String[0]),
+    BLOCK_CALCITE_BREAK(new String[0]),
+    BLOCK_CALCITE_FALL(new String[0]),
+    BLOCK_CALCITE_HIT(new String[0]),
+    BLOCK_CALCITE_PLACE(new String[0]),
+    BLOCK_CALCITE_STEP(new String[0]),
+    BLOCK_CAMPFIRE_CRACKLE(new String[0]),
+    BLOCK_CANDLE_AMBIENT(new String[0]),
+    BLOCK_CANDLE_BREAK(new String[0]),
+    BLOCK_CANDLE_EXTINGUISH(new String[0]),
+    BLOCK_CANDLE_FALL(new String[0]),
+    BLOCK_CANDLE_HIT(new String[0]),
+    BLOCK_CANDLE_PLACE(new String[0]),
+    BLOCK_CANDLE_STEP(new String[0]),
+    BLOCK_CAVE_VINES_BREAK(new String[0]),
+    BLOCK_CAVE_VINES_FALL(new String[0]),
+    BLOCK_CAVE_VINES_HIT(new String[0]),
+    BLOCK_CAVE_VINES_PICK_BERRIES(new String[0]),
+    BLOCK_CAVE_VINES_PLACE(new String[0]),
+    BLOCK_CAVE_VINES_STEP(new String[0]),
+    BLOCK_CHAIN_BREAK(new String[0]),
+    BLOCK_CHAIN_FALL(new String[0]),
+    BLOCK_CHAIN_HIT(new String[0]),
+    BLOCK_CHAIN_PLACE(new String[0]),
+    BLOCK_CHAIN_STEP(new String[0]),
+    BLOCK_CHERRY_LEAVES_BREAK(new String[0]),
+    BLOCK_CHERRY_LEAVES_FALL(new String[0]),
+    BLOCK_CHERRY_LEAVES_HIT(new String[0]),
+    BLOCK_CHERRY_LEAVES_PLACE(new String[0]),
+    BLOCK_CHERRY_LEAVES_STEP(new String[0]),
+    BLOCK_CHERRY_SAPLING_BREAK(new String[0]),
+    BLOCK_CHERRY_SAPLING_FALL(new String[0]),
+    BLOCK_CHERRY_SAPLING_HIT(new String[0]),
+    BLOCK_CHERRY_SAPLING_PLACE(new String[0]),
+    BLOCK_CHERRY_SAPLING_STEP(new String[0]),
+    BLOCK_CHERRY_WOOD_BREAK(new String[0]),
+    BLOCK_CHERRY_WOOD_BUTTON_CLICK_OFF(new String[0]),
+    BLOCK_CHERRY_WOOD_BUTTON_CLICK_ON(new String[0]),
+    BLOCK_CHERRY_WOOD_DOOR_CLOSE(new String[0]),
+    BLOCK_CHERRY_WOOD_DOOR_OPEN(new String[0]),
+    BLOCK_CHERRY_WOOD_FALL(new String[0]),
+    BLOCK_CHERRY_WOOD_FENCE_GATE_CLOSE(new String[0]),
+    BLOCK_CHERRY_WOOD_FENCE_GATE_OPEN(new String[0]),
+    BLOCK_CHERRY_WOOD_HANGING_SIGN_BREAK(new String[0]),
+    BLOCK_CHERRY_WOOD_HANGING_SIGN_FALL(new String[0]),
+    BLOCK_CHERRY_WOOD_HANGING_SIGN_HIT(new String[0]),
+    BLOCK_CHERRY_WOOD_HANGING_SIGN_PLACE(new String[0]),
+    BLOCK_CHERRY_WOOD_HANGING_SIGN_STEP(new String[0]),
+    BLOCK_CHERRY_WOOD_HIT(new String[0]),
+    BLOCK_CHERRY_WOOD_PLACE(new String[0]),
+    BLOCK_CHERRY_WOOD_PRESSURE_PLATE_CLICK_OFF(new String[0]),
+    BLOCK_CHERRY_WOOD_PRESSURE_PLATE_CLICK_ON(new String[0]),
+    BLOCK_CHERRY_WOOD_STEP(new String[0]),
+    BLOCK_CHERRY_WOOD_TRAPDOOR_CLOSE(new String[0]),
+    BLOCK_CHERRY_WOOD_TRAPDOOR_OPEN(new String[0]),
+    BLOCK_CHEST_CLOSE("CHEST_CLOSE", "ENTITY_CHEST_CLOSE"),
+    BLOCK_CHEST_LOCKED(new String[0]),
+    BLOCK_CHEST_OPEN("CHEST_OPEN", "ENTITY_CHEST_OPEN"),
+    BLOCK_CHISELED_BOOKSHELF_BREAK(new String[0]),
+    BLOCK_CHISELED_BOOKSHELF_FALL(new String[0]),
+    BLOCK_CHISELED_BOOKSHELF_HIT(new String[0]),
+    BLOCK_CHISELED_BOOKSHELF_INSERT(new String[0]),
+    BLOCK_CHISELED_BOOKSHELF_INSERT_ENCHANTED(new String[0]),
+    BLOCK_CHISELED_BOOKSHELF_PICKUP(new String[0]),
+    BLOCK_CHISELED_BOOKSHELF_PICKUP_ENCHANTED(new String[0]),
+    BLOCK_CHISELED_BOOKSHELF_PLACE(new String[0]),
+    BLOCK_CHISELED_BOOKSHELF_STEP(new String[0]),
+    BLOCK_CHORUS_FLOWER_DEATH(new String[0]),
+    BLOCK_CHORUS_FLOWER_GROW(new String[0]),
+    BLOCK_COBWEB_BREAK(new String[0]),
+    BLOCK_COBWEB_FALL(new String[0]),
+    BLOCK_COBWEB_HIT(new String[0]),
+    BLOCK_COBWEB_PLACE(new String[0]),
+    BLOCK_COBWEB_STEP(new String[0]),
+    BLOCK_COMPARATOR_CLICK(new String[0]),
+    BLOCK_COMPOSTER_EMPTY(new String[0]),
+    BLOCK_COMPOSTER_FILL(new String[0]),
+    BLOCK_COMPOSTER_FILL_SUCCESS(new String[0]),
+    BLOCK_COMPOSTER_READY(new String[0]),
+    BLOCK_CONDUIT_ACTIVATE(new String[0]),
+    BLOCK_CONDUIT_AMBIENT(new String[0]),
+    BLOCK_CONDUIT_AMBIENT_SHORT(new String[0]),
+    BLOCK_CONDUIT_ATTACK_TARGET(new String[0]),
+    BLOCK_CONDUIT_DEACTIVATE(new String[0]),
+    BLOCK_COPPER_BREAK(new String[0]),
+    BLOCK_COPPER_BULB_BREAK(new String[0]),
+    BLOCK_COPPER_BULB_FALL(new String[0]),
+    BLOCK_COPPER_BULB_HIT(new String[0]),
+    BLOCK_COPPER_BULB_PLACE(new String[0]),
+    BLOCK_COPPER_BULB_STEP(new String[0]),
+    BLOCK_COPPER_BULB_TURN_OFF(new String[0]),
+    BLOCK_COPPER_BULB_TURN_ON(new String[0]),
+    BLOCK_COPPER_DOOR_CLOSE(new String[0]),
+    BLOCK_COPPER_DOOR_OPEN(new String[0]),
+    BLOCK_COPPER_FALL(new String[0]),
+    BLOCK_COPPER_GRATE_BREAK(new String[0]),
+    BLOCK_COPPER_GRATE_FALL(new String[0]),
+    BLOCK_COPPER_GRATE_HIT(new String[0]),
+    BLOCK_COPPER_GRATE_PLACE(new String[0]),
+    BLOCK_COPPER_GRATE_STEP(new String[0]),
+    BLOCK_COPPER_HIT(new String[0]),
+    BLOCK_COPPER_PLACE(new String[0]),
+    BLOCK_COPPER_STEP(new String[0]),
+    BLOCK_COPPER_TRAPDOOR_CLOSE(new String[0]),
+    BLOCK_COPPER_TRAPDOOR_OPEN(new String[0]),
+    BLOCK_CORAL_BLOCK_BREAK(new String[0]),
+    BLOCK_CORAL_BLOCK_FALL(new String[0]),
+    BLOCK_CORAL_BLOCK_HIT(new String[0]),
+    BLOCK_CORAL_BLOCK_PLACE(new String[0]),
+    BLOCK_CORAL_BLOCK_STEP(new String[0]),
+    BLOCK_CRAFTER_CRAFT(new String[0]),
+    BLOCK_CRAFTER_FAIL(new String[0]),
+    BLOCK_CROP_BREAK(new String[0]),
+    BLOCK_DECORATED_POT_BREAK(new String[0]),
+    BLOCK_DECORATED_POT_FALL(new String[0]),
+    BLOCK_DECORATED_POT_HIT(new String[0]),
+    BLOCK_DECORATED_POT_INSERT(new String[0]),
+    BLOCK_DECORATED_POT_INSERT_FAIL(new String[0]),
+    BLOCK_DECORATED_POT_PLACE(new String[0]),
+    BLOCK_DECORATED_POT_SHATTER(new String[0]),
+    BLOCK_DECORATED_POT_STEP(new String[0]),
+    BLOCK_DEEPSLATE_BREAK(new String[0]),
+    BLOCK_DEEPSLATE_BRICKS_BREAK(new String[0]),
+    BLOCK_DEEPSLATE_BRICKS_FALL(new String[0]),
+    BLOCK_DEEPSLATE_BRICKS_HIT(new String[0]),
+    BLOCK_DEEPSLATE_BRICKS_PLACE(new String[0]),
+    BLOCK_DEEPSLATE_BRICKS_STEP(new String[0]),
+    BLOCK_DEEPSLATE_FALL(new String[0]),
+    BLOCK_DEEPSLATE_HIT(new String[0]),
+    BLOCK_DEEPSLATE_PLACE(new String[0]),
+    BLOCK_DEEPSLATE_STEP(new String[0]),
+    BLOCK_DEEPSLATE_TILES_BREAK(new String[0]),
+    BLOCK_DEEPSLATE_TILES_FALL(new String[0]),
+    BLOCK_DEEPSLATE_TILES_HIT(new String[0]),
+    BLOCK_DEEPSLATE_TILES_PLACE(new String[0]),
+    BLOCK_DEEPSLATE_TILES_STEP(new String[0]),
+    BLOCK_DISPENSER_DISPENSE(new String[0]),
+    BLOCK_DISPENSER_FAIL(new String[0]),
+    BLOCK_DISPENSER_LAUNCH(new String[0]),
+    BLOCK_DRIPSTONE_BLOCK_BREAK(new String[0]),
+    BLOCK_DRIPSTONE_BLOCK_FALL(new String[0]),
+    BLOCK_DRIPSTONE_BLOCK_HIT(new String[0]),
+    BLOCK_DRIPSTONE_BLOCK_PLACE(new String[0]),
+    BLOCK_DRIPSTONE_BLOCK_STEP(new String[0]),
+    BLOCK_ENCHANTMENT_TABLE_USE(new String[0]),
+    BLOCK_ENDER_CHEST_CLOSE(new String[0]),
+    BLOCK_ENDER_CHEST_OPEN(new String[0]),
+    BLOCK_END_GATEWAY_SPAWN(new String[0]),
+    BLOCK_END_PORTAL_FRAME_FILL(new String[0]),
+    BLOCK_END_PORTAL_SPAWN(new String[0]),
+    BLOCK_FENCE_GATE_CLOSE(new String[0]),
+    BLOCK_FENCE_GATE_OPEN(new String[0]),
+    BLOCK_FIRE_AMBIENT("FIRE"),
+    BLOCK_FIRE_EXTINGUISH("FIZZ"),
+    BLOCK_FLOWERING_AZALEA_BREAK(new String[0]),
+    BLOCK_FLOWERING_AZALEA_FALL(new String[0]),
+    BLOCK_FLOWERING_AZALEA_HIT(new String[0]),
+    BLOCK_FLOWERING_AZALEA_PLACE(new String[0]),
+    BLOCK_FLOWERING_AZALEA_STEP(new String[0]),
+    BLOCK_FROGLIGHT_BREAK(new String[0]),
+    BLOCK_FROGLIGHT_FALL(new String[0]),
+    BLOCK_FROGLIGHT_HIT(new String[0]),
+    BLOCK_FROGLIGHT_PLACE(new String[0]),
+    BLOCK_FROGLIGHT_STEP(new String[0]),
+    BLOCK_FROGSPAWN_BREAK(new String[0]),
+    BLOCK_FROGSPAWN_FALL(new String[0]),
+    BLOCK_FROGSPAWN_HATCH(new String[0]),
+    BLOCK_FROGSPAWN_HIT(new String[0]),
+    BLOCK_FROGSPAWN_PLACE(new String[0]),
+    BLOCK_FROGSPAWN_STEP(new String[0]),
+    BLOCK_FUNGUS_BREAK(new String[0]),
+    BLOCK_FUNGUS_FALL(new String[0]),
+    BLOCK_FUNGUS_HIT(new String[0]),
+    BLOCK_FUNGUS_PLACE(new String[0]),
+    BLOCK_FUNGUS_STEP(new String[0]),
+    BLOCK_FURNACE_FIRE_CRACKLE(new String[0]),
+    BLOCK_GILDED_BLACKSTONE_BREAK(new String[0]),
+    BLOCK_GILDED_BLACKSTONE_FALL(new String[0]),
+    BLOCK_GILDED_BLACKSTONE_HIT(new String[0]),
+    BLOCK_GILDED_BLACKSTONE_PLACE(new String[0]),
+    BLOCK_GILDED_BLACKSTONE_STEP(new String[0]),
+    BLOCK_GLASS_BREAK("GLASS"),
+    BLOCK_GLASS_FALL(new String[0]),
+    BLOCK_GLASS_HIT(new String[0]),
+    BLOCK_GLASS_PLACE(new String[0]),
+    BLOCK_GLASS_STEP(new String[0]),
+    BLOCK_GRASS_BREAK("DIG_GRASS"),
+    BLOCK_GRASS_FALL(new String[0]),
+    BLOCK_GRASS_HIT(new String[0]),
+    BLOCK_GRASS_PLACE(new String[0]),
+    BLOCK_GRASS_STEP("STEP_GRASS"),
+    BLOCK_GRAVEL_BREAK("DIG_GRAVEL"),
+    BLOCK_GRAVEL_FALL(new String[0]),
+    BLOCK_GRAVEL_HIT(new String[0]),
+    BLOCK_GRAVEL_PLACE(new String[0]),
+    BLOCK_GRAVEL_STEP("STEP_GRAVEL"),
+    BLOCK_GRINDSTONE_USE(new String[0]),
+    BLOCK_GROWING_PLANT_CROP(new String[0]),
+    BLOCK_HANGING_ROOTS_BREAK(new String[0]),
+    BLOCK_HANGING_ROOTS_FALL(new String[0]),
+    BLOCK_HANGING_ROOTS_HIT(new String[0]),
+    BLOCK_HANGING_ROOTS_PLACE(new String[0]),
+    BLOCK_HANGING_ROOTS_STEP(new String[0]),
+    BLOCK_HANGING_SIGN_BREAK(new String[0]),
+    BLOCK_HANGING_SIGN_FALL(new String[0]),
+    BLOCK_HANGING_SIGN_HIT(new String[0]),
+    BLOCK_HANGING_SIGN_PLACE(new String[0]),
+    BLOCK_HANGING_SIGN_STEP(new String[0]),
+    BLOCK_HANGING_SIGN_WAXED_INTERACT_FAIL(new String[0]),
+    BLOCK_HEAVY_CORE_BREAK(new String[0]),
+    BLOCK_HEAVY_CORE_FALL(new String[0]),
+    BLOCK_HEAVY_CORE_HIT(new String[0]),
+    BLOCK_HEAVY_CORE_PLACE(new String[0]),
+    BLOCK_HEAVY_CORE_STEP(new String[0]),
+    BLOCK_HONEY_BLOCK_BREAK(new String[0]),
+    BLOCK_HONEY_BLOCK_FALL(new String[0]),
+    BLOCK_HONEY_BLOCK_HIT(new String[0]),
+    BLOCK_HONEY_BLOCK_PLACE(new String[0]),
+    BLOCK_HONEY_BLOCK_SLIDE(new String[0]),
+    BLOCK_HONEY_BLOCK_STEP(new String[0]),
+    BLOCK_IRON_DOOR_CLOSE(new String[0]),
+    BLOCK_IRON_DOOR_OPEN(new String[0]),
+    BLOCK_IRON_TRAPDOOR_CLOSE(new String[0]),
+    BLOCK_IRON_TRAPDOOR_OPEN(new String[0]),
+    BLOCK_LADDER_BREAK(new String[0]),
+    BLOCK_LADDER_FALL(new String[0]),
+    BLOCK_LADDER_HIT(new String[0]),
+    BLOCK_LADDER_PLACE(new String[0]),
+    BLOCK_LADDER_STEP("STEP_LADDER"),
+    BLOCK_LANTERN_BREAK(new String[0]),
+    BLOCK_LANTERN_FALL(new String[0]),
+    BLOCK_LANTERN_HIT(new String[0]),
+    BLOCK_LANTERN_PLACE(new String[0]),
+    BLOCK_LANTERN_STEP(new String[0]),
+    BLOCK_LARGE_AMETHYST_BUD_BREAK(new String[0]),
+    BLOCK_LARGE_AMETHYST_BUD_PLACE(new String[0]),
+    BLOCK_LAVA_AMBIENT("LAVA"),
+    BLOCK_LAVA_EXTINGUISH(new String[0]),
+    BLOCK_LAVA_POP("LAVA_POP"),
+    BLOCK_LEVER_CLICK(new String[0]),
+    BLOCK_LILY_PAD_PLACE("BLOCK_WATERLILY_PLACE"),
+    BLOCK_LODESTONE_BREAK(new String[0]),
+    BLOCK_LODESTONE_FALL(new String[0]),
+    BLOCK_LODESTONE_HIT(new String[0]),
+    BLOCK_LODESTONE_PLACE(new String[0]),
+    BLOCK_LODESTONE_STEP(new String[0]),
+    BLOCK_MANGROVE_ROOTS_BREAK(new String[0]),
+    BLOCK_MANGROVE_ROOTS_FALL(new String[0]),
+    BLOCK_MANGROVE_ROOTS_HIT(new String[0]),
+    BLOCK_MANGROVE_ROOTS_PLACE(new String[0]),
+    BLOCK_MANGROVE_ROOTS_STEP(new String[0]),
+    BLOCK_MEDIUM_AMETHYST_BUD_BREAK(new String[0]),
+    BLOCK_MEDIUM_AMETHYST_BUD_PLACE(new String[0]),
+    BLOCK_METAL_BREAK(new String[0]),
+    BLOCK_METAL_FALL(new String[0]),
+    BLOCK_METAL_HIT(new String[0]),
+    BLOCK_METAL_PLACE(new String[0]),
+    BLOCK_METAL_PRESSURE_PLATE_CLICK_OFF("BLOCK_METAL_PRESSUREPLATE_CLICK_OFF"),
+    BLOCK_METAL_PRESSURE_PLATE_CLICK_ON("BLOCK_METAL_PRESSUREPLATE_CLICK_ON"),
+    BLOCK_METAL_STEP(new String[0]),
+    BLOCK_MOSS_BREAK(new String[0]),
+    BLOCK_MOSS_CARPET_BREAK(new String[0]),
+    BLOCK_MOSS_CARPET_FALL(new String[0]),
+    BLOCK_MOSS_CARPET_HIT(new String[0]),
+    BLOCK_MOSS_CARPET_PLACE(new String[0]),
+    BLOCK_MOSS_CARPET_STEP(new String[0]),
+    BLOCK_MOSS_FALL(new String[0]),
+    BLOCK_MOSS_HIT(new String[0]),
+    BLOCK_MOSS_PLACE(new String[0]),
+    BLOCK_MOSS_STEP(new String[0]),
+    BLOCK_MUDDY_MANGROVE_ROOTS_BREAK(new String[0]),
+    BLOCK_MUDDY_MANGROVE_ROOTS_FALL(new String[0]),
+    BLOCK_MUDDY_MANGROVE_ROOTS_HIT(new String[0]),
+    BLOCK_MUDDY_MANGROVE_ROOTS_PLACE(new String[0]),
+    BLOCK_MUDDY_MANGROVE_ROOTS_STEP(new String[0]),
+    BLOCK_MUD_BREAK(new String[0]),
+    BLOCK_MUD_BRICKS_BREAK(new String[0]),
+    BLOCK_MUD_BRICKS_FALL(new String[0]),
+    BLOCK_MUD_BRICKS_HIT(new String[0]),
+    BLOCK_MUD_BRICKS_PLACE(new String[0]),
+    BLOCK_MUD_BRICKS_STEP(new String[0]),
+    BLOCK_MUD_FALL(new String[0]),
+    BLOCK_MUD_HIT(new String[0]),
+    BLOCK_MUD_PLACE(new String[0]),
+    BLOCK_MUD_STEP(new String[0]),
+    BLOCK_NETHERITE_BLOCK_BREAK(new String[0]),
+    BLOCK_NETHERITE_BLOCK_FALL(new String[0]),
+    BLOCK_NETHERITE_BLOCK_HIT(new String[0]),
+    BLOCK_NETHERITE_BLOCK_PLACE(new String[0]),
+    BLOCK_NETHERITE_BLOCK_STEP(new String[0]),
+    BLOCK_NETHERRACK_BREAK(new String[0]),
+    BLOCK_NETHERRACK_FALL(new String[0]),
+    BLOCK_NETHERRACK_HIT(new String[0]),
+    BLOCK_NETHERRACK_PLACE(new String[0]),
+    BLOCK_NETHERRACK_STEP(new String[0]),
+    BLOCK_NETHER_BRICKS_BREAK(new String[0]),
+    BLOCK_NETHER_BRICKS_FALL(new String[0]),
+    BLOCK_NETHER_BRICKS_HIT(new String[0]),
+    BLOCK_NETHER_BRICKS_PLACE(new String[0]),
+    BLOCK_NETHER_BRICKS_STEP(new String[0]),
+    BLOCK_NETHER_GOLD_ORE_BREAK(new String[0]),
+    BLOCK_NETHER_GOLD_ORE_FALL(new String[0]),
+    BLOCK_NETHER_GOLD_ORE_HIT(new String[0]),
+    BLOCK_NETHER_GOLD_ORE_PLACE(new String[0]),
+    BLOCK_NETHER_GOLD_ORE_STEP(new String[0]),
+    BLOCK_NETHER_ORE_BREAK(new String[0]),
+    BLOCK_NETHER_ORE_FALL(new String[0]),
+    BLOCK_NETHER_ORE_HIT(new String[0]),
+    BLOCK_NETHER_ORE_PLACE(new String[0]),
+    BLOCK_NETHER_ORE_STEP(new String[0]),
+    BLOCK_NETHER_SPROUTS_BREAK(new String[0]),
+    BLOCK_NETHER_SPROUTS_FALL(new String[0]),
+    BLOCK_NETHER_SPROUTS_HIT(new String[0]),
+    BLOCK_NETHER_SPROUTS_PLACE(new String[0]),
+    BLOCK_NETHER_SPROUTS_STEP(new String[0]),
+    BLOCK_NETHER_WART_BREAK(new String[0]),
+    BLOCK_NETHER_WOOD_BREAK(new String[0]),
+    BLOCK_NETHER_WOOD_BUTTON_CLICK_OFF(new String[0]),
+    BLOCK_NETHER_WOOD_BUTTON_CLICK_ON(new String[0]),
+    BLOCK_NETHER_WOOD_DOOR_CLOSE(new String[0]),
+    BLOCK_NETHER_WOOD_DOOR_OPEN(new String[0]),
+    BLOCK_NETHER_WOOD_FALL(new String[0]),
+    BLOCK_NETHER_WOOD_FENCE_GATE_CLOSE(new String[0]),
+    BLOCK_NETHER_WOOD_FENCE_GATE_OPEN(new String[0]),
+    BLOCK_NETHER_WOOD_HANGING_SIGN_BREAK(new String[0]),
+    BLOCK_NETHER_WOOD_HANGING_SIGN_FALL(new String[0]),
+    BLOCK_NETHER_WOOD_HANGING_SIGN_HIT(new String[0]),
+    BLOCK_NETHER_WOOD_HANGING_SIGN_PLACE(new String[0]),
+    BLOCK_NETHER_WOOD_HANGING_SIGN_STEP(new String[0]),
+    BLOCK_NETHER_WOOD_HIT(new String[0]),
+    BLOCK_NETHER_WOOD_PLACE(new String[0]),
+    BLOCK_NETHER_WOOD_PRESSURE_PLATE_CLICK_OFF(new String[0]),
+    BLOCK_NETHER_WOOD_PRESSURE_PLATE_CLICK_ON(new String[0]),
+    BLOCK_NETHER_WOOD_STEP(new String[0]),
+    BLOCK_NETHER_WOOD_TRAPDOOR_CLOSE(new String[0]),
+    BLOCK_NETHER_WOOD_TRAPDOOR_OPEN(new String[0]),
+    BLOCK_NOTE_BLOCK_BANJO(new String[0]),
+    BLOCK_NOTE_BLOCK_BASEDRUM("NOTE_BASS_DRUM", "BLOCK_NOTE_BASEDRUM"),
+    BLOCK_NOTE_BLOCK_BASS("NOTE_BASS", "BLOCK_NOTE_BASS"),
+    BLOCK_NOTE_BLOCK_BELL("BLOCK_NOTE_BELL"),
+    BLOCK_NOTE_BLOCK_BIT(new String[0]),
+    BLOCK_NOTE_BLOCK_CHIME("BLOCK_NOTE_CHIME"),
+    BLOCK_NOTE_BLOCK_COW_BELL(new String[0]),
+    BLOCK_NOTE_BLOCK_DIDGERIDOO(new String[0]),
+    BLOCK_NOTE_BLOCK_FLUTE("BLOCK_NOTE_FLUTE"),
+    BLOCK_NOTE_BLOCK_GUITAR("NOTE_BASS_GUITAR", "BLOCK_NOTE_GUITAR"),
+    BLOCK_NOTE_BLOCK_HARP("NOTE_PIANO", "BLOCK_NOTE_HARP"),
+    BLOCK_NOTE_BLOCK_HAT("NOTE_STICKS", "BLOCK_NOTE_HAT"),
+    BLOCK_NOTE_BLOCK_IMITATE_CREEPER(new String[0]),
+    BLOCK_NOTE_BLOCK_IMITATE_ENDER_DRAGON(new String[0]),
+    BLOCK_NOTE_BLOCK_IMITATE_PIGLIN(new String[0]),
+    BLOCK_NOTE_BLOCK_IMITATE_SKELETON(new String[0]),
+    BLOCK_NOTE_BLOCK_IMITATE_WITHER_SKELETON(new String[0]),
+    BLOCK_NOTE_BLOCK_IMITATE_ZOMBIE(new String[0]),
+    BLOCK_NOTE_BLOCK_IRON_XYLOPHONE(new String[0]),
+    BLOCK_NOTE_BLOCK_PLING("NOTE_PLING", "BLOCK_NOTE_PLING"),
+    BLOCK_NOTE_BLOCK_SNARE("NOTE_SNARE_DRUM", "BLOCK_NOTE_SNARE"),
+    BLOCK_NOTE_BLOCK_XYLOPHONE("BLOCK_NOTE_XYLOPHONE"),
+    BLOCK_NYLIUM_BREAK(new String[0]),
+    BLOCK_NYLIUM_FALL(new String[0]),
+    BLOCK_NYLIUM_HIT(new String[0]),
+    BLOCK_NYLIUM_PLACE(new String[0]),
+    BLOCK_NYLIUM_STEP(new String[0]),
+    BLOCK_PACKED_MUD_BREAK(new String[0]),
+    BLOCK_PACKED_MUD_FALL(new String[0]),
+    BLOCK_PACKED_MUD_HIT(new String[0]),
+    BLOCK_PACKED_MUD_PLACE(new String[0]),
+    BLOCK_PACKED_MUD_STEP(new String[0]),
+    BLOCK_PINK_PETALS_BREAK(new String[0]),
+    BLOCK_PINK_PETALS_FALL(new String[0]),
+    BLOCK_PINK_PETALS_HIT(new String[0]),
+    BLOCK_PINK_PETALS_PLACE(new String[0]),
+    BLOCK_PINK_PETALS_STEP(new String[0]),
+    BLOCK_PISTON_CONTRACT("PISTON_RETRACT"),
+    BLOCK_PISTON_EXTEND("PISTON_EXTEND"),
+    BLOCK_POINTED_DRIPSTONE_BREAK(new String[0]),
+    BLOCK_POINTED_DRIPSTONE_DRIP_LAVA(new String[0]),
+    BLOCK_POINTED_DRIPSTONE_DRIP_LAVA_INTO_CAULDRON(new String[0]),
+    BLOCK_POINTED_DRIPSTONE_DRIP_WATER(new String[0]),
+    BLOCK_POINTED_DRIPSTONE_DRIP_WATER_INTO_CAULDRON(new String[0]),
+    BLOCK_POINTED_DRIPSTONE_FALL(new String[0]),
+    BLOCK_POINTED_DRIPSTONE_HIT(new String[0]),
+    BLOCK_POINTED_DRIPSTONE_LAND(new String[0]),
+    BLOCK_POINTED_DRIPSTONE_PLACE(new String[0]),
+    BLOCK_POINTED_DRIPSTONE_STEP(new String[0]),
+    BLOCK_POLISHED_DEEPSLATE_BREAK(new String[0]),
+    BLOCK_POLISHED_DEEPSLATE_FALL(new String[0]),
+    BLOCK_POLISHED_DEEPSLATE_HIT(new String[0]),
+    BLOCK_POLISHED_DEEPSLATE_PLACE(new String[0]),
+    BLOCK_POLISHED_DEEPSLATE_STEP(new String[0]),
+    BLOCK_POLISHED_TUFF_BREAK(new String[0]),
+    BLOCK_POLISHED_TUFF_FALL(new String[0]),
+    BLOCK_POLISHED_TUFF_HIT(new String[0]),
+    BLOCK_POLISHED_TUFF_PLACE(new String[0]),
+    BLOCK_POLISHED_TUFF_STEP(new String[0]),
+    BLOCK_PORTAL_AMBIENT("PORTAL"),
+    BLOCK_PORTAL_TRAVEL("PORTAL_TRAVEL"),
+    BLOCK_PORTAL_TRIGGER("PORTAL_TRIGGER"),
+    BLOCK_POWDER_SNOW_BREAK(new String[0]),
+    BLOCK_POWDER_SNOW_FALL(new String[0]),
+    BLOCK_POWDER_SNOW_HIT(new String[0]),
+    BLOCK_POWDER_SNOW_PLACE(new String[0]),
+    BLOCK_POWDER_SNOW_STEP(new String[0]),
+    BLOCK_PUMPKIN_CARVE(new String[0]),
+    BLOCK_REDSTONE_TORCH_BURNOUT(new String[0]),
+    BLOCK_RESPAWN_ANCHOR_AMBIENT(new String[0]),
+    BLOCK_RESPAWN_ANCHOR_CHARGE(new String[0]),
+    BLOCK_RESPAWN_ANCHOR_DEPLETE(new String[0]),
+    BLOCK_RESPAWN_ANCHOR_SET_SPAWN(new String[0]),
+    BLOCK_ROOTED_DIRT_BREAK(new String[0]),
+    BLOCK_ROOTED_DIRT_FALL(new String[0]),
+    BLOCK_ROOTED_DIRT_HIT(new String[0]),
+    BLOCK_ROOTED_DIRT_PLACE(new String[0]),
+    BLOCK_ROOTED_DIRT_STEP(new String[0]),
+    BLOCK_ROOTS_BREAK(new String[0]),
+    BLOCK_ROOTS_FALL(new String[0]),
+    BLOCK_ROOTS_HIT(new String[0]),
+    BLOCK_ROOTS_PLACE(new String[0]),
+    BLOCK_ROOTS_STEP(new String[0]),
+    BLOCK_SAND_BREAK("DIG_SAND"),
+    BLOCK_SAND_FALL(new String[0]),
+    BLOCK_SAND_HIT(new String[0]),
+    BLOCK_SAND_PLACE(new String[0]),
+    BLOCK_SAND_STEP("STEP_SAND"),
+    BLOCK_SCAFFOLDING_BREAK(new String[0]),
+    BLOCK_SCAFFOLDING_FALL(new String[0]),
+    BLOCK_SCAFFOLDING_HIT(new String[0]),
+    BLOCK_SCAFFOLDING_PLACE(new String[0]),
+    BLOCK_SCAFFOLDING_STEP(new String[0]),
+    BLOCK_SCULK_BREAK(new String[0]),
+    BLOCK_SCULK_CATALYST_BLOOM(new String[0]),
+    BLOCK_SCULK_CATALYST_BREAK(new String[0]),
+    BLOCK_SCULK_CATALYST_FALL(new String[0]),
+    BLOCK_SCULK_CATALYST_HIT(new String[0]),
+    BLOCK_SCULK_CATALYST_PLACE(new String[0]),
+    BLOCK_SCULK_CATALYST_STEP(new String[0]),
+    BLOCK_SCULK_CHARGE(new String[0]),
+    BLOCK_SCULK_FALL(new String[0]),
+    BLOCK_SCULK_HIT(new String[0]),
+    BLOCK_SCULK_PLACE(new String[0]),
+    BLOCK_SCULK_SENSOR_BREAK(new String[0]),
+    BLOCK_SCULK_SENSOR_CLICKING(new String[0]),
+    BLOCK_SCULK_SENSOR_CLICKING_STOP(new String[0]),
+    BLOCK_SCULK_SENSOR_FALL(new String[0]),
+    BLOCK_SCULK_SENSOR_HIT(new String[0]),
+    BLOCK_SCULK_SENSOR_PLACE(new String[0]),
+    BLOCK_SCULK_SENSOR_STEP(new String[0]),
+    BLOCK_SCULK_SHRIEKER_BREAK(new String[0]),
+    BLOCK_SCULK_SHRIEKER_FALL(new String[0]),
+    BLOCK_SCULK_SHRIEKER_HIT(new String[0]),
+    BLOCK_SCULK_SHRIEKER_PLACE(new String[0]),
+    BLOCK_SCULK_SHRIEKER_SHRIEK(new String[0]),
+    BLOCK_SCULK_SHRIEKER_STEP(new String[0]),
+    BLOCK_SCULK_SPREAD(new String[0]),
+    BLOCK_SCULK_STEP(new String[0]),
+    BLOCK_SCULK_VEIN_BREAK(new String[0]),
+    BLOCK_SCULK_VEIN_FALL(new String[0]),
+    BLOCK_SCULK_VEIN_HIT(new String[0]),
+    BLOCK_SCULK_VEIN_PLACE(new String[0]),
+    BLOCK_SCULK_VEIN_STEP(new String[0]),
+    BLOCK_SHROOMLIGHT_BREAK(new String[0]),
+    BLOCK_SHROOMLIGHT_FALL(new String[0]),
+    BLOCK_SHROOMLIGHT_HIT(new String[0]),
+    BLOCK_SHROOMLIGHT_PLACE(new String[0]),
+    BLOCK_SHROOMLIGHT_STEP(new String[0]),
+    BLOCK_SHULKER_BOX_CLOSE(new String[0]),
+    BLOCK_SHULKER_BOX_OPEN(new String[0]),
+    BLOCK_SIGN_WAXED_INTERACT_FAIL(new String[0]),
+    BLOCK_SLIME_BLOCK_BREAK("BLOCK_SLIME_BREAK"),
+    BLOCK_SLIME_BLOCK_FALL("BLOCK_SLIME_FALL"),
+    BLOCK_SLIME_BLOCK_HIT("BLOCK_SLIME_HIT"),
+    BLOCK_SLIME_BLOCK_PLACE("BLOCK_SLIME_PLACE"),
+    BLOCK_SLIME_BLOCK_STEP("BLOCK_SLIME_STEP"),
+    BLOCK_SMALL_AMETHYST_BUD_BREAK(new String[0]),
+    BLOCK_SMALL_AMETHYST_BUD_PLACE(new String[0]),
+    BLOCK_SMALL_DRIPLEAF_BREAK(new String[0]),
+    BLOCK_SMALL_DRIPLEAF_FALL(new String[0]),
+    BLOCK_SMALL_DRIPLEAF_HIT(new String[0]),
+    BLOCK_SMALL_DRIPLEAF_PLACE(new String[0]),
+    BLOCK_SMALL_DRIPLEAF_STEP(new String[0]),
+    BLOCK_SMITHING_TABLE_USE(new String[0]),
+    BLOCK_SMOKER_SMOKE(new String[0]),
+    BLOCK_SNIFFER_EGG_CRACK(new String[0]),
+    BLOCK_SNIFFER_EGG_HATCH(new String[0]),
+    BLOCK_SNIFFER_EGG_PLOP(new String[0]),
+    BLOCK_SNOW_BREAK("DIG_SNOW"),
+    BLOCK_SNOW_FALL(new String[0]),
+    BLOCK_SNOW_HIT(new String[0]),
+    BLOCK_SNOW_PLACE(new String[0]),
+    BLOCK_SNOW_STEP("STEP_SNOW"),
+    BLOCK_SOUL_SAND_BREAK(new String[0]),
+    BLOCK_SOUL_SAND_FALL(new String[0]),
+    BLOCK_SOUL_SAND_HIT(new String[0]),
+    BLOCK_SOUL_SAND_PLACE(new String[0]),
+    BLOCK_SOUL_SAND_STEP(new String[0]),
+    BLOCK_SOUL_SOIL_BREAK(new String[0]),
+    BLOCK_SOUL_SOIL_FALL(new String[0]),
+    BLOCK_SOUL_SOIL_HIT(new String[0]),
+    BLOCK_SOUL_SOIL_PLACE(new String[0]),
+    BLOCK_SOUL_SOIL_STEP(new String[0]),
+    BLOCK_SPONGE_ABSORB(new String[0]),
+    BLOCK_SPONGE_BREAK(new String[0]),
+    BLOCK_SPONGE_FALL(new String[0]),
+    BLOCK_SPONGE_HIT(new String[0]),
+    BLOCK_SPONGE_PLACE(new String[0]),
+    BLOCK_SPONGE_STEP(new String[0]),
+    BLOCK_SPORE_BLOSSOM_BREAK(new String[0]),
+    BLOCK_SPORE_BLOSSOM_FALL(new String[0]),
+    BLOCK_SPORE_BLOSSOM_HIT(new String[0]),
+    BLOCK_SPORE_BLOSSOM_PLACE(new String[0]),
+    BLOCK_SPORE_BLOSSOM_STEP(new String[0]),
+    BLOCK_STEM_BREAK(new String[0]),
+    BLOCK_STEM_FALL(new String[0]),
+    BLOCK_STEM_HIT(new String[0]),
+    BLOCK_STEM_PLACE(new String[0]),
+    BLOCK_STEM_STEP(new String[0]),
+    BLOCK_STONE_BREAK("DIG_STONE"),
+    BLOCK_STONE_BUTTON_CLICK_OFF(new String[0]),
+    BLOCK_STONE_BUTTON_CLICK_ON(new String[0]),
+    BLOCK_STONE_FALL(new String[0]),
+    BLOCK_STONE_HIT(new String[0]),
+    BLOCK_STONE_PLACE(new String[0]),
+    BLOCK_STONE_PRESSURE_PLATE_CLICK_OFF("BLOCK_STONE_PRESSUREPLATE_CLICK_OFF"),
+    BLOCK_STONE_PRESSURE_PLATE_CLICK_ON("BLOCK_STONE_PRESSUREPLATE_CLICK_ON"),
+    BLOCK_STONE_STEP("STEP_STONE"),
+    BLOCK_SUSPICIOUS_GRAVEL_BREAK(new String[0]),
+    BLOCK_SUSPICIOUS_GRAVEL_FALL(new String[0]),
+    BLOCK_SUSPICIOUS_GRAVEL_HIT(new String[0]),
+    BLOCK_SUSPICIOUS_GRAVEL_PLACE(new String[0]),
+    BLOCK_SUSPICIOUS_GRAVEL_STEP(new String[0]),
+    BLOCK_SUSPICIOUS_SAND_BREAK(new String[0]),
+    BLOCK_SUSPICIOUS_SAND_FALL(new String[0]),
+    BLOCK_SUSPICIOUS_SAND_HIT(new String[0]),
+    BLOCK_SUSPICIOUS_SAND_PLACE(new String[0]),
+    BLOCK_SUSPICIOUS_SAND_STEP(new String[0]),
+    BLOCK_SWEET_BERRY_BUSH_BREAK(new String[0]),
+    BLOCK_SWEET_BERRY_BUSH_PICK_BERRIES("ITEM_SWEET_BERRIES_PICK_FROM_BUSH"),
+    BLOCK_SWEET_BERRY_BUSH_PLACE(new String[0]),
+    BLOCK_TRIAL_SPAWNER_ABOUT_TO_SPAWN_ITEM(new String[0]),
+    BLOCK_TRIAL_SPAWNER_AMBIENT(new String[0]),
+    BLOCK_TRIAL_SPAWNER_AMBIENT_CHARGED(new String[0]),
+    BLOCK_TRIAL_SPAWNER_AMBIENT_OMINOUS(new String[0]),
+    BLOCK_TRIAL_SPAWNER_BREAK(new String[0]),
+    BLOCK_TRIAL_SPAWNER_CHARGE_ACTIVATE(new String[0]),
+    BLOCK_TRIAL_SPAWNER_CLOSE_SHUTTER(new String[0]),
+    BLOCK_TRIAL_SPAWNER_DETECT_PLAYER(new String[0]),
+    BLOCK_TRIAL_SPAWNER_EJECT_ITEM(new String[0]),
+    BLOCK_TRIAL_SPAWNER_FALL(new String[0]),
+    BLOCK_TRIAL_SPAWNER_HIT(new String[0]),
+    BLOCK_TRIAL_SPAWNER_OMINOUS_ACTIVATE(new String[0]),
+    BLOCK_TRIAL_SPAWNER_OPEN_SHUTTER(new String[0]),
+    BLOCK_TRIAL_SPAWNER_PLACE(new String[0]),
+    BLOCK_TRIAL_SPAWNER_SPAWN_ITEM(new String[0]),
+    BLOCK_TRIAL_SPAWNER_SPAWN_ITEM_BEGIN(new String[0]),
+    BLOCK_TRIAL_SPAWNER_SPAWN_MOB(new String[0]),
+    BLOCK_TRIAL_SPAWNER_STEP(new String[0]),
+    BLOCK_TRIPWIRE_ATTACH(new String[0]),
+    BLOCK_TRIPWIRE_CLICK_OFF(new String[0]),
+    BLOCK_TRIPWIRE_CLICK_ON(new String[0]),
+    BLOCK_TRIPWIRE_DETACH(new String[0]),
+    BLOCK_TUFF_BREAK(new String[0]),
+    BLOCK_TUFF_BRICKS_BREAK(new String[0]),
+    BLOCK_TUFF_BRICKS_FALL(new String[0]),
+    BLOCK_TUFF_BRICKS_HIT(new String[0]),
+    BLOCK_TUFF_BRICKS_PLACE(new String[0]),
+    BLOCK_TUFF_BRICKS_STEP(new String[0]),
+    BLOCK_TUFF_FALL(new String[0]),
+    BLOCK_TUFF_HIT(new String[0]),
+    BLOCK_TUFF_PLACE(new String[0]),
+    BLOCK_TUFF_STEP(new String[0]),
+    BLOCK_VAULT_ACTIVATE(new String[0]),
+    BLOCK_VAULT_AMBIENT(new String[0]),
+    BLOCK_VAULT_BREAK(new String[0]),
+    BLOCK_VAULT_CLOSE_SHUTTER(new String[0]),
+    BLOCK_VAULT_DEACTIVATE(new String[0]),
+    BLOCK_VAULT_EJECT_ITEM(new String[0]),
+    BLOCK_VAULT_FALL(new String[0]),
+    BLOCK_VAULT_HIT(new String[0]),
+    BLOCK_VAULT_INSERT_ITEM(new String[0]),
+    BLOCK_VAULT_INSERT_ITEM_FAIL(new String[0]),
+    BLOCK_VAULT_OPEN_SHUTTER(new String[0]),
+    BLOCK_VAULT_PLACE(new String[0]),
+    BLOCK_VAULT_REJECT_REWARDED_PLAYER(new String[0]),
+    BLOCK_VAULT_STEP(new String[0]),
+    BLOCK_VINE_BREAK(new String[0]),
+    BLOCK_VINE_FALL(new String[0]),
+    BLOCK_VINE_HIT(new String[0]),
+    BLOCK_VINE_PLACE(new String[0]),
+    BLOCK_VINE_STEP(new String[0]),
+    BLOCK_WART_BLOCK_BREAK(new String[0]),
+    BLOCK_WART_BLOCK_FALL(new String[0]),
+    BLOCK_WART_BLOCK_HIT(new String[0]),
+    BLOCK_WART_BLOCK_PLACE(new String[0]),
+    BLOCK_WART_BLOCK_STEP(new String[0]),
+    BLOCK_WATER_AMBIENT("WATER"),
+    BLOCK_WEEPING_VINES_BREAK(new String[0]),
+    BLOCK_WEEPING_VINES_FALL(new String[0]),
+    BLOCK_WEEPING_VINES_HIT(new String[0]),
+    BLOCK_WEEPING_VINES_PLACE(new String[0]),
+    BLOCK_WEEPING_VINES_STEP(new String[0]),
+    BLOCK_WET_GRASS_BREAK(new String[0]),
+    BLOCK_WET_GRASS_FALL(new String[0]),
+    BLOCK_WET_GRASS_HIT(new String[0]),
+    BLOCK_WET_GRASS_PLACE("BLOCK_WET_GRASS_HIT"),
+    BLOCK_WET_GRASS_STEP("BLOCK_WET_GRASS_HIT"),
+    BLOCK_WET_SPONGE_BREAK(new String[0]),
+    BLOCK_WET_SPONGE_DRIES(new String[0]),
+    BLOCK_WET_SPONGE_FALL(new String[0]),
+    BLOCK_WET_SPONGE_HIT(new String[0]),
+    BLOCK_WET_SPONGE_PLACE(new String[0]),
+    BLOCK_WET_SPONGE_STEP(new String[0]),
+    BLOCK_WOODEN_BUTTON_CLICK_OFF("WOOD_CLICK", "BLOCK_WOOD_BUTTON_CLICK_OFF"),
+    BLOCK_WOODEN_BUTTON_CLICK_ON("WOOD_CLICK", "BLOCK_WOOD_BUTTON_CLICK_ON"),
+    BLOCK_WOODEN_DOOR_CLOSE("DOOR_CLOSE"),
+    BLOCK_WOODEN_DOOR_OPEN("DOOR_OPEN"),
+    BLOCK_WOODEN_PRESSURE_PLATE_CLICK_OFF("BLOCK_WOOD_PRESSUREPLATE_CLICK_OFF"),
+    BLOCK_WOODEN_PRESSURE_PLATE_CLICK_ON("BLOCK_WOOD_PRESSUREPLATE_CLICK_ON"),
+    BLOCK_WOODEN_TRAPDOOR_CLOSE(new String[0]),
+    BLOCK_WOODEN_TRAPDOOR_OPEN(new String[0]),
+    BLOCK_WOOD_BREAK("DIG_WOOD"),
+    BLOCK_WOOD_FALL(new String[0]),
+    BLOCK_WOOD_HIT(new String[0]),
+    BLOCK_WOOD_PLACE(new String[0]),
+    BLOCK_WOOD_STEP("STEP_WOOD"),
+    BLOCK_WOOL_BREAK("DIG_WOOL", "BLOCK_CLOTH_BREAK"),
+    BLOCK_WOOL_FALL(new String[0]),
+    BLOCK_WOOL_HIT("BLOCK_WOOL_FALL"),
+    BLOCK_WOOL_PLACE("BLOCK_WOOL_FALL"),
+    BLOCK_WOOL_STEP("STEP_WOOL", "BLOCK_CLOTH_STEP"),
+    ENCHANT_THORNS_HIT(new String[0]),
+    ENTITY_ALLAY_AMBIENT_WITHOUT_ITEM(new String[0]),
+    ENTITY_ALLAY_AMBIENT_WITH_ITEM(new String[0]),
+    ENTITY_ALLAY_DEATH(new String[0]),
+    ENTITY_ALLAY_HURT(new String[0]),
+    ENTITY_ALLAY_ITEM_GIVEN(new String[0]),
+    ENTITY_ALLAY_ITEM_TAKEN(new String[0]),
+    ENTITY_ALLAY_ITEM_THROWN(new String[0]),
+    ENTITY_ARMADILLO_AMBIENT(new String[0]),
+    ENTITY_ARMADILLO_BRUSH(new String[0]),
+    ENTITY_ARMADILLO_DEATH(new String[0]),
+    ENTITY_ARMADILLO_EAT(new String[0]),
+    ENTITY_ARMADILLO_HURT(new String[0]),
+    ENTITY_ARMADILLO_HURT_REDUCED(new String[0]),
+    ENTITY_ARMADILLO_LAND(new String[0]),
+    ENTITY_ARMADILLO_PEEK(new String[0]),
+    ENTITY_ARMADILLO_ROLL(new String[0]),
+    ENTITY_ARMADILLO_SCUTE_DROP(new String[0]),
+    ENTITY_ARMADILLO_STEP(new String[0]),
+    ENTITY_ARMADILLO_UNROLL_FINISH(new String[0]),
+    ENTITY_ARMADILLO_UNROLL_START(new String[0]),
+    ENTITY_ARMOR_STAND_BREAK("ENTITY_ARMORSTAND_BREAK"),
+    ENTITY_ARMOR_STAND_FALL("ENTITY_ARMORSTAND_FALL"),
+    ENTITY_ARMOR_STAND_HIT("ENTITY_ARMORSTAND_HIT"),
+    ENTITY_ARMOR_STAND_PLACE("ENTITY_ARMORSTAND_PLACE"),
+    ENTITY_ARROW_HIT("ARROW_HIT"),
+    ENTITY_ARROW_HIT_PLAYER("SUCCESSFUL_HIT"),
+    ENTITY_ARROW_SHOOT("SHOOT_ARROW"),
+    ENTITY_AXOLOTL_ATTACK(new String[0]),
+    ENTITY_AXOLOTL_DEATH(new String[0]),
+    ENTITY_AXOLOTL_HURT(new String[0]),
+    ENTITY_AXOLOTL_IDLE_AIR(new String[0]),
+    ENTITY_AXOLOTL_IDLE_WATER(new String[0]),
+    ENTITY_AXOLOTL_SPLASH(new String[0]),
+    ENTITY_AXOLOTL_SWIM(new String[0]),
+    ENTITY_BAT_AMBIENT("BAT_IDLE"),
+    ENTITY_BAT_DEATH("BAT_DEATH"),
+    ENTITY_BAT_HURT("BAT_HURT"),
+    ENTITY_BAT_LOOP("BAT_LOOP"),
+    ENTITY_BAT_TAKEOFF("BAT_TAKEOFF"),
+    ENTITY_BEE_DEATH(new String[0]),
+    ENTITY_BEE_HURT(new String[0]),
+    ENTITY_BEE_LOOP(new String[0]),
+    ENTITY_BEE_LOOP_AGGRESSIVE(new String[0]),
+    ENTITY_BEE_POLLINATE(new String[0]),
+    ENTITY_BEE_STING(new String[0]),
+    ENTITY_BLAZE_AMBIENT("BLAZE_BREATH"),
+    ENTITY_BLAZE_BURN(new String[0]),
+    ENTITY_BLAZE_DEATH("BLAZE_DEATH"),
+    ENTITY_BLAZE_HURT("BLAZE_HIT"),
+    ENTITY_BLAZE_SHOOT(new String[0]),
+    ENTITY_BOAT_PADDLE_LAND(new String[0]),
+    ENTITY_BOAT_PADDLE_WATER(new String[0]),
+    ENTITY_BOGGED_AMBIENT(new String[0]),
+    ENTITY_BOGGED_DEATH(new String[0]),
+    ENTITY_BOGGED_HURT(new String[0]),
+    ENTITY_BOGGED_SHEAR(new String[0]),
+    ENTITY_BOGGED_STEP(new String[0]),
+    ENTITY_BREEZE_CHARGE(new String[0]),
+    ENTITY_BREEZE_DEATH(new String[0]),
+    ENTITY_BREEZE_DEFLECT(new String[0]),
+    ENTITY_BREEZE_HURT(new String[0]),
+    ENTITY_BREEZE_IDLE_AIR(new String[0]),
+    ENTITY_BREEZE_IDLE_GROUND(new String[0]),
+    ENTITY_BREEZE_INHALE(new String[0]),
+    ENTITY_BREEZE_JUMP(new String[0]),
+    ENTITY_BREEZE_LAND(new String[0]),
+    ENTITY_BREEZE_SHOOT(new String[0]),
+    ENTITY_BREEZE_SLIDE(new String[0]),
+    ENTITY_BREEZE_WHIRL(new String[0]),
+    ENTITY_BREEZE_WIND_BURST(new String[0]),
+    ENTITY_CAMEL_AMBIENT(new String[0]),
+    ENTITY_CAMEL_DASH(new String[0]),
+    ENTITY_CAMEL_DASH_READY(new String[0]),
+    ENTITY_CAMEL_DEATH(new String[0]),
+    ENTITY_CAMEL_EAT(new String[0]),
+    ENTITY_CAMEL_HURT(new String[0]),
+    ENTITY_CAMEL_SADDLE(new String[0]),
+    ENTITY_CAMEL_SIT(new String[0]),
+    ENTITY_CAMEL_STAND(new String[0]),
+    ENTITY_CAMEL_STEP(new String[0]),
+    ENTITY_CAMEL_STEP_SAND(new String[0]),
+    ENTITY_CAT_AMBIENT("CAT_MEOW"),
+    ENTITY_CAT_BEG_FOR_FOOD(new String[0]),
+    ENTITY_CAT_DEATH(new String[0]),
+    ENTITY_CAT_EAT(new String[0]),
+    ENTITY_CAT_HISS("CAT_HISS"),
+    ENTITY_CAT_HURT("CAT_HIT"),
+    ENTITY_CAT_PURR("CAT_PURR"),
+    ENTITY_CAT_PURREOW("CAT_PURREOW"),
+    ENTITY_CAT_STRAY_AMBIENT(new String[0]),
+    ENTITY_CHICKEN_AMBIENT("CHICKEN_IDLE"),
+    ENTITY_CHICKEN_DEATH(new String[0]),
+    ENTITY_CHICKEN_EGG("CHICKEN_EGG_POP"),
+    ENTITY_CHICKEN_HURT("CHICKEN_HURT"),
+    ENTITY_CHICKEN_STEP("CHICKEN_WALK"),
+    ENTITY_COD_AMBIENT(new String[0]),
+    ENTITY_COD_DEATH(new String[0]),
+    ENTITY_COD_FLOP(new String[0]),
+    ENTITY_COD_HURT(new String[0]),
+    ENTITY_COW_AMBIENT("COW_IDLE"),
+    ENTITY_COW_DEATH(new String[0]),
+    ENTITY_COW_HURT("COW_HURT"),
+    ENTITY_COW_MILK(new String[0]),
+    ENTITY_COW_STEP("COW_WALK"),
+    ENTITY_CREEPER_DEATH("CREEPER_DEATH"),
+    ENTITY_CREEPER_HURT(new String[0]),
+    ENTITY_CREEPER_PRIMED("CREEPER_HISS"),
+    ENTITY_DOLPHIN_AMBIENT(new String[0]),
+    ENTITY_DOLPHIN_AMBIENT_WATER(new String[0]),
+    ENTITY_DOLPHIN_ATTACK(new String[0]),
+    ENTITY_DOLPHIN_DEATH(new String[0]),
+    ENTITY_DOLPHIN_EAT(new String[0]),
+    ENTITY_DOLPHIN_HURT(new String[0]),
+    ENTITY_DOLPHIN_JUMP(new String[0]),
+    ENTITY_DOLPHIN_PLAY(new String[0]),
+    ENTITY_DOLPHIN_SPLASH(new String[0]),
+    ENTITY_DOLPHIN_SWIM(new String[0]),
+    ENTITY_DONKEY_AMBIENT("DONKEY_IDLE"),
+    ENTITY_DONKEY_ANGRY("DONKEY_ANGRY"),
+    ENTITY_DONKEY_CHEST(new String[0]),
+    ENTITY_DONKEY_DEATH("DONKEY_DEATH"),
+    ENTITY_DONKEY_EAT(new String[0]),
+    ENTITY_DONKEY_HURT("DONKEY_HIT"),
+    ENTITY_DONKEY_JUMP(new String[0]),
+    ENTITY_DRAGON_FIREBALL_EXPLODE("ENTITY_ENDERDRAGON_FIREBALL_EXPLODE"),
+    ENTITY_DROWNED_AMBIENT(new String[0]),
+    ENTITY_DROWNED_AMBIENT_WATER(new String[0]),
+    ENTITY_DROWNED_DEATH(new String[0]),
+    ENTITY_DROWNED_DEATH_WATER(new String[0]),
+    ENTITY_DROWNED_HURT(new String[0]),
+    ENTITY_DROWNED_HURT_WATER(new String[0]),
+    ENTITY_DROWNED_SHOOT(new String[0]),
+    ENTITY_DROWNED_STEP(new String[0]),
+    ENTITY_DROWNED_SWIM(new String[0]),
+    ENTITY_EGG_THROW(new String[0]),
+    ENTITY_ELDER_GUARDIAN_AMBIENT(new String[0]),
+    ENTITY_ELDER_GUARDIAN_AMBIENT_LAND(new String[0]),
+    ENTITY_ELDER_GUARDIAN_CURSE(new String[0]),
+    ENTITY_ELDER_GUARDIAN_DEATH(new String[0]),
+    ENTITY_ELDER_GUARDIAN_DEATH_LAND(new String[0]),
+    ENTITY_ELDER_GUARDIAN_FLOP(new String[0]),
+    ENTITY_ELDER_GUARDIAN_HURT(new String[0]),
+    ENTITY_ELDER_GUARDIAN_HURT_LAND(new String[0]),
+    ENTITY_ENDERMAN_AMBIENT("ENDERMAN_IDLE", "ENTITY_ENDERMEN_AMBIENT"),
+    ENTITY_ENDERMAN_DEATH("ENDERMAN_DEATH", "ENTITY_ENDERMEN_DEATH"),
+    ENTITY_ENDERMAN_HURT("ENDERMAN_HIT", "ENTITY_ENDERMEN_HURT"),
+    ENTITY_ENDERMAN_SCREAM("ENDERMAN_SCREAM", "ENTITY_ENDERMEN_SCREAM"),
+    ENTITY_ENDERMAN_STARE("ENDERMAN_STARE", "ENTITY_ENDERMEN_STARE"),
+    ENTITY_ENDERMAN_TELEPORT("ENDERMAN_TELEPORT", "ENTITY_ENDERMEN_TELEPORT"),
+    ENTITY_ENDERMITE_AMBIENT(new String[0]),
+    ENTITY_ENDERMITE_DEATH(new String[0]),
+    ENTITY_ENDERMITE_HURT(new String[0]),
+    ENTITY_ENDERMITE_STEP(new String[0]),
+    ENTITY_ENDER_DRAGON_AMBIENT("ENDERDRAGON_WINGS", "ENTITY_ENDERDRAGON_AMBIENT"),
+    ENTITY_ENDER_DRAGON_DEATH("ENDERDRAGON_DEATH", "ENTITY_ENDERDRAGON_DEATH"),
+    ENTITY_ENDER_DRAGON_FLAP("ENDERDRAGON_WINGS", "ENTITY_ENDERDRAGON_FLAP"),
+    ENTITY_ENDER_DRAGON_GROWL("ENDERDRAGON_GROWL", "ENTITY_ENDERDRAGON_GROWL"),
+    ENTITY_ENDER_DRAGON_HURT("ENDERDRAGON_HIT", "ENTITY_ENDERDRAGON_HURT"),
+    ENTITY_ENDER_DRAGON_SHOOT("ENTITY_ENDERDRAGON_SHOOT"),
+    ENTITY_ENDER_EYE_DEATH(new String[0]),
+    ENTITY_ENDER_EYE_LAUNCH("ENTITY_ENDER_EYE_DEATH", "ENTITY_ENDEREYE_DEATH"),
+    ENTITY_ENDER_PEARL_THROW("ENTITY_ENDERPEARL_THROW"),
+    ENTITY_EVOKER_AMBIENT("ENTITY_EVOCATION_ILLAGER_AMBIENT"),
+    ENTITY_EVOKER_CAST_SPELL("ENTITY_EVOCATION_ILLAGER_CAST_SPELL"),
+    ENTITY_EVOKER_CELEBRATE(new String[0]),
+    ENTITY_EVOKER_DEATH("ENTITY_EVOCATION_ILLAGER_DEATH"),
+    ENTITY_EVOKER_FANGS_ATTACK("ENTITY_EVOCATION_FANGS_ATTACK"),
+    ENTITY_EVOKER_HURT("ENTITY_EVOCATION_ILLAGER_HURT"),
+    ENTITY_EVOKER_PREPARE_ATTACK("ENTITY_EVOCATION_ILLAGER_PREPARE_ATTACK"),
+    ENTITY_EVOKER_PREPARE_SUMMON("ENTITY_EVOCATION_ILLAGER_PREPARE_SUMMON"),
+    ENTITY_EVOKER_PREPARE_WOLOLO("ENTITY_EVOCATION_ILLAGER_PREPARE_WOLOLO"),
+    ENTITY_EXPERIENCE_BOTTLE_THROW(new String[0]),
+    ENTITY_EXPERIENCE_ORB_PICKUP("ORB_PICKUP"),
+    ENTITY_FIREWORK_ROCKET_BLAST("FIREWORK_BLAST", "ENTITY_FIREWORK_BLAST"),
+    ENTITY_FIREWORK_ROCKET_BLAST_FAR("FIREWORK_BLAST2", "ENTITY_FIREWORK_BLAST_FAR"),
+    ENTITY_FIREWORK_ROCKET_LARGE_BLAST("FIREWORK_LARGE_BLAST", "ENTITY_FIREWORK_LARGE_BLAST"),
+    ENTITY_FIREWORK_ROCKET_LARGE_BLAST_FAR("FIREWORK_LARGE_BLAST2", "ENTITY_FIREWORK_LARGE_BLAST_FAR"),
+    ENTITY_FIREWORK_ROCKET_LAUNCH("FIREWORK_LAUNCH", "ENTITY_FIREWORK_LAUNCH"),
+    ENTITY_FIREWORK_ROCKET_SHOOT(new String[0]),
+    ENTITY_FIREWORK_ROCKET_TWINKLE("FIREWORK_TWINKLE", "ENTITY_FIREWORK_TWINKLE"),
+    ENTITY_FIREWORK_ROCKET_TWINKLE_FAR("FIREWORK_TWINKLE2", "ENTITY_FIREWORK_TWINKLE_FAR"),
+    ENTITY_FISHING_BOBBER_RETRIEVE(new String[0]),
+    ENTITY_FISHING_BOBBER_SPLASH("SPLASH2", "ENTITY_BOBBER_SPLASH"),
+    ENTITY_FISHING_BOBBER_THROW("ENTITY_BOBBER_THROW"),
+    ENTITY_FISH_SWIM(new String[0]),
+    ENTITY_FOX_AGGRO(new String[0]),
+    ENTITY_FOX_AMBIENT(new String[0]),
+    ENTITY_FOX_BITE(new String[0]),
+    ENTITY_FOX_DEATH(new String[0]),
+    ENTITY_FOX_EAT(new String[0]),
+    ENTITY_FOX_HURT(new String[0]),
+    ENTITY_FOX_SCREECH(new String[0]),
+    ENTITY_FOX_SLEEP(new String[0]),
+    ENTITY_FOX_SNIFF(new String[0]),
+    ENTITY_FOX_SPIT(new String[0]),
+    ENTITY_FOX_TELEPORT(new String[0]),
+    ENTITY_FROG_AMBIENT(new String[0]),
+    ENTITY_FROG_DEATH(new String[0]),
+    ENTITY_FROG_EAT(new String[0]),
+    ENTITY_FROG_HURT(new String[0]),
+    ENTITY_FROG_LAY_SPAWN(new String[0]),
+    ENTITY_FROG_LONG_JUMP(new String[0]),
+    ENTITY_FROG_STEP(new String[0]),
+    ENTITY_FROG_TONGUE(new String[0]),
+    ENTITY_GENERIC_BIG_FALL("FALL_BIG"),
+    ENTITY_GENERIC_BURN(new String[0]),
+    ENTITY_GENERIC_DEATH(new String[0]),
+    ENTITY_GENERIC_DRINK("DRINK"),
+    ENTITY_GENERIC_EAT("EAT"),
+    ENTITY_GENERIC_EXPLODE("EXPLODE"),
+    ENTITY_GENERIC_EXTINGUISH_FIRE(new String[0]),
+    ENTITY_GENERIC_HURT(new String[0]),
+    ENTITY_GENERIC_SMALL_FALL("FALL_SMALL"),
+    ENTITY_GENERIC_SPLASH("SPLASH"),
+    ENTITY_GENERIC_SWIM("SWIM"),
+    ENTITY_GHAST_AMBIENT("GHAST_MOAN"),
+    ENTITY_GHAST_DEATH("GHAST_DEATH"),
+    ENTITY_GHAST_HURT("GHAST_SCREAM2"),
+    ENTITY_GHAST_SCREAM("GHAST_SCREAM"),
+    ENTITY_GHAST_SHOOT("GHAST_FIREBALL"),
+    ENTITY_GHAST_WARN("GHAST_CHARGE"),
+    ENTITY_GLOW_ITEM_FRAME_ADD_ITEM(new String[0]),
+    ENTITY_GLOW_ITEM_FRAME_BREAK(new String[0]),
+    ENTITY_GLOW_ITEM_FRAME_PLACE(new String[0]),
+    ENTITY_GLOW_ITEM_FRAME_REMOVE_ITEM(new String[0]),
+    ENTITY_GLOW_ITEM_FRAME_ROTATE_ITEM(new String[0]),
+    ENTITY_GLOW_SQUID_AMBIENT(new String[0]),
+    ENTITY_GLOW_SQUID_DEATH(new String[0]),
+    ENTITY_GLOW_SQUID_HURT(new String[0]),
+    ENTITY_GLOW_SQUID_SQUIRT(new String[0]),
+    ENTITY_GOAT_AMBIENT(new String[0]),
+    ENTITY_GOAT_DEATH(new String[0]),
+    ENTITY_GOAT_EAT(new String[0]),
+    ENTITY_GOAT_HORN_BREAK(new String[0]),
+    ENTITY_GOAT_HURT(new String[0]),
+    ENTITY_GOAT_LONG_JUMP(new String[0]),
+    ENTITY_GOAT_MILK(new String[0]),
+    ENTITY_GOAT_PREPARE_RAM(new String[0]),
+    ENTITY_GOAT_RAM_IMPACT(new String[0]),
+    ENTITY_GOAT_SCREAMING_AMBIENT(new String[0]),
+    ENTITY_GOAT_SCREAMING_DEATH(new String[0]),
+    ENTITY_GOAT_SCREAMING_EAT(new String[0]),
+    ENTITY_GOAT_SCREAMING_HORN_BREAK(new String[0]),
+    ENTITY_GOAT_SCREAMING_HURT(new String[0]),
+    ENTITY_GOAT_SCREAMING_LONG_JUMP(new String[0]),
+    ENTITY_GOAT_SCREAMING_MILK(new String[0]),
+    ENTITY_GOAT_SCREAMING_PREPARE_RAM(new String[0]),
+    ENTITY_GOAT_SCREAMING_RAM_IMPACT(new String[0]),
+    ENTITY_GOAT_STEP(new String[0]),
+    ENTITY_GUARDIAN_AMBIENT(new String[0]),
+    ENTITY_GUARDIAN_AMBIENT_LAND(new String[0]),
+    ENTITY_GUARDIAN_ATTACK(new String[0]),
+    ENTITY_GUARDIAN_DEATH(new String[0]),
+    ENTITY_GUARDIAN_DEATH_LAND(new String[0]),
+    ENTITY_GUARDIAN_FLOP(new String[0]),
+    ENTITY_GUARDIAN_HURT(new String[0]),
+    ENTITY_GUARDIAN_HURT_LAND(new String[0]),
+    ENTITY_HOGLIN_AMBIENT(new String[0]),
+    ENTITY_HOGLIN_ANGRY(new String[0]),
+    ENTITY_HOGLIN_ATTACK(new String[0]),
+    ENTITY_HOGLIN_CONVERTED_TO_ZOMBIFIED(new String[0]),
+    ENTITY_HOGLIN_DEATH(new String[0]),
+    ENTITY_HOGLIN_HURT(new String[0]),
+    ENTITY_HOGLIN_RETREAT(new String[0]),
+    ENTITY_HOGLIN_STEP(new String[0]),
+    ENTITY_HORSE_AMBIENT("HORSE_IDLE"),
+    ENTITY_HORSE_ANGRY("HORSE_ANGRY"),
+    ENTITY_HORSE_ARMOR("HORSE_ARMOR"),
+    ENTITY_HORSE_BREATHE("HORSE_BREATHE"),
+    ENTITY_HORSE_DEATH("HORSE_DEATH"),
+    ENTITY_HORSE_EAT(new String[0]),
+    ENTITY_HORSE_GALLOP("HORSE_GALLOP"),
+    ENTITY_HORSE_HURT("HORSE_HIT"),
+    ENTITY_HORSE_JUMP("HORSE_JUMP"),
+    ENTITY_HORSE_LAND("HORSE_LAND"),
+    ENTITY_HORSE_SADDLE("HORSE_SADDLE"),
+    ENTITY_HORSE_STEP("HORSE_SOFT"),
+    ENTITY_HORSE_STEP_WOOD("HORSE_WOOD"),
+    ENTITY_HOSTILE_BIG_FALL("FALL_BIG"),
+    ENTITY_HOSTILE_DEATH(new String[0]),
+    ENTITY_HOSTILE_HURT(new String[0]),
+    ENTITY_HOSTILE_SMALL_FALL("FALL_SMALL"),
+    ENTITY_HOSTILE_SPLASH("SPLASH"),
+    ENTITY_HOSTILE_SWIM("SWIM"),
+    ENTITY_HUSK_AMBIENT(new String[0]),
+    ENTITY_HUSK_CONVERTED_TO_ZOMBIE(new String[0]),
+    ENTITY_HUSK_DEATH(new String[0]),
+    ENTITY_HUSK_HURT(new String[0]),
+    ENTITY_HUSK_STEP(new String[0]),
+    ENTITY_ILLUSIONER_AMBIENT("ENTITY_ILLUSION_ILLAGER_AMBIENT"),
+    ENTITY_ILLUSIONER_CAST_SPELL("ENTITY_ILLUSION_ILLAGER_CAST_SPELL"),
+    ENTITY_ILLUSIONER_DEATH("ENTITY_ILLUSIONER_CAST_DEATH", "ENTITY_ILLUSION_ILLAGER_DEATH"),
+    ENTITY_ILLUSIONER_HURT("ENTITY_ILLUSION_ILLAGER_HURT"),
+    ENTITY_ILLUSIONER_MIRROR_MOVE("ENTITY_ILLUSION_ILLAGER_MIRROR_MOVE"),
+    ENTITY_ILLUSIONER_PREPARE_BLINDNESS("ENTITY_ILLUSION_ILLAGER_PREPARE_BLINDNESS"),
+    ENTITY_ILLUSIONER_PREPARE_MIRROR("ENTITY_ILLUSION_ILLAGER_PREPARE_MIRROR"),
+    ENTITY_IRON_GOLEM_ATTACK("IRONGOLEM_THROW", "ENTITY_IRONGOLEM_ATTACK"),
+    ENTITY_IRON_GOLEM_DAMAGE(new String[0]),
+    ENTITY_IRON_GOLEM_DEATH("IRONGOLEM_DEATH", "ENTITY_IRONGOLEM_DEATH"),
+    ENTITY_IRON_GOLEM_HURT("IRONGOLEM_HIT", "ENTITY_IRONGOLEM_HURT"),
+    ENTITY_IRON_GOLEM_REPAIR(new String[0]),
+    ENTITY_IRON_GOLEM_STEP("IRONGOLEM_WALK", "ENTITY_IRONGOLEM_STEP"),
+    ENTITY_ITEM_BREAK("ITEM_BREAK"),
+    ENTITY_ITEM_FRAME_ADD_ITEM("ENTITY_ITEMFRAME_ADD_ITEM"),
+    ENTITY_ITEM_FRAME_BREAK("ENTITY_ITEMFRAME_BREAK"),
+    ENTITY_ITEM_FRAME_PLACE("ENTITY_ITEMFRAME_PLACE"),
+    ENTITY_ITEM_FRAME_REMOVE_ITEM("ENTITY_ITEMFRAME_REMOVE_ITEM"),
+    ENTITY_ITEM_FRAME_ROTATE_ITEM("ENTITY_ITEMFRAME_ROTATE_ITEM"),
+    ENTITY_ITEM_PICKUP("ITEM_PICKUP"),
+    ENTITY_LEASH_KNOT_BREAK("ENTITY_LEASHKNOT_BREAK"),
+    ENTITY_LEASH_KNOT_PLACE("ENTITY_LEASHKNOT_PLACE"),
+    ENTITY_LIGHTNING_BOLT_IMPACT("ENTITY_LIGHTNING_IMPACT", "AMBIENCE_THUNDER"),
+    ENTITY_LIGHTNING_BOLT_THUNDER("ENTITY_LIGHTNING_THUNDER", "AMBIENCE_THUNDER"),
+    ENTITY_LINGERING_POTION_THROW(new String[0]),
+    ENTITY_LLAMA_AMBIENT(new String[0]),
+    ENTITY_LLAMA_ANGRY(new String[0]),
+    ENTITY_LLAMA_CHEST(new String[0]),
+    ENTITY_LLAMA_DEATH(new String[0]),
+    ENTITY_LLAMA_EAT(new String[0]),
+    ENTITY_LLAMA_HURT(new String[0]),
+    ENTITY_LLAMA_SPIT(new String[0]),
+    ENTITY_LLAMA_STEP(new String[0]),
+    ENTITY_LLAMA_SWAG(new String[0]),
+    ENTITY_MAGMA_CUBE_DEATH("ENTITY_MAGMACUBE_DEATH"),
+    ENTITY_MAGMA_CUBE_DEATH_SMALL("ENTITY_SMALL_MAGMACUBE_DEATH"),
+    ENTITY_MAGMA_CUBE_HURT("ENTITY_MAGMACUBE_HURT"),
+    ENTITY_MAGMA_CUBE_HURT_SMALL("ENTITY_SMALL_MAGMACUBE_HURT"),
+    ENTITY_MAGMA_CUBE_JUMP("MAGMACUBE_JUMP", "ENTITY_MAGMACUBE_JUMP"),
+    ENTITY_MAGMA_CUBE_SQUISH("MAGMACUBE_WALK", "ENTITY_MAGMACUBE_SQUISH"),
+    ENTITY_MAGMA_CUBE_SQUISH_SMALL("MAGMACUBE_WALK2", "ENTITY_SMALL_MAGMACUBE_SQUISH"),
+    ENTITY_MINECART_INSIDE("MINECART_INSIDE"),
+    ENTITY_MINECART_INSIDE_UNDERWATER(new String[0]),
+    ENTITY_MINECART_RIDING("MINECART_BASE"),
+    ENTITY_MOOSHROOM_CONVERT(new String[0]),
+    ENTITY_MOOSHROOM_EAT(new String[0]),
+    ENTITY_MOOSHROOM_MILK(new String[0]),
+    ENTITY_MOOSHROOM_SHEAR(new String[0]),
+    ENTITY_MOOSHROOM_SUSPICIOUS_MILK(new String[0]),
+    ENTITY_MULE_AMBIENT(new String[0]),
+    ENTITY_MULE_ANGRY(new String[0]),
+    ENTITY_MULE_CHEST("ENTITY_MULE_AMBIENT"),
+    ENTITY_MULE_DEATH("ENTITY_MULE_AMBIENT"),
+    ENTITY_MULE_EAT(new String[0]),
+    ENTITY_MULE_HURT("ENTITY_MULE_AMBIENT"),
+    ENTITY_MULE_JUMP(new String[0]),
+    ENTITY_OCELOT_AMBIENT(new String[0]),
+    ENTITY_OCELOT_DEATH(new String[0]),
+    ENTITY_OCELOT_HURT(new String[0]),
+    ENTITY_PAINTING_BREAK(new String[0]),
+    ENTITY_PAINTING_PLACE(new String[0]),
+    ENTITY_PANDA_AGGRESSIVE_AMBIENT(new String[0]),
+    ENTITY_PANDA_AMBIENT(new String[0]),
+    ENTITY_PANDA_BITE(new String[0]),
+    ENTITY_PANDA_CANT_BREED(new String[0]),
+    ENTITY_PANDA_DEATH(new String[0]),
+    ENTITY_PANDA_EAT(new String[0]),
+    ENTITY_PANDA_HURT(new String[0]),
+    ENTITY_PANDA_PRE_SNEEZE(new String[0]),
+    ENTITY_PANDA_SNEEZE(new String[0]),
+    ENTITY_PANDA_STEP(new String[0]),
+    ENTITY_PANDA_WORRIED_AMBIENT(new String[0]),
+    ENTITY_PARROT_AMBIENT(new String[0]),
+    ENTITY_PARROT_DEATH(new String[0]),
+    ENTITY_PARROT_EAT(new String[0]),
+    ENTITY_PARROT_FLY(new String[0]),
+    ENTITY_PARROT_HURT(new String[0]),
+    ENTITY_PARROT_IMITATE_BLAZE(new String[0]),
+    ENTITY_PARROT_IMITATE_BOGGED(new String[0]),
+    ENTITY_PARROT_IMITATE_BREEZE(new String[0]),
+    ENTITY_PARROT_IMITATE_CREEPER(new String[0]),
+    ENTITY_PARROT_IMITATE_DROWNED(new String[0]),
+    ENTITY_PARROT_IMITATE_ELDER_GUARDIAN(new String[0]),
+    ENTITY_PARROT_IMITATE_ENDERMAN(new String[0]),
+    ENTITY_PARROT_IMITATE_ENDERMITE(new String[0]),
+    ENTITY_PARROT_IMITATE_ENDER_DRAGON(new String[0]),
+    ENTITY_PARROT_IMITATE_EVOKER(new String[0]),
+    ENTITY_PARROT_IMITATE_GHAST(new String[0]),
+    ENTITY_PARROT_IMITATE_GUARDIAN(new String[0]),
+    ENTITY_PARROT_IMITATE_HOGLIN(new String[0]),
+    ENTITY_PARROT_IMITATE_HUSK(new String[0]),
+    ENTITY_PARROT_IMITATE_ILLUSIONER(new String[0]),
+    ENTITY_PARROT_IMITATE_MAGMA_CUBE(new String[0]),
+    ENTITY_PARROT_IMITATE_PHANTOM(new String[0]),
+    ENTITY_PARROT_IMITATE_PIGLIN(new String[0]),
+    ENTITY_PARROT_IMITATE_PIGLIN_BRUTE(new String[0]),
+    ENTITY_PARROT_IMITATE_PILLAGER(new String[0]),
+    ENTITY_PARROT_IMITATE_POLAR_BEAR(new String[0]),
+    ENTITY_PARROT_IMITATE_RAVAGER(new String[0]),
+    ENTITY_PARROT_IMITATE_SHULKER(new String[0]),
+    ENTITY_PARROT_IMITATE_SILVERFISH(new String[0]),
+    ENTITY_PARROT_IMITATE_SKELETON(new String[0]),
+    ENTITY_PARROT_IMITATE_SLIME(new String[0]),
+    ENTITY_PARROT_IMITATE_SPIDER(new String[0]),
+    ENTITY_PARROT_IMITATE_STRAY(new String[0]),
+    ENTITY_PARROT_IMITATE_VEX(new String[0]),
+    ENTITY_PARROT_IMITATE_VINDICATOR(new String[0]),
+    ENTITY_PARROT_IMITATE_WARDEN(new String[0]),
+    ENTITY_PARROT_IMITATE_WITCH(new String[0]),
+    ENTITY_PARROT_IMITATE_WITHER(new String[0]),
+    ENTITY_PARROT_IMITATE_WITHER_SKELETON(new String[0]),
+    ENTITY_PARROT_IMITATE_WOLF(new String[0]),
+    ENTITY_PARROT_IMITATE_ZOGLIN(new String[0]),
+    ENTITY_PARROT_IMITATE_ZOMBIE(new String[0]),
+    ENTITY_PARROT_IMITATE_ZOMBIE_VILLAGER(new String[0]),
+    ENTITY_PARROT_STEP(new String[0]),
+    ENTITY_PHANTOM_AMBIENT(new String[0]),
+    ENTITY_PHANTOM_BITE(new String[0]),
+    ENTITY_PHANTOM_DEATH(new String[0]),
+    ENTITY_PHANTOM_FLAP(new String[0]),
+    ENTITY_PHANTOM_HURT(new String[0]),
+    ENTITY_PHANTOM_SWOOP(new String[0]),
+    ENTITY_PIGLIN_ADMIRING_ITEM(new String[0]),
+    ENTITY_PIGLIN_AMBIENT(new String[0]),
+    ENTITY_PIGLIN_ANGRY(new String[0]),
+    ENTITY_PIGLIN_BRUTE_AMBIENT(new String[0]),
+    ENTITY_PIGLIN_BRUTE_ANGRY(new String[0]),
+    ENTITY_PIGLIN_BRUTE_CONVERTED_TO_ZOMBIFIED(new String[0]),
+    ENTITY_PIGLIN_BRUTE_DEATH(new String[0]),
+    ENTITY_PIGLIN_BRUTE_HURT(new String[0]),
+    ENTITY_PIGLIN_BRUTE_STEP(new String[0]),
+    ENTITY_PIGLIN_CELEBRATE(new String[0]),
+    ENTITY_PIGLIN_CONVERTED_TO_ZOMBIFIED(new String[0]),
+    ENTITY_PIGLIN_DEATH(new String[0]),
+    ENTITY_PIGLIN_HURT(new String[0]),
+    ENTITY_PIGLIN_JEALOUS(new String[0]),
+    ENTITY_PIGLIN_RETREAT(new String[0]),
+    ENTITY_PIGLIN_STEP(new String[0]),
+    ENTITY_PIG_AMBIENT("PIG_IDLE"),
+    ENTITY_PIG_DEATH("PIG_DEATH"),
+    ENTITY_PIG_HURT(new String[0]),
+    ENTITY_PIG_SADDLE("ENTITY_PIG_HURT"),
+    ENTITY_PIG_STEP("PIG_WALK"),
+    ENTITY_PILLAGER_AMBIENT(new String[0]),
+    ENTITY_PILLAGER_CELEBRATE(new String[0]),
+    ENTITY_PILLAGER_DEATH(new String[0]),
+    ENTITY_PILLAGER_HURT(new String[0]),
+    ENTITY_PLAYER_ATTACK_CRIT(new String[0]),
+    ENTITY_PLAYER_ATTACK_KNOCKBACK(new String[0]),
+    ENTITY_PLAYER_ATTACK_NODAMAGE(new String[0]),
+    ENTITY_PLAYER_ATTACK_STRONG("SUCCESSFUL_HIT"),
+    ENTITY_PLAYER_ATTACK_SWEEP(new String[0]),
+    ENTITY_PLAYER_ATTACK_WEAK(new String[0]),
+    ENTITY_PLAYER_BIG_FALL("FALL_BIG"),
+    ENTITY_PLAYER_BREATH(new String[0]),
+    ENTITY_PLAYER_BURP("BURP"),
+    ENTITY_PLAYER_DEATH(new String[0]),
+    ENTITY_PLAYER_HURT("HURT_FLESH"),
+    ENTITY_PLAYER_HURT_DROWN(new String[0]),
+    ENTITY_PLAYER_HURT_FREEZE(new String[0]),
+    ENTITY_PLAYER_HURT_ON_FIRE(new String[0]),
+    ENTITY_PLAYER_HURT_SWEET_BERRY_BUSH(new String[0]),
+    ENTITY_PLAYER_LEVELUP("LEVEL_UP"),
+    ENTITY_PLAYER_SMALL_FALL("FALL_SMALL"),
+    ENTITY_PLAYER_SPLASH("SLASH"),
+    ENTITY_PLAYER_SPLASH_HIGH_SPEED("SPLASH"),
+    ENTITY_PLAYER_SWIM("SWIM"),
+    ENTITY_PLAYER_TELEPORT(new String[0]),
+    ENTITY_POLAR_BEAR_AMBIENT(new String[0]),
+    ENTITY_POLAR_BEAR_AMBIENT_BABY("ENTITY_POLAR_BEAR_BABY_AMBIENT"),
+    ENTITY_POLAR_BEAR_DEATH(new String[0]),
+    ENTITY_POLAR_BEAR_HURT(new String[0]),
+    ENTITY_POLAR_BEAR_STEP(new String[0]),
+    ENTITY_POLAR_BEAR_WARNING(new String[0]),
+    ENTITY_PUFFER_FISH_AMBIENT(new String[0]),
+    ENTITY_PUFFER_FISH_BLOW_OUT(new String[0]),
+    ENTITY_PUFFER_FISH_BLOW_UP(new String[0]),
+    ENTITY_PUFFER_FISH_DEATH(new String[0]),
+    ENTITY_PUFFER_FISH_FLOP(new String[0]),
+    ENTITY_PUFFER_FISH_HURT(new String[0]),
+    ENTITY_PUFFER_FISH_STING(new String[0]),
+    ENTITY_RABBIT_AMBIENT(new String[0]),
+    ENTITY_RABBIT_ATTACK(new String[0]),
+    ENTITY_RABBIT_DEATH(new String[0]),
+    ENTITY_RABBIT_HURT(new String[0]),
+    ENTITY_RABBIT_JUMP(new String[0]),
+    ENTITY_RAVAGER_AMBIENT(new String[0]),
+    ENTITY_RAVAGER_ATTACK(new String[0]),
+    ENTITY_RAVAGER_CELEBRATE(new String[0]),
+    ENTITY_RAVAGER_DEATH(new String[0]),
+    ENTITY_RAVAGER_HURT(new String[0]),
+    ENTITY_RAVAGER_ROAR(new String[0]),
+    ENTITY_RAVAGER_STEP(new String[0]),
+    ENTITY_RAVAGER_STUNNED(new String[0]),
+    ENTITY_SALMON_AMBIENT(new String[0]),
+    ENTITY_SALMON_DEATH(new String[0]),
+    ENTITY_SALMON_FLOP(new String[0]),
+    ENTITY_SALMON_HURT("ENTITY_SALMON_FLOP"),
+    ENTITY_SHEEP_AMBIENT("SHEEP_IDLE"),
+    ENTITY_SHEEP_DEATH(new String[0]),
+    ENTITY_SHEEP_HURT(new String[0]),
+    ENTITY_SHEEP_SHEAR("SHEEP_SHEAR"),
+    ENTITY_SHEEP_STEP("SHEEP_WALK"),
+    ENTITY_SHULKER_AMBIENT(new String[0]),
+    ENTITY_SHULKER_BULLET_HIT(new String[0]),
+    ENTITY_SHULKER_BULLET_HURT(new String[0]),
+    ENTITY_SHULKER_CLOSE(new String[0]),
+    ENTITY_SHULKER_DEATH(new String[0]),
+    ENTITY_SHULKER_HURT(new String[0]),
+    ENTITY_SHULKER_HURT_CLOSED(new String[0]),
+    ENTITY_SHULKER_OPEN(new String[0]),
+    ENTITY_SHULKER_SHOOT(new String[0]),
+    ENTITY_SHULKER_TELEPORT(new String[0]),
+    ENTITY_SILVERFISH_AMBIENT("SILVERFISH_IDLE"),
+    ENTITY_SILVERFISH_DEATH("SILVERFISH_KILL"),
+    ENTITY_SILVERFISH_HURT("SILVERFISH_HIT"),
+    ENTITY_SILVERFISH_STEP("SILVERFISH_WALK"),
+    ENTITY_SKELETON_AMBIENT("SKELETON_IDLE"),
+    ENTITY_SKELETON_CONVERTED_TO_STRAY(new String[0]),
+    ENTITY_SKELETON_DEATH("SKELETON_DEATH"),
+    ENTITY_SKELETON_HORSE_AMBIENT("HORSE_SKELETON_IDLE"),
+    ENTITY_SKELETON_HORSE_AMBIENT_WATER(new String[0]),
+    ENTITY_SKELETON_HORSE_DEATH("HORSE_SKELETON_DEATH"),
+    ENTITY_SKELETON_HORSE_GALLOP_WATER(new String[0]),
+    ENTITY_SKELETON_HORSE_HURT("HORSE_SKELETON_HIT"),
+    ENTITY_SKELETON_HORSE_JUMP_WATER(new String[0]),
+    ENTITY_SKELETON_HORSE_STEP_WATER(new String[0]),
+    ENTITY_SKELETON_HORSE_SWIM(new String[0]),
+    ENTITY_SKELETON_HURT("SKELETON_HURT"),
+    ENTITY_SKELETON_SHOOT(new String[0]),
+    ENTITY_SKELETON_STEP("SKELETON_WALK"),
+    ENTITY_SLIME_ATTACK("SLIME_ATTACK"),
+    ENTITY_SLIME_DEATH(new String[0]),
+    ENTITY_SLIME_DEATH_SMALL(new String[0]),
+    ENTITY_SLIME_HURT(new String[0]),
+    ENTITY_SLIME_HURT_SMALL("ENTITY_SMALL_SLIME_HURT"),
+    ENTITY_SLIME_JUMP("SLIME_WALK"),
+    ENTITY_SLIME_JUMP_SMALL("SLIME_WALK2", "ENTITY_SMALL_SLIME_SQUISH"),
+    ENTITY_SLIME_SQUISH("SLIME_WALK2"),
+    ENTITY_SLIME_SQUISH_SMALL("ENTITY_SMALL_SLIME_SQUISH"),
+    ENTITY_SNIFFER_DEATH(new String[0]),
+    ENTITY_SNIFFER_DIGGING(new String[0]),
+    ENTITY_SNIFFER_DIGGING_STOP(new String[0]),
+    ENTITY_SNIFFER_DROP_SEED(new String[0]),
+    ENTITY_SNIFFER_EAT(new String[0]),
+    ENTITY_SNIFFER_HAPPY(new String[0]),
+    ENTITY_SNIFFER_HURT(new String[0]),
+    ENTITY_SNIFFER_IDLE(new String[0]),
+    ENTITY_SNIFFER_SCENTING(new String[0]),
+    ENTITY_SNIFFER_SEARCHING(new String[0]),
+    ENTITY_SNIFFER_SNIFFING(new String[0]),
+    ENTITY_SNIFFER_STEP(new String[0]),
+    ENTITY_SNOWBALL_THROW(new String[0]),
+    ENTITY_SNOW_GOLEM_AMBIENT("ENTITY_SNOWMAN_AMBIENT"),
+    ENTITY_SNOW_GOLEM_DEATH("ENTITY_SNOWMAN_DEATH"),
+    ENTITY_SNOW_GOLEM_HURT("ENTITY_SNOWMAN_HURT"),
+    ENTITY_SNOW_GOLEM_SHEAR(new String[0]),
+    ENTITY_SNOW_GOLEM_SHOOT("ENTITY_SNOWMAN_SHOOT"),
+    ENTITY_SPIDER_AMBIENT("SPIDER_IDLE"),
+    ENTITY_SPIDER_DEATH("SPIDER_DEATH"),
+    ENTITY_SPIDER_HURT(new String[0]),
+    ENTITY_SPIDER_STEP("SPIDER_WALK"),
+    ENTITY_SPLASH_POTION_BREAK(new String[0]),
+    ENTITY_SPLASH_POTION_THROW(new String[0]),
+    ENTITY_SQUID_AMBIENT(new String[0]),
+    ENTITY_SQUID_DEATH(new String[0]),
+    ENTITY_SQUID_HURT(new String[0]),
+    ENTITY_SQUID_SQUIRT(new String[0]),
+    ENTITY_STRAY_AMBIENT(new String[0]),
+    ENTITY_STRAY_DEATH(new String[0]),
+    ENTITY_STRAY_HURT(new String[0]),
+    ENTITY_STRAY_STEP(new String[0]),
+    ENTITY_STRIDER_AMBIENT(new String[0]),
+    ENTITY_STRIDER_DEATH(new String[0]),
+    ENTITY_STRIDER_EAT(new String[0]),
+    ENTITY_STRIDER_HAPPY(new String[0]),
+    ENTITY_STRIDER_HURT(new String[0]),
+    ENTITY_STRIDER_RETREAT(new String[0]),
+    ENTITY_STRIDER_SADDLE(new String[0]),
+    ENTITY_STRIDER_STEP(new String[0]),
+    ENTITY_STRIDER_STEP_LAVA(new String[0]),
+    ENTITY_TADPOLE_DEATH(new String[0]),
+    ENTITY_TADPOLE_FLOP(new String[0]),
+    ENTITY_TADPOLE_GROW_UP(new String[0]),
+    ENTITY_TADPOLE_HURT(new String[0]),
+    ENTITY_TNT_PRIMED("FUSE"),
+    ENTITY_TROPICAL_FISH_AMBIENT(new String[0]),
+    ENTITY_TROPICAL_FISH_DEATH(new String[0]),
+    ENTITY_TROPICAL_FISH_FLOP("ENTITY_TROPICAL_FISH_DEATH"),
+    ENTITY_TROPICAL_FISH_HURT(new String[0]),
+    ENTITY_TURTLE_AMBIENT_LAND(new String[0]),
+    ENTITY_TURTLE_DEATH(new String[0]),
+    ENTITY_TURTLE_DEATH_BABY(new String[0]),
+    ENTITY_TURTLE_EGG_BREAK(new String[0]),
+    ENTITY_TURTLE_EGG_CRACK(new String[0]),
+    ENTITY_TURTLE_EGG_HATCH(new String[0]),
+    ENTITY_TURTLE_HURT(new String[0]),
+    ENTITY_TURTLE_HURT_BABY(new String[0]),
+    ENTITY_TURTLE_LAY_EGG(new String[0]),
+    ENTITY_TURTLE_SHAMBLE(new String[0]),
+    ENTITY_TURTLE_SHAMBLE_BABY(new String[0]),
+    ENTITY_TURTLE_SWIM(new String[0]),
+    ENTITY_VEX_AMBIENT(new String[0]),
+    ENTITY_VEX_CHARGE(new String[0]),
+    ENTITY_VEX_DEATH(new String[0]),
+    ENTITY_VEX_HURT(new String[0]),
+    ENTITY_VILLAGER_AMBIENT("VILLAGER_IDLE"),
+    ENTITY_VILLAGER_CELEBRATE(new String[0]),
+    ENTITY_VILLAGER_DEATH("VILLAGER_DEATH"),
+    ENTITY_VILLAGER_HURT("VILLAGER_HIT"),
+    ENTITY_VILLAGER_NO("VILLAGER_NO"),
+    ENTITY_VILLAGER_TRADE("VILLAGER_HAGGLE", "ENTITY_VILLAGER_TRADING"),
+    ENTITY_VILLAGER_WORK_ARMORER(new String[0]),
+    ENTITY_VILLAGER_WORK_BUTCHER(new String[0]),
+    ENTITY_VILLAGER_WORK_CARTOGRAPHER(new String[0]),
+    ENTITY_VILLAGER_WORK_CLERIC(new String[0]),
+    ENTITY_VILLAGER_WORK_FARMER(new String[0]),
+    ENTITY_VILLAGER_WORK_FISHERMAN(new String[0]),
+    ENTITY_VILLAGER_WORK_FLETCHER(new String[0]),
+    ENTITY_VILLAGER_WORK_LEATHERWORKER(new String[0]),
+    ENTITY_VILLAGER_WORK_LIBRARIAN(new String[0]),
+    ENTITY_VILLAGER_WORK_MASON(new String[0]),
+    ENTITY_VILLAGER_WORK_SHEPHERD(new String[0]),
+    ENTITY_VILLAGER_WORK_TOOLSMITH(new String[0]),
+    ENTITY_VILLAGER_WORK_WEAPONSMITH(new String[0]),
+    ENTITY_VILLAGER_YES("VILLAGER_YES"),
+    ENTITY_VINDICATOR_AMBIENT("ENTITY_VINDICATION_ILLAGER_AMBIENT"),
+    ENTITY_VINDICATOR_CELEBRATE(new String[0]),
+    ENTITY_VINDICATOR_DEATH("ENTITY_VINDICATION_ILLAGER_DEATH"),
+    ENTITY_VINDICATOR_HURT("ENTITY_VINDICATION_ILLAGER_HURT"),
+    ENTITY_WANDERING_TRADER_AMBIENT(new String[0]),
+    ENTITY_WANDERING_TRADER_DEATH(new String[0]),
+    ENTITY_WANDERING_TRADER_DISAPPEARED(new String[0]),
+    ENTITY_WANDERING_TRADER_DRINK_MILK(new String[0]),
+    ENTITY_WANDERING_TRADER_DRINK_POTION(new String[0]),
+    ENTITY_WANDERING_TRADER_HURT(new String[0]),
+    ENTITY_WANDERING_TRADER_NO(new String[0]),
+    ENTITY_WANDERING_TRADER_REAPPEARED(new String[0]),
+    ENTITY_WANDERING_TRADER_TRADE(new String[0]),
+    ENTITY_WANDERING_TRADER_YES(new String[0]),
+    ENTITY_WARDEN_AGITATED(new String[0]),
+    ENTITY_WARDEN_AMBIENT(new String[0]),
+    ENTITY_WARDEN_ANGRY(new String[0]),
+    ENTITY_WARDEN_ATTACK_IMPACT(new String[0]),
+    ENTITY_WARDEN_DEATH(new String[0]),
+    ENTITY_WARDEN_DIG(new String[0]),
+    ENTITY_WARDEN_EMERGE(new String[0]),
+    ENTITY_WARDEN_HEARTBEAT(new String[0]),
+    ENTITY_WARDEN_HURT(new String[0]),
+    ENTITY_WARDEN_LISTENING(new String[0]),
+    ENTITY_WARDEN_LISTENING_ANGRY(new String[0]),
+    ENTITY_WARDEN_NEARBY_CLOSE(new String[0]),
+    ENTITY_WARDEN_NEARBY_CLOSER(new String[0]),
+    ENTITY_WARDEN_NEARBY_CLOSEST(new String[0]),
+    ENTITY_WARDEN_ROAR(new String[0]),
+    ENTITY_WARDEN_SNIFF(new String[0]),
+    ENTITY_WARDEN_SONIC_BOOM(new String[0]),
+    ENTITY_WARDEN_SONIC_CHARGE(new String[0]),
+    ENTITY_WARDEN_STEP(new String[0]),
+    ENTITY_WARDEN_TENDRIL_CLICKS(new String[0]),
+    ENTITY_WIND_CHARGE_THROW(new String[0]),
+    ENTITY_WIND_CHARGE_WIND_BURST("ENTITY_GENERIC_WIND_BURST"),
+    ENTITY_WITCH_AMBIENT(new String[0]),
+    ENTITY_WITCH_CELEBRATE(new String[0]),
+    ENTITY_WITCH_DEATH(new String[0]),
+    ENTITY_WITCH_DRINK(new String[0]),
+    ENTITY_WITCH_HURT(new String[0]),
+    ENTITY_WITCH_THROW(new String[0]),
+    ENTITY_WITHER_AMBIENT("WITHER_IDLE"),
+    ENTITY_WITHER_BREAK_BLOCK(new String[0]),
+    ENTITY_WITHER_DEATH("WITHER_DEATH"),
+    ENTITY_WITHER_HURT("WITHER_HURT"),
+    ENTITY_WITHER_SHOOT("WITHER_SHOOT"),
+    ENTITY_WITHER_SKELETON_AMBIENT(new String[0]),
+    ENTITY_WITHER_SKELETON_DEATH(new String[0]),
+    ENTITY_WITHER_SKELETON_HURT(new String[0]),
+    ENTITY_WITHER_SKELETON_STEP(new String[0]),
+    ENTITY_WITHER_SPAWN("WITHER_SPAWN"),
+    ENTITY_WOLF_AMBIENT("WOLF_BARK"),
+    ENTITY_WOLF_DEATH("WOLF_DEATH"),
+    ENTITY_WOLF_GROWL("WOLF_GROWL"),
+    ENTITY_WOLF_HOWL("WOLF_HOWL"),
+    ENTITY_WOLF_HURT("WOLF_HURT"),
+    ENTITY_WOLF_PANT("WOLF_PANT"),
+    ENTITY_WOLF_SHAKE("WOLF_SHAKE"),
+    ENTITY_WOLF_STEP("WOLF_WALK"),
+    ENTITY_WOLF_WHINE("WOLF_WHINE"),
+    ENTITY_ZOGLIN_AMBIENT(new String[0]),
+    ENTITY_ZOGLIN_ANGRY(new String[0]),
+    ENTITY_ZOGLIN_ATTACK(new String[0]),
+    ENTITY_ZOGLIN_DEATH(new String[0]),
+    ENTITY_ZOGLIN_HURT(new String[0]),
+    ENTITY_ZOGLIN_STEP(new String[0]),
+    ENTITY_ZOMBIE_AMBIENT("ZOMBIE_IDLE"),
+    ENTITY_ZOMBIE_ATTACK_IRON_DOOR("ZOMBIE_METAL"),
+    ENTITY_ZOMBIE_ATTACK_WOODEN_DOOR("ZOMBIE_WOOD", "ENTITY_ZOMBIE_ATTACK_DOOR_WOOD"),
+    ENTITY_ZOMBIE_BREAK_WOODEN_DOOR("ZOMBIE_WOODBREAK", "ENTITY_ZOMBIE_BREAK_DOOR_WOOD"),
+    ENTITY_ZOMBIE_CONVERTED_TO_DROWNED(new String[0]),
+    ENTITY_ZOMBIE_DEATH("ZOMBIE_DEATH"),
+    ENTITY_ZOMBIE_DESTROY_EGG(new String[0]),
+    ENTITY_ZOMBIE_HORSE_AMBIENT("HORSE_ZOMBIE_IDLE"),
+    ENTITY_ZOMBIE_HORSE_DEATH("HORSE_ZOMBIE_DEATH"),
+    ENTITY_ZOMBIE_HORSE_HURT("HORSE_ZOMBIE_HIT"),
+    ENTITY_ZOMBIE_HURT("ZOMBIE_HURT"),
+    ENTITY_ZOMBIE_INFECT("ZOMBIE_INFECT"),
+    ENTITY_ZOMBIE_STEP("ZOMBIE_WALK"),
+    ENTITY_ZOMBIE_VILLAGER_AMBIENT(new String[0]),
+    ENTITY_ZOMBIE_VILLAGER_CONVERTED("ZOMBIE_UNFECT"),
+    ENTITY_ZOMBIE_VILLAGER_CURE("ZOMBIE_REMEDY"),
+    ENTITY_ZOMBIE_VILLAGER_DEATH(new String[0]),
+    ENTITY_ZOMBIE_VILLAGER_HURT(new String[0]),
+    ENTITY_ZOMBIE_VILLAGER_STEP(new String[0]),
+    ENTITY_ZOMBIFIED_PIGLIN_AMBIENT("ZOMBIE_PIG_IDLE", "ENTITY_ZOMBIE_PIG_AMBIENT", "ENTITY_ZOMBIE_PIGMAN_AMBIENT"),
+    ENTITY_ZOMBIFIED_PIGLIN_ANGRY("ZOMBIE_PIG_ANGRY", "ENTITY_ZOMBIE_PIG_ANGRY", "ENTITY_ZOMBIE_PIGMAN_ANGRY"),
+    ENTITY_ZOMBIFIED_PIGLIN_DEATH("ZOMBIE_PIG_DEATH", "ENTITY_ZOMBIE_PIG_DEATH", "ENTITY_ZOMBIE_PIGMAN_DEATH"),
+    ENTITY_ZOMBIFIED_PIGLIN_HURT("ZOMBIE_PIG_HURT", "ENTITY_ZOMBIE_PIG_HURT", "ENTITY_ZOMBIE_PIGMAN_HURT"),
+    EVENT_MOB_EFFECT_BAD_OMEN(new String[0]),
+    EVENT_MOB_EFFECT_RAID_OMEN(new String[0]),
+    EVENT_MOB_EFFECT_TRIAL_OMEN(new String[0]),
+    EVENT_RAID_HORN(new String[0]),
+    INTENTIONALLY_EMPTY(new String[0]),
+    ITEM_ARMOR_EQUIP_CHAIN(new String[0]),
+    ITEM_ARMOR_EQUIP_DIAMOND(new String[0]),
+    ITEM_ARMOR_EQUIP_ELYTRA(new String[0]),
+    ITEM_ARMOR_EQUIP_GENERIC(new String[0]),
+    ITEM_ARMOR_EQUIP_GOLD(new String[0]),
+    ITEM_ARMOR_EQUIP_IRON(new String[0]),
+    ITEM_ARMOR_EQUIP_LEATHER(new String[0]),
+    ITEM_ARMOR_EQUIP_NETHERITE(new String[0]),
+    ITEM_ARMOR_EQUIP_TURTLE(new String[0]),
+    ITEM_ARMOR_EQUIP_WOLF(new String[0]),
+    ITEM_ARMOR_UNEQUIP_WOLF(new String[0]),
+    ITEM_AXE_SCRAPE(new String[0]),
+    ITEM_AXE_STRIP(new String[0]),
+    ITEM_AXE_WAX_OFF(new String[0]),
+    ITEM_BONE_MEAL_USE(new String[0]),
+    ITEM_BOOK_PAGE_TURN(new String[0]),
+    ITEM_BOOK_PUT(new String[0]),
+    ITEM_BOTTLE_EMPTY(new String[0]),
+    ITEM_BOTTLE_FILL(new String[0]),
+    ITEM_BOTTLE_FILL_DRAGONBREATH(new String[0]),
+    ITEM_BRUSH_BRUSHING(new String[0]),
+    ITEM_BRUSH_BRUSHING_GENERIC(new String[0]),
+    ITEM_BRUSH_BRUSHING_GRAVEL(new String[0]),
+    ITEM_BRUSH_BRUSHING_GRAVEL_COMPLETE(new String[0]),
+    ITEM_BRUSH_BRUSHING_SAND(new String[0]),
+    ITEM_BRUSH_BRUSHING_SAND_COMPLETE(new String[0]),
+    ITEM_BRUSH_BRUSH_SAND_COMPLETED(new String[0]),
+    ITEM_BUCKET_EMPTY(new String[0]),
+    ITEM_BUCKET_EMPTY_AXOLOTL(new String[0]),
+    ITEM_BUCKET_EMPTY_FISH(new String[0]),
+    ITEM_BUCKET_EMPTY_LAVA(new String[0]),
+    ITEM_BUCKET_EMPTY_POWDER_SNOW(new String[0]),
+    ITEM_BUCKET_EMPTY_TADPOLE(new String[0]),
+    ITEM_BUCKET_FILL(new String[0]),
+    ITEM_BUCKET_FILL_AXOLOTL(new String[0]),
+    ITEM_BUCKET_FILL_FISH(new String[0]),
+    ITEM_BUCKET_FILL_LAVA(new String[0]),
+    ITEM_BUCKET_FILL_POWDER_SNOW(new String[0]),
+    ITEM_BUCKET_FILL_TADPOLE(new String[0]),
+    ITEM_BUNDLE_DROP_CONTENTS(new String[0]),
+    ITEM_BUNDLE_INSERT(new String[0]),
+    ITEM_BUNDLE_REMOVE_ONE(new String[0]),
+    ITEM_CHORUS_FRUIT_TELEPORT(new String[0]),
+    ITEM_CROP_PLANT(new String[0]),
+    ITEM_CROSSBOW_HIT(new String[0]),
+    ITEM_CROSSBOW_LOADING_END(new String[0]),
+    ITEM_CROSSBOW_LOADING_MIDDLE(new String[0]),
+    ITEM_CROSSBOW_LOADING_START(new String[0]),
+    ITEM_CROSSBOW_QUICK_CHARGE_1(new String[0]),
+    ITEM_CROSSBOW_QUICK_CHARGE_2(new String[0]),
+    ITEM_CROSSBOW_QUICK_CHARGE_3(new String[0]),
+    ITEM_CROSSBOW_SHOOT(new String[0]),
+    ITEM_DYE_USE(new String[0]),
+    ITEM_ELYTRA_FLYING(new String[0]),
+    ITEM_FIRECHARGE_USE(new String[0]),
+    ITEM_FLINTANDSTEEL_USE("FIRE_IGNITE"),
+    ITEM_GLOW_INK_SAC_USE(new String[0]),
+    ITEM_GOAT_HORN_PLAY(new String[0]),
+    ITEM_GOAT_HORN_SOUND_0(new String[0]),
+    ITEM_GOAT_HORN_SOUND_1(new String[0]),
+    ITEM_GOAT_HORN_SOUND_2(new String[0]),
+    ITEM_GOAT_HORN_SOUND_3(new String[0]),
+    ITEM_GOAT_HORN_SOUND_4(new String[0]),
+    ITEM_GOAT_HORN_SOUND_5(new String[0]),
+    ITEM_GOAT_HORN_SOUND_6(new String[0]),
+    ITEM_GOAT_HORN_SOUND_7(new String[0]),
+    ITEM_HOE_TILL(new String[0]),
+    ITEM_HONEYCOMB_WAX_ON(new String[0]),
+    ITEM_HONEY_BOTTLE_DRINK(new String[0]),
+    ITEM_INK_SAC_USE(new String[0]),
+    ITEM_LODESTONE_COMPASS_LOCK(new String[0]),
+    ITEM_MACE_SMASH_AIR(new String[0]),
+    ITEM_MACE_SMASH_GROUND(new String[0]),
+    ITEM_MACE_SMASH_GROUND_HEAVY(new String[0]),
+    ITEM_NETHER_WART_PLANT(new String[0]),
+    ITEM_OMINOUS_BOTTLE_DISPOSE(new String[0]),
+    ITEM_SHIELD_BLOCK(new String[0]),
+    ITEM_SHIELD_BREAK(new String[0]),
+    ITEM_SHOVEL_FLATTEN(new String[0]),
+    ITEM_SPYGLASS_STOP_USING(new String[0]),
+    ITEM_SPYGLASS_USE(new String[0]),
+    ITEM_TOTEM_USE(new String[0]),
+    ITEM_TRIDENT_HIT(new String[0]),
+    ITEM_TRIDENT_HIT_GROUND(new String[0]),
+    ITEM_TRIDENT_RETURN(new String[0]),
+    ITEM_TRIDENT_RIPTIDE_1(new String[0]),
+    ITEM_TRIDENT_RIPTIDE_2("ITEM_TRIDENT_RIPTIDE_1"),
+    ITEM_TRIDENT_RIPTIDE_3("ITEM_TRIDENT_RIPTIDE_1"),
+    ITEM_TRIDENT_THROW(new String[0]),
+    ITEM_TRIDENT_THUNDER(new String[0]),
+    ITEM_WOLF_ARMOR_BREAK(new String[0]),
+    ITEM_WOLF_ARMOR_CRACK(new String[0]),
+    ITEM_WOLF_ARMOR_DAMAGE(new String[0]),
+    ITEM_WOLF_ARMOR_REPAIR(new String[0]),
+    MUSIC_CREATIVE(new String[0]),
+    MUSIC_CREDITS(new String[0]),
+    MUSIC_DISC_11("RECORD_11"),
+    MUSIC_DISC_13("RECORD_13"),
+    MUSIC_DISC_5(new String[0]),
+    MUSIC_DISC_BLOCKS("RECORD_BLOCKS"),
+    MUSIC_DISC_CAT("RECORD_CAT"),
+    MUSIC_DISC_CHIRP("RECORD_CHIRP"),
+    MUSIC_DISC_CREATOR(new String[0]),
+    MUSIC_DISC_CREATOR_MUSIC_BOX(new String[0]),
+    MUSIC_DISC_FAR("RECORD_FAR"),
+    MUSIC_DISC_MALL("RECORD_MALL"),
+    MUSIC_DISC_MELLOHI("RECORD_MELLOHI"),
+    MUSIC_DISC_OTHERSIDE(new String[0]),
+    MUSIC_DISC_PIGSTEP(new String[0]),
+    MUSIC_DISC_PRECIPICE(new String[0]),
+    MUSIC_DISC_RELIC(new String[0]),
+    MUSIC_DISC_STAL("RECORD_STAL"),
+    MUSIC_DISC_STRAD("RECORD_STRAD"),
+    MUSIC_DISC_WAIT("RECORD_WAIT"),
+    MUSIC_DISC_WARD("RECORD_WARD"),
+    MUSIC_DRAGON(new String[0]),
+    MUSIC_END(new String[0]),
+    MUSIC_GAME(new String[0]),
+    MUSIC_MENU(new String[0]),
+    MUSIC_NETHER_BASALT_DELTAS("MUSIC_NETHER"),
+    MUSIC_NETHER_CRIMSON_FOREST(new String[0]),
+    MUSIC_NETHER_NETHER_WASTES(new String[0]),
+    MUSIC_NETHER_SOUL_SAND_VALLEY(new String[0]),
+    MUSIC_NETHER_WARPED_FOREST(new String[0]),
+    MUSIC_OVERWORLD_BADLANDS(new String[0]),
+    MUSIC_OVERWORLD_BAMBOO_JUNGLE(new String[0]),
+    MUSIC_OVERWORLD_CHERRY_GROVE(new String[0]),
+    MUSIC_OVERWORLD_DEEP_DARK(new String[0]),
+    MUSIC_OVERWORLD_DESERT(new String[0]),
+    MUSIC_OVERWORLD_DRIPSTONE_CAVES(new String[0]),
+    MUSIC_OVERWORLD_FLOWER_FOREST(new String[0]),
+    MUSIC_OVERWORLD_FOREST(new String[0]),
+    MUSIC_OVERWORLD_FROZEN_PEAKS(new String[0]),
+    MUSIC_OVERWORLD_GROVE(new String[0]),
+    MUSIC_OVERWORLD_JAGGED_PEAKS(new String[0]),
+    MUSIC_OVERWORLD_JUNGLE(new String[0]),
+    MUSIC_OVERWORLD_JUNGLE_AND_FOREST(new String[0]),
+    MUSIC_OVERWORLD_LUSH_CAVES(new String[0]),
+    MUSIC_OVERWORLD_MEADOW(new String[0]),
+    MUSIC_OVERWORLD_OLD_GROWTH_TAIGA(new String[0]),
+    MUSIC_OVERWORLD_SNOWY_SLOPES(new String[0]),
+    MUSIC_OVERWORLD_SPARSE_JUNGLE(new String[0]),
+    MUSIC_OVERWORLD_STONY_PEAKS(new String[0]),
+    MUSIC_OVERWORLD_SWAMP(new String[0]),
+    MUSIC_UNDER_WATER(new String[0]),
+    PARTICLE_SOUL_ESCAPE(new String[0]),
+    UI_BUTTON_CLICK("CLICK"),
+    UI_CARTOGRAPHY_TABLE_TAKE_RESULT(new String[0]),
+    UI_LOOM_SELECT_PATTERN(new String[0]),
+    UI_LOOM_TAKE_RESULT(new String[0]),
+    UI_STONECUTTER_SELECT_RECIPE(new String[0]),
+    UI_STONECUTTER_TAKE_RESULT(new String[0]),
+    UI_TOAST_CHALLENGE_COMPLETE(new String[0]),
+    UI_TOAST_IN(new String[0]),
+    UI_TOAST_OUT(new String[0]),
+    WEATHER_RAIN("AMBIENCE_RAIN"),
+    WEATHER_RAIN_ABOVE(new String[0]);
+
+    public static final XSound[] VALUES;
+    public static final @Unmodifiable Set<XSound> MUSIC;
+    public static final float DEFAULT_VOLUME = 1.0f;
+    public static final float DEFAULT_PITCH = 1.0f;
+    public static final Pattern NAMESPACED_SOUND_PATTERN;
+    public static final Pattern RECORD_PATTERN;
+    @Nullable
+    private final Sound sound;
+
+    private XSound(String ... stringArray) {
+        Sound sound = (Sound)Data.BUKKIT_NAMES.get(this.name());
+        if (sound == null) {
+            for (String string2 : stringArray) {
+                sound = (Sound)Data.BUKKIT_NAMES.get(string2);
+                if (sound != null) break;
+            }
+        }
+        this.sound = sound;
+        Data.NAMES.put(this.name(), this);
+        for (String string2 : stringArray) {
+            Data.NAMES.putIfAbsent(string2, this);
+        }
+    }
+
+    @Nonnull
+    private static String format(@Nonnull String string) {
+        int n = string.length();
+        char[] cArray = new char[n];
+        int n2 = 0;
+        boolean bl = false;
+        for (int i = 0; i < n; ++i) {
+            char c = string.charAt(i);
+            if (!(bl || n2 == 0 || c != '-' && c != ' ' && c != '_' || cArray[n2] == '_')) {
+                bl = true;
+                continue;
+            }
+            boolean bl2 = false;
+            if (!(c >= 'A' && c <= 'Z' || c >= 'a' && c <= 'z') && !(bl2 = c >= '0' && c <= '9')) continue;
+            if (bl) {
+                cArray[n2++] = 95;
+                bl = false;
+            }
+            cArray[n2++] = bl2 ? c : (char)(c & 0x5F);
+        }
+        return new String(cArray, 0, n2);
+    }
+
+    @Nonnull
+    public static Optional<XSound> matchXSound(@Nonnull String string) {
+        if (string == null || string.isEmpty()) {
+            throw new IllegalArgumentException("Cannot match XSound of a null or empty sound name");
+        }
+        return Optional.ofNullable((XSound)((Object)Data.NAMES.get(XSound.format(string))));
+    }
+
+    @Nonnull
+    public static XSound matchXSound(@Nonnull Sound sound) {
+        Objects.requireNonNull(sound, "Cannot match XSound of a null sound");
+        return Objects.requireNonNull((XSound)((Object)Data.NAMES.get(sound.name())), () -> "Unsupported sound: " + sound.name());
+    }
+
+    private static List<String> split(@Nonnull String string, char c) {
+        ArrayList<String> arrayList = new ArrayList<String>(4);
+        boolean bl = false;
+        boolean bl2 = false;
+        int n = string.length();
+        int n2 = 0;
+        for (int i = 0; i < n; ++i) {
+            if (string.charAt(i) == c) {
+                if (bl) {
+                    arrayList.add(string.substring(n2, i));
+                    bl = false;
+                    bl2 = true;
+                }
+                n2 = i + 1;
+                continue;
+            }
+            bl2 = false;
+            bl = true;
+        }
+        if (bl || bl2) {
+            arrayList.add(string.substring(n2, n));
+        }
+        return arrayList;
+    }
+
+    @Nullable
+    public static Record play(@Nullable String string, Consumer<SoundPlayer> consumer) {
+        Record record;
+        try {
+            record = XSound.parse(string);
+        }
+        catch (Throwable throwable) {
+            return null;
+        }
+        if (record == null) {
+            return null;
+        }
+        SoundPlayer soundPlayer = record.soundPlayer();
+        consumer.accept(soundPlayer);
+        soundPlayer.play();
+        return record;
+    }
+
+    /*
+     * Enabled force condition propagation
+     * Lifted jumps to return sites
+     */
+    @Nullable
+    public static Record parse(@Nullable String string) {
+        String string2;
+        Optional<XSound> optional;
+        if (Strings.isNullOrEmpty((String)string) || string.equalsIgnoreCase("none")) {
+            return null;
+        }
+        List<String> list = XSound.split(string.replace(" ", ""), ',');
+        Record record = new Record();
+        String string3 = list.get(0);
+        if (string3.charAt(0) == '~') {
+            string3 = string3.substring(1);
+            record.publicSound(true);
+        } else {
+            record.publicSound(false);
+        }
+        if (string3.isEmpty()) {
+            throw new IllegalArgumentException("No sound name specified: " + string);
+        }
+        int n = string3.indexOf(64);
+        if (n != -1) {
+            optional = string3.substring(0, n);
+            string2 = string3.substring(n + 1);
+            Category category = (Category)((Object)Enums.getIfPresent(Category.class, (String)((String)((Object)optional)).toUpperCase(Locale.ENGLISH)).orNull());
+            if (category == null) {
+                throw new IllegalArgumentException("Unknown sound category '" + (String)((Object)optional) + "' in: " + string);
+            }
+            record.inCategory(category);
+        } else {
+            string2 = string3;
+        }
+        if (string2.isEmpty()) {
+            throw new IllegalArgumentException("No sound name specified: " + string3);
+        }
+        optional = XSound.matchXSound(string2);
+        if (!optional.isPresent()) {
+            if (string2.indexOf(58) == -1) throw new IllegalArgumentException("Unknown sound: " + string3);
+            if (!NAMESPACED_SOUND_PATTERN.matcher(string2 = string2.toLowerCase(Locale.ENGLISH)).matches()) {
+                throw new IllegalArgumentException("Unknown sound '" + string2 + "', invalid namespace characters: " + string3);
+            }
+            record.withSound(string2);
+        } else {
+            record.withSound((XSound)((Object)optional.get()));
+        }
+        try {
+            if (list.size() > 1) {
+                record.withVolume(Float.parseFloat(list.get(1)));
+            }
+        }
+        catch (NumberFormatException numberFormatException) {
+            throw new NumberFormatException("Invalid number '" + list.get(1) + "' for sound volume '" + string + '\'');
+        }
+        try {
+            if (list.size() > 2) {
+                record.withPitch(Float.parseFloat(list.get(2)));
+            }
+        }
+        catch (NumberFormatException numberFormatException) {
+            throw new NumberFormatException("Invalid number '" + list.get(2) + "' for sound pitch '" + string + '\'');
+        }
+        try {
+            if (list.size() <= 3) return record;
+            record.withSeed(Long.parseLong(list.get(3)));
+            return record;
+        }
+        catch (NumberFormatException numberFormatException) {
+            throw new NumberFormatException("Invalid number '" + list.get(3) + "' for sound seed '" + string + '\'');
+        }
+    }
+
+    public static void stopMusic(@Nonnull Player player) {
+        Objects.requireNonNull(player, "Cannot stop playing musics from null player");
+        for (XSound xSound : MUSIC) {
+            Sound sound = xSound.parseSound();
+            if (sound == null) continue;
+            player.stopSound(sound);
+        }
+    }
+
+    public String toString() {
+        return Arrays.stream(this.name().split("_")).map(string -> string.charAt(0) + string.substring(1).toLowerCase()).collect(Collectors.joining(" "));
+    }
+
+    @Nullable
+    public Sound parseSound() {
+        return this.sound;
+    }
+
+    public boolean isSupported() {
+        return this.parseSound() != null;
+    }
+
+    @Nullable
+    public XSound or(@Nullable XSound xSound) {
+        return this.isSupported() ? this : xSound;
+    }
+
+    public void stopSound(@Nonnull Player player) {
+        Objects.requireNonNull(player, "Cannot stop playing sound from null player");
+        Sound sound = this.parseSound();
+        if (sound != null) {
+            player.stopSound(sound);
+        }
+    }
+
+    public void play(@Nonnull Entity entity) {
+        Objects.requireNonNull(entity, "Cannot play sound for null entity");
+        SoundPlayer soundPlayer = this.record().soundPlayer();
+        if (entity instanceof Player) {
+            soundPlayer.forPlayers((Player)entity);
+        } else if (entity instanceof LivingEntity) {
+            soundPlayer.atLocation(((LivingEntity)entity).getEyeLocation());
+        } else {
+            soundPlayer.atLocation(entity.getLocation());
+        }
+        soundPlayer.play();
+    }
+
+    public void play(@Nonnull Location location) {
+        Objects.requireNonNull(location, "Cannot play sound at null location");
+        this.record().soundPlayer().atLocation(location).play();
+    }
+
+    public void play(@Nonnull Entity entity, float f, float f2) {
+        if (!(entity instanceof Player)) {
+            Location location = entity instanceof LivingEntity ? ((LivingEntity)entity).getEyeLocation() : entity.getLocation();
+            this.play(location, f, f2);
+            return;
+        }
+        this.record().withVolume(f).withPitch(f2).soundPlayer().forPlayers((Player)entity).play();
+    }
+
+    public void play(@Nonnull Location location, float f, float f2) {
+        this.record().withVolume(f).withPitch(f2).soundPlayer().atLocation(location).play();
+    }
+
+    public Record record() {
+        return new Record().withSound(this);
+    }
+
+    /*
+     * Opcode count of 14424 triggered aggressive code reduction.  Override with --aggressivesizethreshold.
+     */
+    static {
+        VALUES = XSound.values();
+        MUSIC = Collections.unmodifiableSet(EnumSet.copyOf(Arrays.stream(VALUES).filter(xSound -> xSound.name().startsWith("MUSIC")).collect(Collectors.toList())));
+        NAMESPACED_SOUND_PATTERN = Pattern.compile("(?<namespace>[a-z0-9._-]+):(?<key>[a-z0-9/._-]+)");
+        RECORD_PATTERN = Pattern.compile("\\s*(?<atLocation>~)?\\s*(?:(?<category>[\\w$_]+)@)?(?<sound>[\\w$_]+|" + NAMESPACED_SOUND_PATTERN.pattern() + ")\\s*(?:,\\s*(?<volume>[+-]?(?:\\d*\\.)?\\d+)\\s*(?:,\\s*(?<pitch>[+-]?(?:\\d*\\.)?\\d+))?)?\\s*");
+    }
+
+    private static final class Data {
+        private static final WeakHashMap<String, Sound> BUKKIT_NAMES = new WeakHashMap();
+        private static final Map<String, XSound> NAMES = new HashMap<String, XSound>();
+
+        private Data() {
+        }
+
+        static {
+            for (Sound sound : Sound.values()) {
+                BUKKIT_NAMES.put(sound.name(), sound);
+            }
+        }
+    }
+
+    public static class Record
+    implements Cloneable {
+        private static final Random RANDOM = new Random();
+        private Object sound;
+        @Nonnull
+        private Category category = Category.MASTER;
+        @Nullable
+        private Long seed;
+        private float volume = 1.0f;
+        private float pitch = 1.0f;
+        private boolean publicSound;
+
+        @Nullable
+        public Long getSeed() {
+            return this.seed;
+        }
+
+        public Object getSound() {
+            return this.sound;
+        }
+
+        @Nonnull
+        public Category getCategory() {
+            return this.category;
+        }
+
+        public float getVolume() {
+            return this.volume;
+        }
+
+        public float getPitch() {
+            return this.pitch;
+        }
+
+        public Record inCategory(Category category) {
+            this.category = Objects.requireNonNull(category, "Sound category cannot be null");
+            return this;
+        }
+
+        public SoundPlayer soundPlayer() {
+            return new SoundPlayer(this);
+        }
+
+        public Record withSound(@Nonnull XSound xSound) {
+            Objects.requireNonNull(xSound, "Cannot play a null sound");
+            this.sound = xSound;
+            return this;
+        }
+
+        public Record withSound(@Nonnull String string) {
+            Objects.requireNonNull(string, "Cannot play a null sound");
+            string = string.toLowerCase(Locale.ENGLISH);
+            if (string.indexOf(58) < 0) {
+                throw new IllegalArgumentException("Raw sound name doesn't contain both namespace and key: " + string);
+            }
+            this.sound = string;
+            return this;
+        }
+
+        public long generateSeed() {
+            return this.seed == null ? RANDOM.nextLong() : this.seed.longValue();
+        }
+
+        public Record withVolume(float f) {
+            this.volume = f;
+            return this;
+        }
+
+        public Record publicSound(boolean bl) {
+            this.publicSound = bl;
+            return this;
+        }
+
+        public Record withPitch(float f) {
+            this.pitch = f;
+            return this;
+        }
+
+        public Record withSeed(Long l) {
+            this.seed = l;
+            return this;
+        }
+
+        public String rebuild() {
+            String string = "";
+            if (this.publicSound) {
+                string = string + "~";
+            }
+            if (this.category != Category.MASTER) {
+                string = string + this.category.name();
+            }
+            string = string + this.sound + ", " + this.volume + ", " + this.pitch;
+            if (this.seed != null) {
+                string = string + ", " + this.seed;
+            }
+            return string;
+        }
+
+        public String toString() {
+            return "Record{sound=" + this.sound + ", category=" + (Object)((Object)this.category) + ", seed=" + this.seed + ", volume=" + this.volume + ", pitch=" + this.pitch + ", publicSound=" + this.publicSound + '}';
+        }
+
+        public Record clone() {
+            Record record = new Record();
+            record.sound = this.sound;
+            record.volume = this.volume;
+            record.pitch = this.pitch;
+            record.publicSound = this.publicSound;
+            record.seed = this.seed;
+            return record;
+        }
+    }
+
+    public static class SoundPlayer {
+        private static final byte SUPPORTED_METHOD_LEVEL;
+        public Record record;
+        public Set<UUID> players = new HashSet<UUID>(10);
+        public Set<UUID> heard = new HashSet<UUID>();
+        @Nullable
+        public Location location;
+
+        public SoundPlayer(Record record) {
+            this.withRecord(record);
+        }
+
+        public SoundPlayer withRecord(Record record) {
+            this.record = Objects.requireNonNull(record, "Cannot play a null record");
+            return this;
+        }
+
+        public SoundPlayer forPlayers(Player ... playerArray) {
+            this.players.clear();
+            if (playerArray != null && playerArray.length > 0) {
+                this.players.addAll(Arrays.stream(playerArray).map(Entity::getUniqueId).collect(Collectors.toSet()));
+            }
+            return this;
+        }
+
+        public SoundPlayer atLocation(@Nullable Location location) {
+            this.location = location;
+            return this;
+        }
+
+        public SoundPlayer forPlayers(@Nullable Collection<Player> collection) {
+            this.players.clear();
+            this.players.addAll(collection.stream().map(Entity::getUniqueId).collect(Collectors.toList()));
+            return this;
+        }
+
+        public Collection<Player> getHearingPlayers() {
+            if (this.record.publicSound || this.players.isEmpty()) {
+                Location location;
+                if (this.location == null) {
+                    if (this.players.size() != 1) {
+                        throw new IllegalStateException("Cannot play public sound when no location is specified: " + this);
+                    }
+                    Player player = Bukkit.getPlayer((UUID)this.players.iterator().next());
+                    if (player == null) {
+                        return new ArrayList<Player>();
+                    }
+                    location = player.getEyeLocation();
+                } else {
+                    location = this.location;
+                }
+                return SoundPlayer.getHearingPlayers(location, this.record.volume);
+            }
+            return SoundPlayer.toOnlinePlayers(this.players, Collectors.toList());
+        }
+
+        @Nonnull
+        public static Collection<Player> getHearingPlayers(Location location, double d) {
+            d = d > 1.0 ? 16.0 * d : 16.0;
+            double d2 = d * d;
+            List list = location.getWorld().getPlayers();
+            ArrayList<Player> arrayList = new ArrayList<Player>(list.size());
+            double d3 = location.getX();
+            double d4 = location.getY();
+            double d5 = location.getZ();
+            for (Player player : list) {
+                double d6;
+                double d7;
+                Location location2 = player.getLocation();
+                double d8 = d3 - location2.getX();
+                double d9 = d8 * d8 + (d7 = d4 - location2.getY()) * d7 + (d6 = d5 - location2.getZ()) * d6;
+                if (!(d9 < d2)) continue;
+                arrayList.add(player);
+            }
+            return arrayList;
+        }
+
+        /*
+         * Enabled force condition propagation
+         * Lifted jumps to return sites
+         */
+        public void play() {
+            Location location;
+            if (this.location == null) {
+                if (this.players.size() != 1) throw new IllegalStateException("Cannot play sound when there is no location available");
+                UUID uUID = this.players.iterator().next();
+                Player player = Bukkit.getPlayer((UUID)uUID);
+                if (player == null) {
+                    return;
+                }
+                location = player.getEyeLocation();
+            } else {
+                location = this.location;
+            }
+            this.play(location);
+        }
+
+        public void play(@Nonnull Location location) {
+            Collection<Player> collection = this.getHearingPlayers();
+            this.heard = collection.stream().map(Entity::getUniqueId).collect(Collectors.toSet());
+            if (collection.isEmpty()) {
+                return;
+            }
+            this.play(collection, location);
+        }
+
+        private static <A, R> R toOnlinePlayers(Collection<UUID> collection, Collector<Player, A, R> collector) {
+            return collection.stream().map(Bukkit::getPlayer).filter(Objects::nonNull).collect(collector);
+        }
+
+        public void play(Collection<Player> collection, @Nonnull Location location) {
+            Objects.requireNonNull(location, "Cannot play sound at null location");
+            Sound sound = this.record.sound instanceof XSound ? ((XSound)((Object)this.record.sound)).parseSound() : null;
+            String string = this.record.sound instanceof String ? (String)this.record.sound : null;
+            block5: for (Player player : collection) {
+                switch (SUPPORTED_METHOD_LEVEL) {
+                    case 3: {
+                        if (sound != null) {
+                            player.playSound(location, sound, (SoundCategory)this.record.category.getBukkitObject(), this.record.volume, this.record.pitch, this.record.generateSeed());
+                            continue block5;
+                        }
+                        player.playSound(location, string, (SoundCategory)this.record.category.getBukkitObject(), this.record.volume, this.record.pitch, this.record.generateSeed());
+                        continue block5;
+                    }
+                    case 2: {
+                        if (sound != null) {
+                            player.playSound(location, sound, (SoundCategory)this.record.category.getBukkitObject(), this.record.volume, this.record.pitch);
+                            continue block5;
+                        }
+                        player.playSound(location, string, (SoundCategory)this.record.category.getBukkitObject(), this.record.volume, this.record.pitch);
+                        continue block5;
+                    }
+                    case 1: {
+                        if (sound != null) {
+                            player.playSound(location, sound, this.record.volume, this.record.pitch);
+                            continue block5;
+                        }
+                        player.playSound(location, string, this.record.volume, this.record.pitch);
+                        continue block5;
+                    }
+                }
+                throw new IllegalStateException("Unknown format: " + SUPPORTED_METHOD_LEVEL);
+            }
+        }
+
+        public void stopSound() {
+            if (this.heard == null || this.heard.isEmpty()) {
+                return;
+            }
+            List<Player> list = SoundPlayer.toOnlinePlayers(this.heard, Collectors.toList());
+            list.forEach(player -> {
+                if (this.record.sound instanceof XSound) {
+                    player.stopSound(((XSound)((Object)((Object)this.record.sound))).parseSound());
+                } else {
+                    player.stopSound((String)this.record.sound);
+                }
+            });
+        }
+
+        static {
+            int n;
+            try {
+                Player.class.getDeclaredMethod("playSound", Location.class, String.class, SoundCategory.class, Float.TYPE, Float.TYPE, Long.TYPE);
+                n = 3;
+            }
+            catch (Throwable throwable) {
+                try {
+                    Player.class.getDeclaredMethod("playSound", Location.class, String.class, SoundCategory.class, Float.TYPE, Float.TYPE);
+                    n = 2;
+                }
+                catch (Throwable throwable2) {
+                    try {
+                        Player.class.getDeclaredMethod("playSound", Location.class, Sound.class, Float.TYPE, Float.TYPE);
+                        n = 1;
+                    }
+                    catch (Throwable throwable3) {
+                        throw new RuntimeException("None of sound methods are supported", throwable3);
+                    }
+                }
+            }
+            SUPPORTED_METHOD_LEVEL = (byte)n;
+        }
+    }
+
+    public static enum Category {
+        MASTER,
+        MUSIC,
+        RECORDS,
+        WEATHER,
+        BLOCKS,
+        HOSTILE,
+        NEUTRAL,
+        PLAYERS,
+        AMBIENT,
+        VOICE;
+
+        private final Object bukkitObject;
+
+        public boolean isSupported() {
+            return this.bukkitObject != null;
+        }
+
+        private static <T> T cast(Object object) {
+            return (T)object;
+        }
+
+        private Category() {
+            Object object = null;
+            try {
+                object = Enums.getIfPresent((Class)((Class)Category.cast(Class.forName("org.bukkit.SoundCategory"))), (String)this.name()).orNull();
+            }
+            catch (ClassNotFoundException classNotFoundException) {
+                // empty catch block
+            }
+            this.bukkitObject = object;
+        }
+
+        public Object getBukkitObject() {
+            return this.bukkitObject;
+        }
+    }
+}
+
