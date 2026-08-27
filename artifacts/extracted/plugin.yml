@@ -25,12 +25,11 @@ commands:
   valoriatycoon:
     description: Commande principale de ValoriaTycoon
     usage: /valoriatycoon
-    aliases: [ vt, vtc, valoria, tycoon ]
   generators:
     description: Affiche la liste des générateurs dans une interface
     usage: /generators
-    aliases: [ gen, gens, gshop ]
+    aliases: [ gen ]
   selldrops:
     description: Vend les drops présents dans l'inventaire
     usage: /selldrops
-    aliases: [ sd, sell, sellall, sa, sellhand, sh, sellgui, sg, vendre ]
+    aliases: [ sell ]

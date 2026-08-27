@@ -50,7 +50,7 @@ scripts/
 2. Installez les dépendances obligatoires.
 3. Redémarrez le serveur.
 4. Modifiez les fichiers générés dans `plugins/ValoriaTycoon/` selon vos besoins.
-5. Utilisez `/vt rl` ou `/valoriatycoon reload` après modification de la configuration.
+5. Utilisez `/valoriatycoon reload` après modification de la configuration.
 
 ## Dépendances
 
@@ -75,22 +75,22 @@ scripts/
 
 ## Commandes
 
-| Commande complète | Raccourci | Description |
-| --- | --- | --- |
-| `/valoriatycoon` | `/vt` | Affiche la version du plugin. |
-| `/valoriatycoon help` | `/vt h` | Affiche l'aide des commandes. |
-| `/valoriatycoon give <joueur> <palier> [quantité]` | `/vt g <joueur> <palier> [quantité]` | Donne un générateur à un joueur. |
-| `/valoriatycoon giveall <palier> [quantité]` | `/vt ga <palier> [quantité]` | Donne un générateur à tous les joueurs connectés. |
-| `/valoriatycoon wand sell <joueur> <utilisations> <multiplicateur>` | `/vt w s <joueur> <utilisations> <multiplicateur>` | Donne une baguette de vente à un joueur. |
-| `/valoriatycoon setlimit <joueur> <limite>` | `/vt sl <joueur> <limite>` | Définit la limite de générateurs d'un joueur. |
-| `/valoriatycoon addlimit <joueur> <limite>` | `/vt al <joueur> <limite>` | Ajoute une valeur à la limite d'un joueur. |
-| `/valoriatycoon startevent <nom>` | `/vt se <nom>` | Démarre un événement manuellement. |
-| `/valoriatycoon stopevent` | `/vt ee` | Arrête l'événement en cours. |
-| `/valoriatycoon reload` | `/vt rl` | Recharge la configuration du plugin. |
-| `/generators` | `/gen` | Ouvre l'interface d'achat des générateurs. |
-| `/selldrops hand` | `/sd h` ou `/sh` | Vend les drops tenus en main. |
-| `/selldrops all` | `/sd a` ou `/sa` | Vend tous les drops de l'inventaire. |
-| `/selldrops gui` | `/sd g` ou `/sg` | Ouvre l'interface de vente. |
+| Commande | Description |
+| --- | --- |
+| `/valoriatycoon` | Affiche la version du plugin. |
+| `/valoriatycoon help` | Affiche l'aide des commandes. |
+| `/valoriatycoon give <joueur> <palier> [quantité]` | Donne un générateur à un joueur. |
+| `/valoriatycoon giveall <palier> [quantité]` | Donne un générateur à tous les joueurs connectés. |
+| `/valoriatycoon wand sell <joueur> <utilisations> <multiplicateur>` | Donne une baguette de vente à un joueur. |
+| `/valoriatycoon setlimit <joueur> <limite>` | Définit la limite de générateurs d'un joueur. |
+| `/valoriatycoon addlimit <joueur> <limite>` | Ajoute une valeur à la limite d'un joueur. |
+| `/valoriatycoon startevent <nom>` | Démarre un événement manuellement. |
+| `/valoriatycoon stopevent` | Arrête l'événement en cours. |
+| `/valoriatycoon reload` | Recharge la configuration du plugin. |
+| `/generators` ou `/gen` | Ouvre l'interface d'achat des générateurs. |
+| `/selldrops hand` ou `/sell hand` | Vend les drops tenus en main. |
+| `/selldrops all` ou `/sell all` | Vend tous les drops de l'inventaire. |
+| `/selldrops gui` ou `/sell gui` | Ouvre l'interface de vente. |
 
 ## Permissions
 
@@ -112,10 +112,6 @@ scripts/
 | `valoriatycoon.admin.setlimit` | Modifier la limite d'un joueur. |
 | `valoriatycoon.admin.addlimit` | Ajouter une limite à un joueur. |
 | `valoriatycoon.admin.givewand` | Donner une baguette de vente. |
-
-### Alias rapides
-
-Les alias principaux disponibles sont `/vt`, `/gen`, `/sd`, `/sa`, `/sh` et `/sg`.
 
 ## Configuration
 

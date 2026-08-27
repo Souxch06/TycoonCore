@@ -30,41 +30,11 @@ implements Listener {
             return;
         }
         if (stringArray.length < 2) {
-            if (SellCommandListener.matches(string, "sellall", "sa")) {
-                if (!player.hasPermission(Permissions.GENERATOR_DROPS_SELL_ALL.getPermission(new String[0]))) {
-                    Messages.NO_PERMISSION.format(new Object[0]).send((CommandSender)player);
-                    playerCommandPreprocessEvent.setCancelled(true);
-                    return;
-                }
-                SellUtil.sellAll(player, (Inventory)player.getInventory(), new boolean[0]);
-                playerCommandPreprocessEvent.setCancelled(true);
-                return;
-            }
-            if (SellCommandListener.matches(string, "sellhand", "sh")) {
-                if (!player.hasPermission(Permissions.GENERATOR_DROPS_SELL_HAND.getPermission(new String[0]))) {
-                    Messages.NO_PERMISSION.format(new Object[0]).send((CommandSender)player);
-                    playerCommandPreprocessEvent.setCancelled(true);
-                    return;
-                }
-                SellUtil.sellHand(player);
-                playerCommandPreprocessEvent.setCancelled(true);
-                return;
-            }
-            if (SellCommandListener.matches(string, "sellgui", "sg")) {
-                if (!player.hasPermission(Permissions.GENERATOR_DROPS_SELL_GUI.getPermission(new String[0]))) {
-                    Messages.NO_PERMISSION.format(new Object[0]).send((CommandSender)player);
-                    playerCommandPreprocessEvent.setCancelled(true);
-                    return;
-                }
-                SellGui.open(player);
-                playerCommandPreprocessEvent.setCancelled(true);
-                return;
-            }
             Messages.NOT_ENOUGH_ARGUMENTS.format(new Object[0]).send((CommandSender)player);
             playerCommandPreprocessEvent.setCancelled(true);
             return;
         }
-        if (SellCommandListener.matches(stringArray[1], "all", "a")) {
+        if (stringArray[1].equalsIgnoreCase("all")) {
             if (!player.hasPermission(Permissions.GENERATOR_DROPS_SELL_ALL.getPermission(new String[0]))) {
                 Messages.NO_PERMISSION.format(new Object[0]).send((CommandSender)player);
                 return;
@@ -73,7 +43,7 @@ implements Listener {
             playerCommandPreprocessEvent.setCancelled(true);
             return;
         }
-        if (SellCommandListener.matches(stringArray[1], "hand", "h", "main")) {
+        if (stringArray[1].equalsIgnoreCase("hand")) {
             if (!player.hasPermission(Permissions.GENERATOR_DROPS_SELL_HAND.getPermission(new String[0]))) {
                 Messages.NO_PERMISSION.format(new Object[0]).send((CommandSender)player);
                 return;
@@ -82,7 +52,7 @@ implements Listener {
             playerCommandPreprocessEvent.setCancelled(true);
             return;
         }
-        if (SellCommandListener.matches(stringArray[1], "gui", "g", "menu")) {
+        if (stringArray[1].equalsIgnoreCase("gui")) {
             if (!player.hasPermission(Permissions.GENERATOR_DROPS_SELL_GUI.getPermission(new String[0]))) {
                 Messages.NO_PERMISSION.format(new Object[0]).send((CommandSender)player);
                 return;
@@ -90,22 +60,6 @@ implements Listener {
             SellGui.open(player);
             playerCommandPreprocessEvent.setCancelled(true);
         }
-    }
-
-    private static boolean matches(String string, String ... stringArray) {
-        if (string == null) {
-            return false;
-        }
-        String[] stringArray2 = stringArray;
-        int n = stringArray.length;
-        int n2 = 0;
-        while (n2 < n) {
-            if (string.equalsIgnoreCase(stringArray2[n2])) {
-                return true;
-            }
-            ++n2;
-        }
-        return false;
     }
 }
 

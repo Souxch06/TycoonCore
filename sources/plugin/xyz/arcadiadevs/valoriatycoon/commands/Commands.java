@@ -1,7 +1,6 @@
 package xyz.arcadiadevs.valoriatycoon.commands;
 
 import com.awaitquality.api.spigot.chat.ChatUtil;
-import java.util.Arrays;
 import java.util.List;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
@@ -41,29 +40,24 @@ implements CommandExecutor {
     public boolean onCommand(@NotNull CommandSender commandSender, @NotNull Command command, @NotNull String string, @NotNull String[] stringArray) {
         Object object;
         boolean bl = commandSender.hasPermission(Permissions.ADMIN.getPermission(new String[0]));
-        if (Commands.matches(command.getName(), "valoriatycoon", "vt", "vtc", "valoria", "tycoon") || Commands.matches(string, "valoriatycoon", "vt", "vtc", "valoria", "tycoon")) {
+        if (command.getName().equalsIgnoreCase("valoriatycoon")) {
             Object object2;
             if (stringArray.length == 0) {
                 Messages.DEFAULT_MESSAGE.format("version", ValoriaTycoon.getInstance().getDescription().getVersion()).send(commandSender);
                 return true;
             }
-            if (Commands.matches(stringArray[0], "help", "h", "?")) {
+            if (stringArray[0].equalsIgnoreCase("help")) {
                 ChatUtil.sendMessage(commandSender, "&9Commandes ValoriaTycoon :");
-                ChatUtil.sendMessage(commandSender, "&7- /vt : affiche la version du plugin");
-                ChatUtil.sendMessage(commandSender, "&7- /vt h : affiche cette aide");
-                ChatUtil.sendMessage(commandSender, "&7- /vt g <joueur> <palier> [quantité] : donne un générateur");
-                ChatUtil.sendMessage(commandSender, "&7- /vt ga <palier> [quantité] : donne un générateur à tous les joueurs");
-                ChatUtil.sendMessage(commandSender, "&7- /vt w s <joueur> <utilisations> <multiplicateur> : donne une baguette de vente");
-                ChatUtil.sendMessage(commandSender, "&7- /vt sl <joueur> <limite> : définit la limite de générateurs");
-                ChatUtil.sendMessage(commandSender, "&7- /vt al <joueur> <limite> : ajoute une limite de générateurs");
-                ChatUtil.sendMessage(commandSender, "&7- /vt se <nom> : démarre un événement");
-                ChatUtil.sendMessage(commandSender, "&7- /vt ee : arrête l'événement en cours");
-                ChatUtil.sendMessage(commandSender, "&7- /vt rl : recharge le plugin");
-                ChatUtil.sendMessage(commandSender, "&7- /sd a/h/g ou /sa /sh /sg : vend les drops ou ouvre l'interface");
+                ChatUtil.sendMessage(commandSender, "&7- /valoriatycoon : affiche la version du plugin");
+                ChatUtil.sendMessage(commandSender, "&7- /valoriatycoon give <joueur> <palier> [quantité] : donne un générateur à un joueur");
+                ChatUtil.sendMessage(commandSender, "&7- /valoriatycoon giveall <palier> [quantité] : donne un générateur à tous les joueurs");
+                ChatUtil.sendMessage(commandSender, "&7- /valoriatycoon wand sell <joueur> <utilisations> <multiplicateur> : donne une baguette de vente à un joueur");
+                ChatUtil.sendMessage(commandSender, "&7- /valoriatycoon setlimit <joueur> <limite> : définit la limite de générateurs d'un joueur");
+                ChatUtil.sendMessage(commandSender, "&7- /sell hand/all : vend les drops en main ou dans votre inventaire");
                 ChatUtil.sendMessage(commandSender, "&7- /gen : affiche tous les générateurs");
                 return true;
             }
-            if (Commands.matches(stringArray[0], "list", "l")) {
+            if (stringArray[0].equalsIgnoreCase("list")) {
                 if (!bl) {
                     Messages.NO_PERMISSION.format(new Object[0]).send(commandSender);
                     return true;
@@ -72,7 +66,7 @@ implements CommandExecutor {
                 ListGui.open(player.getPlayer());
                 return true;
             }
-            if (Commands.matches(stringArray[0], "setlimit", "sl")) {
+            if (stringArray[0].equalsIgnoreCase("setlimit")) {
                 if (!bl) {
                     Messages.NO_PERMISSION.format(new Object[0]).send(commandSender);
                     return true;
@@ -95,7 +89,7 @@ implements CommandExecutor {
                 Messages.LIMIT_UPDATED.format("limit", stringArray[2], "player", player.getName()).send(commandSender);
                 return true;
             }
-            if (Commands.matches(stringArray[0], "addlimit", "al")) {
+            if (stringArray[0].equalsIgnoreCase("addlimit")) {
                 if (!bl) {
                     Messages.NO_PERMISSION.format(new Object[0]).send(commandSender);
                     return true;
@@ -117,12 +111,12 @@ implements CommandExecutor {
                 PlayerData.Data.addToLimit((PlayerData.Data)object2, Integer.parseInt(stringArray[2]));
                 Messages.LIMIT_UPDATED.format("limit", ((PlayerData.Data)object2).getLimit(), "player", object.getName()).send(commandSender);
             }
-            if (Commands.matches(stringArray[0], "wand", "w")) {
+            if (stringArray[0].equalsIgnoreCase("wand")) {
                 if (stringArray.length < 2) {
                     Messages.NOT_ENOUGH_ARGUMENTS.format(new Object[0]).send(commandSender);
                     return true;
                 }
-                if (Commands.matches(stringArray[1], "sell", "s")) {
+                if (stringArray[1].equalsIgnoreCase("sell")) {
                     if (!commandSender.hasPermission(Permissions.GIVE_WAND.getPermission(new String[0]))) {
                         Messages.NO_PERMISSION.format(new Object[0]).send(commandSender);
                         return true;
@@ -143,7 +137,7 @@ implements CommandExecutor {
                 }
                 return true;
             }
-            if (Commands.matches(stringArray[0], "startevent", "se", "start")) {
+            if (stringArray[0].equalsIgnoreCase("startevent")) {
                 if (stringArray.length < 2) {
                     Messages.NOT_ENOUGH_ARGUMENTS.format(new Object[0]).send(commandSender);
                     return true;
@@ -152,7 +146,7 @@ implements CommandExecutor {
                     Messages.EVENT_ALREADY_RUNNING.format(new Object[0]).send(commandSender);
                     return true;
                 }
-                object = String.join((CharSequence)" ", Arrays.copyOfRange(stringArray, 1, stringArray.length));
+                object = String.join((CharSequence)" ", stringArray).substring(11);
                 object2 = this.events.stream().filter(arg_0 -> Commands.lambda$0((String)object, arg_0)).findFirst().orElse(null);
                 if (object2 == null) {
                     Messages.EVENT_NOT_FOUND.format(new Object[0]).send(commandSender);
@@ -160,10 +154,10 @@ implements CommandExecutor {
                 }
                 EventLoop.setNextEvent((Event)object2);
             }
-            if (Commands.matches(stringArray[0], "stopevent", "ee", "stop")) {
+            if (stringArray[0].equalsIgnoreCase("stopevent")) {
                 EventLoop.stopEvent();
             }
-            if (Commands.matches(stringArray[0], "reload", "rl", "r")) {
+            if (stringArray[0].equalsIgnoreCase("reload")) {
                 long l;
                 if (!bl && !commandSender.hasPermission(Permissions.GENERATOR_RELOAD.getPermission(new String[0]))) {
                     Messages.NO_PERMISSION.format(new Object[0]).send(commandSender);
@@ -179,7 +173,7 @@ implements CommandExecutor {
                 this.lastReload = l2;
                 return true;
             }
-            if (Commands.matches(stringArray[0], "give", "g")) {
+            if (stringArray[0].equalsIgnoreCase("give")) {
                 GeneratorsData.Generator generator;
                 int n;
                 if (!bl && !commandSender.hasPermission(Permissions.GENERATOR_GIVE.getPermission(new String[0]))) {
@@ -225,7 +219,7 @@ implements CommandExecutor {
                 Messages.GENERATOR_RECEIVED.format("tier", String.valueOf(n), "amount", String.valueOf(n2)).send((CommandSender)object);
                 return true;
             }
-            if (Commands.matches(stringArray[0], "giveall", "ga")) {
+            if (stringArray[0].equalsIgnoreCase("giveall")) {
                 GeneratorsData.Generator generator;
                 int n;
                 if (!bl && !commandSender.hasPermission(Permissions.GENERATOR_GIVE_ALL.getPermission(new String[0]))) {
@@ -270,7 +264,7 @@ implements CommandExecutor {
                 return true;
             }
         }
-        if (Commands.matches(command.getName(), "generators", "gen", "gens", "gshop") || Commands.matches(string, "generators", "gen", "gens", "gshop")) {
+        if (command.getName().equalsIgnoreCase("generators") || string.equalsIgnoreCase("gen")) {
             if (!(commandSender instanceof Player)) {
                 Messages.ONLY_PLAYER_CAN_EXECUTE_COMMAND.format(new Object[0]).send(commandSender);
                 return true;
@@ -283,7 +277,7 @@ implements CommandExecutor {
             GeneratorsGui.open(object);
             return true;
         }
-        if (Commands.matches(command.getName(), "selldrops", "sd", "sell", "sellall", "sa", "sellhand", "sh", "sellgui", "sg", "vendre") || Commands.matches(string, "selldrops", "sd", "sell", "sellall", "sa", "sellhand", "sh", "sellgui", "sg", "vendre")) {
+        if (command.getName().equalsIgnoreCase("selldrops") || string.equalsIgnoreCase("sell")) {
             if (!(commandSender instanceof Player)) {
                 Messages.ONLY_PLAYER_CAN_EXECUTE_COMMAND.format(new Object[0]).send(commandSender);
                 return true;
@@ -293,34 +287,10 @@ implements CommandExecutor {
                 return true;
             }
             if (stringArray.length == 0) {
-                if (Commands.matches(string, "sellall", "sa")) {
-                    if (!commandSender.hasPermission(Permissions.GENERATOR_DROPS_SELL_ALL.getPermission(new String[0]))) {
-                        Messages.NO_PERMISSION.format(new Object[0]).send(commandSender);
-                        return true;
-                    }
-                    SellUtil.sellAll(object, (Inventory)object.getInventory(), new boolean[0]);
-                    return true;
-                }
-                if (Commands.matches(string, "sellhand", "sh")) {
-                    if (!commandSender.hasPermission(Permissions.GENERATOR_DROPS_SELL_HAND.getPermission(new String[0]))) {
-                        Messages.NO_PERMISSION.format(new Object[0]).send(commandSender);
-                        return true;
-                    }
-                    SellUtil.sellHand(object);
-                    return true;
-                }
-                if (Commands.matches(string, "sellgui", "sg")) {
-                    if (!commandSender.hasPermission(Permissions.GENERATOR_DROPS_SELL_GUI.getPermission(new String[0]))) {
-                        Messages.NO_PERMISSION.format(new Object[0]).send(commandSender);
-                        return true;
-                    }
-                    SellGui.open(object);
-                    return true;
-                }
                 Messages.NOT_ENOUGH_ARGUMENTS.format(new Object[0]).send(commandSender);
                 return true;
             }
-            if (Commands.matches(stringArray[0], "all", "a")) {
+            if (stringArray[0].equalsIgnoreCase("all")) {
                 if (!commandSender.hasPermission(Permissions.GENERATOR_DROPS_SELL_ALL.getPermission(new String[0]))) {
                     Messages.NO_PERMISSION.format(new Object[0]).send(commandSender);
                     return true;
@@ -328,7 +298,7 @@ implements CommandExecutor {
                 SellUtil.sellAll(object, (Inventory)object.getInventory(), new boolean[0]);
                 return true;
             }
-            if (Commands.matches(stringArray[0], "hand", "h", "main")) {
+            if (stringArray[0].equalsIgnoreCase("hand")) {
                 if (!commandSender.hasPermission(Permissions.GENERATOR_DROPS_SELL_HAND.getPermission(new String[0]))) {
                     Messages.NO_PERMISSION.format(new Object[0]).send(commandSender);
                     return true;
@@ -336,7 +306,7 @@ implements CommandExecutor {
                 SellUtil.sellHand(object);
                 return true;
             }
-            if (Commands.matches(stringArray[0], "gui", "g", "menu")) {
+            if (stringArray[0].equalsIgnoreCase("gui")) {
                 if (!commandSender.hasPermission(Permissions.GENERATOR_DROPS_SELL_GUI.getPermission(new String[0]))) {
                     Messages.NO_PERMISSION.format(new Object[0]).send(commandSender);
                     return true;
@@ -346,23 +316,6 @@ implements CommandExecutor {
             }
         }
         return true;
-    }
-
-
-    private static boolean matches(String string, String ... stringArray) {
-        if (string == null) {
-            return false;
-        }
-        String[] stringArray2 = stringArray;
-        int n = stringArray.length;
-        int n2 = 0;
-        while (n2 < n) {
-            if (string.equalsIgnoreCase(stringArray2[n2])) {
-                return true;
-            }
-            ++n2;
-        }
-        return false;
     }
 
     private static /* synthetic */ boolean lambda$0(String string, Event event) {

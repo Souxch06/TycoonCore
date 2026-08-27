@@ -21,17 +21,17 @@ implements TabCompleter {
     @Nullable
     public List<String> onTabComplete(@NotNull CommandSender commandSender, @NotNull Command command, @NotNull String string2, @NotNull String[] stringArray) {
         boolean bl = commandSender.hasPermission(Permissions.ADMIN.getPermission(new String[0]));
-        if (CommandsTabCompletion.matches(command.getName(), "valoriatycoon", "vt", "vtc", "valoria", "tycoon") || CommandsTabCompletion.matches(string2, "valoriatycoon", "vt", "vtc", "valoria", "tycoon")) {
+        if (command.getName().equalsIgnoreCase("valoriatycoon") || command.getName().equalsIgnoreCase("gens") || command.getName().equalsIgnoreCase("gp")) {
             if (stringArray.length == 1) {
                 if (!bl && !commandSender.hasPermission(Permissions.ADMIN.getPermission(new String[0]))) {
                     return null;
                 }
-                return List.of("help", "h", "list", "l", "give", "g", "giveall", "ga", "wand", "w", "setlimit", "sl", "addlimit", "al", "startevent", "se", "stopevent", "ee", "reload", "rl");
+                return List.of("help", "list", "give", "giveall", "wand", "setlimit", "addlimit", "startevent", "stopevent", "reload");
             }
-            if (CommandsTabCompletion.matches(stringArray[0], "reload", "rl", "r") && !bl && !commandSender.hasPermission(Permissions.GENERATOR_RELOAD.getPermission(new String[0]))) {
+            if (stringArray[0].equalsIgnoreCase("reload") && !bl && !commandSender.hasPermission(Permissions.GENERATOR_RELOAD.getPermission(new String[0]))) {
                 return null;
             }
-            if (CommandsTabCompletion.matches(stringArray[0], "setlimit", "sl")) {
+            if (stringArray[0].equalsIgnoreCase("setlimit")) {
                 if (!bl && !commandSender.hasPermission(Permissions.SET_LIMIT.getPermission(new String[0]))) {
                     return null;
                 }
@@ -46,7 +46,7 @@ implements TabCompleter {
                     return List.of("<limite>");
                 }
             }
-            if (CommandsTabCompletion.matches(stringArray[0], "addlimit", "al")) {
+            if (stringArray[0].equalsIgnoreCase("addlimit")) {
                 if (!bl && !commandSender.hasPermission(Permissions.ADD_LIMIT.getPermission(new String[0]))) {
                     return null;
                 }
@@ -61,7 +61,7 @@ implements TabCompleter {
                     return List.of("<limite>");
                 }
             }
-            if (CommandsTabCompletion.matches(stringArray[0], "startevent", "se", "start")) {
+            if (stringArray[0].equalsIgnoreCase("startevent")) {
                 if (!bl && !commandSender.hasPermission(Permissions.START_EVENT.getPermission(new String[0]))) {
                     return null;
                 }
@@ -79,10 +79,10 @@ implements TabCompleter {
                     return arrayList;
                 }
             }
-            if (CommandsTabCompletion.matches(stringArray[0], "stopevent", "ee", "stop") && !bl && !commandSender.hasPermission(Permissions.STOP_EVENT.getPermission(new String[0]))) {
+            if (stringArray[0].equalsIgnoreCase("stopevent") && !bl && !commandSender.hasPermission(Permissions.STOP_EVENT.getPermission(new String[0]))) {
                 return null;
             }
-            if (CommandsTabCompletion.hasSubCommand(stringArray, "give", "g")) {
+            if (Arrays.stream(stringArray).anyMatch(string -> string.equalsIgnoreCase("give"))) {
                 if (!bl && !commandSender.hasPermission(Permissions.GENERATOR_GIVE.getPermission(new String[0]))) {
                     return null;
                 }
@@ -101,7 +101,7 @@ implements TabCompleter {
                     return List.of("[quantité]");
                 }
             }
-            if (CommandsTabCompletion.hasSubCommand(stringArray, "giveall", "ga")) {
+            if (Arrays.stream(stringArray).anyMatch(string -> string.equalsIgnoreCase("giveall"))) {
                 if (!bl && !commandSender.hasPermission(Permissions.GENERATOR_GIVE_ALL.getPermission(new String[0]))) {
                     return null;
                 }
@@ -113,12 +113,12 @@ implements TabCompleter {
                     return List.of("[quantité]");
                 }
             }
-            if (CommandsTabCompletion.hasSubCommand(stringArray, "wand", "w")) {
+            if (Arrays.stream(stringArray).anyMatch(string -> string.equalsIgnoreCase("wand"))) {
                 if (!bl && !commandSender.hasPermission(Permissions.GIVE_WAND.getPermission(new String[0]))) {
                     return null;
                 }
                 if (stringArray.length == 2) {
-                    return List.of("sell", "s");
+                    return List.of("sell");
                 }
                 if (stringArray.length == 3) {
                     ArrayList<String> arrayList = new ArrayList<String>();
@@ -136,7 +136,7 @@ implements TabCompleter {
             }
             return null;
         }
-        if (CommandsTabCompletion.matches(command.getName(), "selldrops", "sd", "sell", "sellall", "sa", "sellhand", "sh", "sellgui", "sg", "vendre") || CommandsTabCompletion.matches(string2, "selldrops", "sd", "sell", "sellall", "sa", "sellhand", "sh", "sellgui", "sg", "vendre")) {
+        if (command.getName().equalsIgnoreCase("selldrops") || string2.equalsIgnoreCase("sell")) {
             if (!Config.SELL_COMMAND_ENABLED.getBoolean()) {
                 return null;
             }
@@ -144,32 +144,11 @@ implements TabCompleter {
                 return null;
             }
             if (stringArray.length == 1) {
-                return List.of("hand", "h", "all", "a", "gui", "g");
+                return List.of("hand", "all", "gui");
             }
             return null;
         }
         return null;
-    }
-
-
-    private static boolean matches(String string, String ... stringArray) {
-        if (string == null) {
-            return false;
-        }
-        String[] stringArray2 = stringArray;
-        int n = stringArray.length;
-        int n2 = 0;
-        while (n2 < n) {
-            if (string.equalsIgnoreCase(stringArray2[n2])) {
-                return true;
-            }
-            ++n2;
-        }
-        return false;
-    }
-
-    private static boolean hasSubCommand(String[] stringArray, String ... stringArray2) {
-        return Arrays.stream(stringArray).anyMatch(string -> CommandsTabCompletion.matches(string, stringArray2));
     }
 
     @Generated
