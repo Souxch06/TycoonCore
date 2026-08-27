@@ -7,10 +7,15 @@ authors:
   - OpenSource
 
 depend:
+  # Vault est réellement requis : setupEconomy() lève « Vault introuvable » sans lui.
   - Vault
-  - ProtocolLib
 
 softdepend:
+  # ProtocolLib n'est appelé par aucune classe du plugin (vérifié dans les .class livrés) : il n'est
+  # utile que via HoloEasy, qui le déclare déjà de son côté. En dépendance dure, son absence (ou
+  # l'absence d'un build compatible 26.x) empêchait Bukkit de charger ValoriaTycoon, hologrammes
+  # désactivés ou non.
+  - ProtocolLib
   - Oraxen
   - Essentials
   - ItemsAdder

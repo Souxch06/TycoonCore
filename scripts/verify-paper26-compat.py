@@ -55,6 +55,24 @@ def check(label, ok, detail=""):
     results.append((label, bool(ok), detail))
 
 
+def top_list(text: str, key: str):
+    """Éléments d'une liste de premier niveau d'un YAML (lignes «  - x »), commentaires ignorés."""
+    items = []
+    inside = False
+    for line in (text or "").splitlines():
+        if not line.startswith(" "):
+            inside = line.strip().rstrip(":") == key
+            continue
+        if not inside:
+            continue
+        stripped = line.strip()
+        if stripped.startswith("#") or not stripped:
+            continue
+        if stripped.startswith("- "):
+            items.append(stripped[2:].strip().strip("'""))
+    return items
+
+
 def utf8_set(data: bytes):
     entries, _ = classfile.parse_header(data)
     return {e[4].decode("utf-8", "replace") for e in entries if e[1] == classfile.UTF8}
@@ -118,6 +136,14 @@ def verify_tree():
           "sources/module-info.java ferait basculer javac en mode module (« module not found: com.google.gson ») ; "
           "déplacer ce résidu sous sources/shaded/com/google/gson/")
     pom = (ROOT / "pom.xml").read_text()
+    tree_yml = (ROOT / "resources" / "plugin.yml").read_text()
+    depends = top_list(tree_yml, "depend")
+    soft = top_list(tree_yml, "softdepend")
+    check("plugin.yml : Vault en dépendance dure, ProtocolLib en souple",
+          depends == ["Vault"] and "ProtocolLib" in soft,
+          f"depend={depends} softdepend(ProtocolLib)={'ProtocolLib' in soft}")
+    check("plugin.yml : miroir artifacts/extracted identique",
+          (EXTRACTED / "plugin.yml").read_text() == tree_yml)
     check("pom.xml : descripteurs JPMS hors de portée de javac pendant compile",
           "<exclude>module-info.class</exclude>" in pom and "restore-module-descriptors" in pom,
           "il faut exclure module-info.class de la copie de ressources ET le réinsérer en prepare-package, "
@@ -164,6 +190,10 @@ def verify_jar(jar_path: Path):
           "le JAR ne doit pas contenir org/bukkit (fourni par le serveur)")
     # les descripteurs JPMS sont exclus de target/classes pendant compile puis réinsérés en
     # prepare-package : s'ils manquent dans le paquet, c'est que le pom a perdu l'étape de restauration
+    check("JAR : ProtocolLib en dépendance souple uniquement",
+          plugin_yml is not None and "ProtocolLib" not in top_list(plugin_yml, "depend"),
+          "ProtocolLib doit être en softdepend : seule la librairie HoloEasy embarquée l'utilise, "
+          "et une dépendance dure bloque le chargement du plugin tout entier")
     check("JAR : descripteurs de module réinsérés", "module-info.class" in names,
           "module-info.class absent du paquet : l'exécution 'restore-module-descriptors' (prepare-package) "
           "du maven-resources-plugin est manquante ou mal ordonnée")
