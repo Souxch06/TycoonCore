@@ -306,9 +306,13 @@ guis:
 
 holograms:
   # Si enabled vaut false, les hologrammes ne seront pas affichés.
+  # Les hologrammes sont rendus par le moteur interne du plugin (des entités armures, API Bukkit
+  # seule) : ni HoloEasy, ni ProtocolLib n'est nécessaire. Le contenu est sauvegardé dans
+  # plugins/ValoriaTycoon/holograms.txt et relu au démarrage ; les lignes restent modifiables à la
+  # main dans ce fichier si un admin veut corriger une étiquette.
   enabled: true
 
-  # Distance d'affichage des hologrammes
+  # Distance d'affichage des hologrammes (indicative : les entités suivent la portée du serveur)
   view-distance: 300
 
 events:

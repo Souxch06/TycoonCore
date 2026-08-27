@@ -18,6 +18,11 @@
         <include>xyz/arcadiadevs/valoriaeconomy/**</include>
       </includes>
     </fileSet>
+    <!-- PAS l'API (xyz/arcadiadevs/valoriateconomy) dans ce jar : ValoriaEconomy est charge en
+         STARTUP, donc le jar de ValoriaTycoon (POSTWORLD) voit ses classes par delegation au
+         classpath des jars deja charges, et le type du service enregistre est ainsi LIT DEPUIS UNE
+         SEULE SOURCE pour les deux plugins. Embarquer une copie ici donnerait deux Class objects
+         differents, d'ou un getRegistration(Economy.class) renvoyant null sans erreur visible. -->
     <fileSet>
       <directory>${project.basedir}/resources-economy</directory>
       <outputDirectory>/</outputDirectory>

@@ -107,41 +107,44 @@ Ton serveur doit tourner sur :
 
 - **Paper 26.2** (dernier build stable sur `papermc.io`) ;
 - **Java 25** ;
-- plugins installés : **Vault**, un plugin d'économie (par ex. **EssentialsX**), **ProtocolLib** ;
-- et **HoloEasy** seulement si tu laisses `holograms-enabled: true` dans `config.yml`
-  (sinon le plugin se désactive tout seul au démarrage, c'est voulu).
+- **aucun plugin à télécharger** : les deux jar construits par le dépôt (`ValoriaTycoon` +
+  `ValoriaEconomy`) portent l'économie, le service d'économie et les hologrammes. Ni Vault, ni
+  EssentialsX, ni HoloEasy, ni ProtocolLib ne sont demandés — s'ils sont encore dans `plugins/`,
+  retire-les (Voir `docs/ECONOMIE.md` pour la monnaie et `docs/HOLOGRAMMES.md` pour les
+  hologrammes).
 
 ## Étape 8 — Installer et tester
 
 1. Arrête le serveur.
-2. Mets le `ValoriaTycoon-v1.6.3.jar` téléchargé à l'étape 6 dans le dossier `plugins/` (écrase l'ancien).
+2. Mets **les deux** jar téléchargés à l'étape 6 dans `plugins/` (`ValoriaTycoon-v1.6.3.jar`,
+   `ValoriaEconomy-v1.6.3.jar`), en écrasant les anciens.
 3. Démarre le serveur, garde la console ouverte.
 4. En jeu, dans l'ordre :
    - `/valoriatycoon reload`
+   - `/bal` puis `/eco set <ton pseudo> 10000` (le solde vient de ValoriaEconomy)
    - `/generators` → achète un générateur
-   - pose-le au sol
-   - attends un drop, puis `/selldrops all`
+   - pose-le au sol (une étiquette d'hologramme doit apparaître au-dessus)
+   - attends un drop, puis `/selldrops all` → `/bal` doit augmenter
    - `/generators` → améliore le palier
+   - `/ah sell 5`, puis achat avec un deuxième compte, puis `/ah returns`
+   - `/sb` (tableau de bord)
 5. Sauvegarde/arrête le serveur.
 
-## Étape 8 bis — Le piège qui fait rougir le plugin (hologrammes)
+## Étape 8 bis — Si les hologrammes gênent
 
-Le plugin **se désactive lui-même** si les hologrammes sont activés alors que HoloEasy n'est pas
-installé. Dans la console, ça donne exactement ceci :
+Ils sont rendus par le moteur interne du plugin (des entités armures invisibles, API Bukkit seule) :
+plus de plugin HoloEasy à installer, donc plus de « plugin introuvable → désactivation ». Si un monde
+refuse malgré tout les entités (monde verrouillé, limite d'entités atteinte), le log dit quoi, et le
+générateur continue de fonctionner sans étiquette. Pour couper l'affichage :
 
+```yaml
+# plugins/ValoriaTycoon/config.yml
+holograms:
+  enabled: false
 ```
-[ValoriaTycoon] HoloEasy not found. Disabling plugin.
-[ValoriaTycoon] Disabling ValoriaTycoon v1.6.3
-```
 
-Deux issues, au choix :
-- **sans hologrammes** (le plus simple pour tester) : ouvre `plugins/ValoriaTycoon/config.yml`,
-  cherche la ligne `holograms:` et, en dessous, passe `enabled: true` à `enabled: false`, enregistre,
-  redémarre ;
-- **avec hologrammes** : installe le plugin **HoloEasy** (et ProtocolLib, qu'il utilise pour les
-  paquets), puis redémarre.
-
-Sans ce choix, `/plugins` affichera ValoriaTycoon en rouge même quand tout le reste va bien.
+Les étiquettes sont sauvegardées dans `plugins/ValoriaTycoon/holograms.txt` : ce fichier est relu au
+démarrage, donc un admin peut corriger une ligne à la main. Détails dans `docs/HOLOGRAMMES.md`.
 
 ## Étape 9 — Comment savoir si c'est bon
 
@@ -302,7 +305,9 @@ l'affichage, rien d'autre du plugin n'est touché, et la liste de ce qui a manqu
 
 - **Ne pas fusionner la PR #7** avant d'avoir eu ✅ à l'étape 5 **et** un test serveur concluant :
   fusionner sur `main` envoie automatiquement le JAR sur ton serveur de prod par SFTP.
-- Ne pas modifier `plugin.yml` (l'`api-version: 1.13` et la dépendance `ProtocolLib` sont laissés exprès).
+- Ne pas modifier `plugin.yml` (l'`api-version: 1.13` est laissée exprès : elle fige les noms de
+  matériaux à plat, et `softdepend:` ne contient que des plugins facultatifs — dont ValoriaEconomy,
+  notre jar, qui n'exige rien d'extérieur).
 - Ne pas supprimer les fichiers `scripts/*.py` : ils sont la preuve que le JAR est conforme, et ils
   resserviront à chaque nouvelle version de Minecraft.
 

@@ -79,8 +79,12 @@ def utf8_values(data: bytes):
     return [e[4].decode("utf-8", "replace") for e in entries if e[1] == UTF8]
 
 
-def replace_utf8(data: bytes, replacements, expect_changes=None):
+def replace_utf8(data: bytes, replacements, expect_changes=None, exact=False):
     """Remplace des sous-chaînes dans les constantes CONSTANT_Utf8 puis reconstruit le fichier.
+
+    Avec ``exact=True``, une règle ne s'applique que sur une entrée dont la valeur est
+    *entièrement* égale à la clé : indispensable pour renommer un nom nu (``HoloEasy``, ``Vault``)
+    sans toucher aux phrases de log qui le contiennent (« HoloEasy not found. Disabling plugin. »).
 
     Les remplacements sont appliqués sur les octets (et non sur des chaînes décodées) : un
     constant-pool utilise du UTF-8 modifié (MUTF-8, cf. JVMS 4.4.7) que ``bytes.decode()`` ne
@@ -89,6 +93,7 @@ def replace_utf8(data: bytes, replacements, expect_changes=None):
 
     :param replacements: mapping ``octets_anciens -> octets_nouveaux``
     :param expect_changes: si fourni, nombre d'entrées modifiées attendu
+    :param exact: si vrai, la clé doit égaler toute la constante (pas seulement la contenir)
     :return: (nouvelles_octets, nombre_d_entrees_modifiees)
     """
     entries, (minor, major, cp_count, cp_end) = parse_header(data)
@@ -98,7 +103,10 @@ def replace_utf8(data: bytes, replacements, expect_changes=None):
         if tag == UTF8 and payload:
             new_payload = payload
             for old, new in replacements.items():
-                if old in new_payload:
+                if exact:
+                    if new_payload == old:
+                        new_payload = new
+                elif old in new_payload:
                     new_payload = new_payload.replace(old, new)
             if new_payload != payload:
                 changed += 1

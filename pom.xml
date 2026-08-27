@@ -10,16 +10,14 @@
     <name>ValoriaTycoon</name>
     <description>Plugin ValoriaTycoon pour serveur Minecraft Tycoon et SkyBlock</description>
 
-    <!-- Dépôt de l'API serveur et du bridge d'économie : uniquement en portée « provided »,
-         donc rien n'est embarqué dans le JAR (le serveur fournit déjà ces classes). -->
+    <!-- Dépôt de l'API serveur, en portée « provided » uniquement : rien n'est embarqué dans le
+         JAR (le serveur fournit déjà ces classes). Aucune autre dépendance externe : l'API
+         d'économie est écrite dans ce dépôt et compilée ici (plus aucun artifact d'API distant),
+         voir sources/api/xyz/arcadiadevs/valoriateconomy/. -->
     <repositories>
         <repository>
             <id>papermc</id>
             <url>https://repo.papermc.io/repository/maven-public/</url>
-        </repository>
-        <repository>
-            <id>jitpack.io</id>
-            <url>https://jitpack.io</url>
         </repository>
     </repositories>
 
@@ -29,18 +27,6 @@
             <artifactId>paper-api</artifactId>
             <version>1.20.4-R0.1-SNAPSHOT</version>
             <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.github.MilkBowl</groupId>
-            <artifactId>VaultAPI</artifactId>
-            <version>1.7</version>
-            <scope>provided</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>*</groupId>
-                    <artifactId>*</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
         <!-- Classes déjà livrées (GuiLib, XSeries, ChatUtil, classes du plugin) : generated
              par scripts/build-reference-jar.py, pour compiler une classe isolément contre le
@@ -108,12 +94,28 @@
                         <!-- Détection de version serveur (Paper 26.x) : compilée depuis
                              sources/plugin, remplace la classe livrée dans le JAR. -->
                         <include>plugin/xyz/arcadiadevs/valoriatycoon/utils/ServerVersion.java</include>
-                        <!-- Économie interne (plugin séparé, même build) : la classe VaultEconomy est
-                             générée, les autres sont écrites à la main. -->
+                        <!-- Économie interne (plugin séparé, même build) : le fournisseur est
+                             généré (surface d'interface vérifiée), les autres sont écrits à la main. -->
                         <include>economy/xyz/arcadiadevs/valoriaeconomy/ValoriaEconomy.java</include>
                         <include>economy/xyz/arcadiadevs/valoriaeconomy/Balances.java</include>
                         <include>economy/xyz/arcadiadevs/valoriaeconomy/MoneyCommand.java</include>
-                        <include>economy/xyz/arcadiadevs/valoriaeconomy/VaultEconomy.java</include>
+                        <include>economy/xyz/arcadiadevs/valoriaeconomy/ValoriaEconomyProvider.java</include>
+                        <!-- API d'économie interne : la meme classe est compilee ici (pour le code
+                             du plugin qui l'appelle) et reprise dans le jar de ValoriaEconomy (pour
+                             le fournisseur qui l'implémente). Une seule source, deux jars. -->
+                        <include>api/xyz/arcadiadevs/valoriateconomy/Economy.java</include>
+                        <include>api/xyz/arcadiadevs/valoriateconomy/EconomyResponse.java</include>
+                        <!-- Hologrammes écrits ici (entités armures, API Bukkit seule) : remplacent
+                             la bibliothèque embarquée qui exigeait ProtocolLib + un plugin HoloEasy.
+                             Le bytecode livré appelle ces signatures exactes. -->
+                        <include>plugin/xyz/arcadiadevs/valoriatycoon/hologram/HoloEasy.java</include>
+                        <include>plugin/xyz/arcadiadevs/valoriatycoon/hologram/HologramPool.java</include>
+                        <include>plugin/xyz/arcadiadevs/valoriatycoon/hologram/Hologram.java</include>
+                        <include>plugin/xyz/arcadiadevs/valoriatycoon/hologram/HologramBuilder.java</include>
+                        <include>plugin/xyz/arcadiadevs/valoriatycoon/hologram/HologramSetupGroup.java</include>
+                        <include>plugin/xyz/arcadiadevs/valoriatycoon/hologram/HologramRegisterGroup.java</include>
+                        <include>plugin/xyz/arcadiadevs/valoriatycoon/hologram/HologramStore.java</include>
+                        <include>plugin/xyz/arcadiadevs/valoriatycoon/utils/HologramsUtil.java</include>
                         <!-- Pont NBT -> PersistentDataContainer : remplace la bibliothèque embarquée,
                              dont les cibles obfusquées ont disparu des serveurs Paper récents. Le repli
                              historique reste livré sous io.github...LegacyNbtBridge. -->
@@ -169,9 +171,15 @@
                     <archive>
                         <manifestFile>artifacts/extracted/META-INF/MANIFEST.MF</manifestFile>
                     </archive>
-                    <!-- Les classes de l'économie vivent dans leur propre paquet, pas dans celui-ci. -->
                     <excludes>
+                        <!-- Les classes du plugin d'économie vivent dans leur propre paquet. -->
                         <exclude>xyz/arcadiadevs/valoriaeconomy/**</exclude>
+                        <!-- Filets : ces arbres ne doivent plus jamais revenir dans un paquet livré,
+                             ils étaient ceux de bibliothèques tierces remplacées par du code du dépôt. -->
+                        <exclude>org/holoeasy/**</exclude>
+                        <exclude>net/milkbowl/**</exclude>
+                        <!-- l'API d'economie ne vit que dans ce jar : voir src/assembly/economy.xml -->
+                        <exclude>META-INF/holoeasy-core.kotlin_module</exclude>
                     </excludes>
                 </configuration>
             </plugin>

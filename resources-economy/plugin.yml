@@ -1,11 +1,13 @@
 name: ValoriaEconomy
 version: '1.6.3'
 main: xyz.arcadiadevs.valoriaeconomy.ValoriaEconomy
-# STARTUP : activé avant les plugins POSTWORLD, donc le fournisseur Vault est déjà
-# enregistré quand ValoriaTycoon le cherche dans son onEnable.
+# STARTUP : active avant tous les plugins POSTWORLD, donc le fournisseur d'economie est deja
+# enregistre quand ValoriaTycoon le cherche dans son onEnable (et quand il resout, via le classpath
+# des jars deja charges, l'interface xyz/arcadiadevs/valoriateconomy/Economy embarquee dans son jar).
+# Aucun plugin externe n'est requis : ni Vault, ni EssentialsX.
 load: STARTUP
 api-version: '1.13'
-description: Économie interne du serveur (soldes, /pay, fournisseur Vault).
+description: Économie interne du serveur (soldes, /bal, /pay, /baltop, /eco).
 authors:
   - ArcadieDevs
 

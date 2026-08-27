@@ -37,18 +37,24 @@ du JAR ; il n'est jamais compilé. `scripts/verify-paper26-compat.py` contrôle 
 
 ## Économie interne (`ValoriaEconomy`)
 
+- `sources/api/xyz/arcadiadevs/valoriateconomy/` : l'**interface** d'économie du serveur
+  (`Economy`, `EconomyResponse`), écrite ici à la place de l'API Vault. Elle est compilée dans le jar
+  de `ValoriaTycoon` (le code du plugin l'appelle) et **uniquement** dans celui-là : si les deux jars
+  portaient leur copie, le `ServicesManager` comparerait deux objets `Class` différents et ne
+  trouverait aucun fournisseur — silencieusement.
 - `sources/economy/xyz/arcadiadevs/valoriaeconomy/` : `ValoriaEconomy` (JavaPlugin), `Balances`
   (`plugins/ValoriaEconomy/economy.yml`, écriture atomique), `MoneyCommand` (`/bal`, `/pay`, `/baltop`,
-  `/eco`), `VaultEconomy` (fournisseur Vault, **généré**).
+  `/eco`), `ValoriaEconomyProvider` (le fournisseur du service, **généré**).
 - `resources-economy/` : `plugin.yml` (avec `load: STARTUP`) et `config.yml` du plugin d'économie ; ils
   ne vont PAS dans le paquet de `ValoriaTycoon`.
 - `src/assembly/economy.xml` : assemble `target/ValoriaEconomy-v<version>.jar` à partir des classes
   compilées et de `resources-economy/` ; le `pom.xml` exclut `xyz/arcadiadevs/valoriaeconomy/**` du jar
   principal.
-- `docs/vault-economy-api.txt` : snapshot des 43 signatures de `net.milkbowl.vault.economy.Economy`
-  (VaultAPI 1.7) ; `scripts/generate-vault-economy.py` émet `VaultEconomy.java` depuis ce snapshot, et
-  `scripts/verify-economy-api.py` refuse tout écart (méthode oubliée, signature décalée, fichier non
-  régénéré, `load: STARTUP` absent).
+- `docs/economy-api.txt` : snapshot des 43 signatures de l'interface (surface historique de VaultAPI
+  1.7, reprise à l'identique puis augmentée de `formatMoney`) ; `scripts/generate-economy-api.py` en
+  émet `Economy.java` **et** `ValoriaEconomyProvider.java`, et `scripts/verify-economy-api.py` refuse
+  tout écart entre snapshot, interface, fournisseur et descripteurs réellement appelés par les `.class`
+  livrés (méthode oubliée, signature décalée, fichier non régénéré, `load: STARTUP` absent).
 - `scripts/import-essentials-balances.py` : import ponctuel des soldes EssentialsX vers `economy.yml`
   (`--dry-run` d'abord ; ne touche jamais un compte déjà présent).
 
@@ -67,13 +73,20 @@ Contient les librairies embarquées avec le plugin :
 - `com.awaitquality`
 - `com.cryptomorin.xseries`
 - `com.google.gson`
-- `io.github.bananapuncher714.nbteditor`
+- `io.github.bananapuncher714.nbteditor` (pont compilé ici, l'implémentation d'origine est conservée
+  sous `LegacyNbtBridge` comme repli)
 - `kotlin`
 - `marcono1234.gson.recordadapter`
-- `org.holoeasy`
 - `org.json`
 
-Ces fichiers sont séparés du code plugin pour éviter de mélanger le cœur de ValoriaTycoon avec les librairies embarquées.
+Ces fichiers sont séparés du code plugin pour éviter de mélanger le cœur de ValoriaTycoon avec les
+librairies embarquées.
+
+**`org.holoeasy` n'y est plus** : la bibliothèque d'hologrammes embarquée (qui exigeait ProtocolLib,
+donc un plugin à installer) a été retirée du dépôt et du jar, remplacée par le paquet
+`sources/plugin/xyz/arcadiadevs/valoriatycoon/hologram/` — voir `docs/HOLOGRAMMES.md`. Le renommage
+des appels dans les classes précompilées est rejouable et contrôlé par
+`scripts/selfmade-api-patch.py` ; `scripts/verify-paper26-compat.py` échoue si l'arbre revient.
 
 ## `resources/`
 
@@ -145,13 +158,17 @@ Pour corriger une classe sans recompiler tout l'arbre décompilé (non compilabl
 une liste explicite de fichiers et résout le reste contre le binaire livré :
 
 - `scripts/build-reference-jar.py` emballe `artifacts/extracted/` dans
-  `artifacts/reference/valoria-renamed.jar` (1788 entrées) ; le `pom.xml` l'ajoute au classpath en
+  `artifacts/reference/valoria-renamed.jar` (~1655 entrées) ; le `pom.xml` l'ajoute au classpath en
   portée `system`. À relancer après toute modification de `artifacts/extracted/`
-  (`python3 scripts/verify-paper26-compat.py` échoue si le JAR est obsolète) ;
-- deux dépendances `provided` complètent le classpath : `io.papermc.paper:paper-api` (pour
-  `org.bukkit.*`) et `com.github.MilkBowl:VaultAPI` (pour `net.milkbowl.vault.economy`) — rien n'est
-  embarqué dans le JAR, mais le build a besoin de réseau pour les résoudre ;
-- fichiers concernés : `ServerVersion.java`, `NBTEditor.java` (pont NBT) et `UpgradeGui.java`.
+  (`python3 scripts/verify-paper26-compat.py` échoue si le JAR est obsolète). Le script **refuse**
+  désormais d'embarquer `net/milkbowl/` ou `org/holoeasy/` : une copie de ces API dans le classpath
+  masquerait nos propres sources, et javac ne signalerait plus un membre oublié ;
+- **une seule** dépendance `provided` complète le classpath : `io.papermc.paper:paper-api` (pour
+  `org.bukkit.*`). L'API d'économie n'est plus un artifact distant (elle vit dans `sources/api/`),
+  donc rien n'est embarqué dans le JAR et le build n'a plus besoin de réseau pour un dépôt tiers ;
+- fichiers concernés : `ServerVersion.java`, `NBTEditor.java` (pont NBT), `UpgradeGui.java`,
+  `HologramsUtil.java` + le paquet `hologram/`, `ScoreboardService.java`, le marché `/ah`, l'API et le
+  fournisseur d'économie.
   Cette liste est celle des `<includes>` du `pom.xml` ; `scripts/check-sources-java.mjs` en vérifie
   la surface publique.
 

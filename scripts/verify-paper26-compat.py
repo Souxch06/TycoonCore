@@ -186,10 +186,19 @@ def verify_tree():
     tree_yml = (ROOT / "resources" / "plugin.yml").read_text()
     depends = top_list(tree_yml, "depend")
     soft = top_list(tree_yml, "softdepend")
-    check("plugin.yml : aucune dépendance dure (Vault, VaultUnlocked, ProtocolLib en souple)",
-          not depends and {"Vault", "VaultUnlocked", "ProtocolLib"} <= set(soft),
-          f"depend={depends} softdepend={soft} — un depend: dur est résolu par NOM exact par Bukkit : "
-          "il refuse les équivalents (VaultUnlocked) et bloque tout le chargement")
+    check("plugin.yml : aucune dépendance dure (tout le monde du serveur reste facultatif)",
+          not depends,
+          f"depend={depends} — un depend: dur est résolu par NOM exact par Bukkit : il refuse les "
+          "équivalents et bloque tout le chargement si l'écriture du nom diffère")
+    check("plugin.yml : le seul bloc cité obligatoire est NOTRE plugin d'économie",
+          "ValoriaEconomy" in soft,
+          f"softdepend={soft} — ValoriaEconomy (jar du dépôt, load: STARTUP) doit être listé pour "
+          "l'ordre de chargement du service Economy")
+    banned = {"Vault", "VaultUnlocked", "ProtocolLib", "HoloEasy", "Essentials", "EssentialsX"}
+    check("plugin.yml : plus aucune dépendance à un plugin à télécharger",
+          not (banned & set(soft)),
+          f"softdepend cite {sorted(banned & set(soft))} — le serveur ne doit rien installer "
+          "d'extérieur : l'économie et les hologrammes viennent du dépôt")
     check("plugin.yml : miroir artifacts/extracted identique",
           (EXTRACTED / "plugin.yml").read_text() == tree_yml)
     check("pom.xml : descripteurs JPMS hors de portée de javac pendant compile",
@@ -259,7 +268,9 @@ def verify_tree():
     check("AuctionGui : une seule vue par joueur + oubli au quit",
           "VIEWS.remove(gui.player.getUniqueId())" in ahgui and "static void forget" in ahgui)
     check("AuctionGui : aucun accès aux noms internes du serveur", "net.minecraft" not in strip_comments(ahgui))
-    check("AuctionHouse : monnaie via Vault uniquement", "net.milkbowl.vault.economy.Economy" in ah_code)
+    check("AuctionHouse : monnaie via l'économie interne du dépôt, jamais via Vault",
+          "xyz.arcadiadevs.valoriateconomy.Economy" in ah_code and "net.milkbowl" not in ah_code,
+          "le marché doit débiter/créditer par notre interface d'économie (aucun plugin Vault à installer)")
     check("AuctionHouse : un retrait admin va au coffre du vendeur, jamais à la poubelle",
           "store.addReturn(seller, item)" in ah_code and "returnItems" in ah_code)
     check("AuctionHouse : aucun accès aux noms internes du serveur",
@@ -283,6 +294,56 @@ def verify_tree():
 
     check("pont : repli historique livré", (NBT_DIR / "LegacyNbtBridge.class").is_file(),
           "artifacts/extracted/io/github/bananapuncher714/nbteditor/LegacyNbtBridge.class manquant")
+
+
+    # 4f. « que du maison » : le serveur ne doit contenir AUCUN plugin téléchargé
+    for name, needle in (("AuctionHouse", "commands/AuctionHouse.java"),
+                         ("UpgradeGui", "guis/UpgradeGui.java"),
+                         ("SellUtil", "utils/SellUtil.java"),
+                         ("GeneratorsGui", "guis/GeneratorsGui.java"),
+                         ("ScoreboardService", "utils/ScoreboardService.java"),
+                         ("ValoriaTycoon", "ValoriaTycoon.java"),
+                         ("LocationsData", "models/LocationsData.java")):
+        src = ROOT / "sources/plugin/xyz/arcadiadevs/valoriatycoon" / needle
+        if src.is_file():
+            code = strip_comments(src.read_text(encoding="utf-8"))
+            # « HoloEasy » designe desormais NOTRE facade (valoriatycoon.hologram.HoloEasy) : seul le
+            # paquet de la bibliotheque tierce est interdit.
+            check(f"{name} : aucun import d'une API tierce (Vault/HoloEasy)",
+                  "milkbowl" not in code and "org.holoeasy" not in code and "org/holoeasy" not in code)
+    for banned_tree in ("org/holoeasy", "net/milkbowl"):
+        check(f"artifacts/extracted : {banned_tree}/ n'est plus livré",
+              not (EXTRACTED / banned_tree).exists(),
+              f"{banned_tree} est une bibliothèque tierce ; le dépôt doit fournir sa propre version")
+        check(f"sources : pas de copie décompilée de {banned_tree}",
+              not (ROOT / "sources/shaded" / banned_tree).exists(),
+              "conserver la source d'un paquet remplacé laisse croire qu'il est encore utilisé")
+    main_class = EXTRACTED / "xyz/arcadiadevs/valoriatycoon/ValoriaTycoon.class"
+    if main_class.is_file():
+        blob = main_class.read_bytes()
+        check("classe principale : nos types économiquement autonomes résolus",
+              b"xyz/arcadiadevs/valoriateconomy/Economy" in blob,
+              "le renommage de l'API d'économie n'a pas été appliqué aux classes livrées "
+              "(lancer scripts/selfmade-api-patch.py)")
+        check("classe principale : hologrammes internes résolus",
+              b"xyz/arcadiadevs/valoriatycoon/hologram/HologramPool" in blob,
+              "le renommage HoloEasy -> moteur interne n'a pas été appliqué")
+        check("classe principale : le garde d'activation cite notre jar d'économie",
+              b"ValoriaEconomy" in blob and b"\x01Vault\x01" not in blob)
+        check("classe principale : aucun contrôle de licence à distance",
+              b"spigotmc.org/legacy/premium" not in blob,
+              "le plugin appelait api.spigotmc.org à chaque démarrage et se désactivait sur réponse "
+              "« false » — un serveur doit rester autonome")
+    for engine in ("HoloEasy.java", "HologramPool.java", "Hologram.java", "HologramBuilder.java",
+                   "HologramStore.java", "HologramSetupGroup.java", "HologramRegisterGroup.java"):
+        check(f"moteur d'hologrammes écrit ici : {engine}",
+              (ROOT / "sources/plugin/xyz/arcadiadevs/valoriatycoon/hologram" / engine).is_file())
+    api = ROOT / "sources/api/xyz/arcadiadevs/valoriateconomy"
+    check("API d'économie écrite ici : Economy.java + EconomyResponse.java",
+          (api / "Economy.java").is_file() and (api / "EconomyResponse.java").is_file())
+    check("pom.xml : plus aucune dépendance Maven à un artifact tiers d'API",
+          "VaultAPI" not in pom and "jitpack" not in pom,
+          "l'interface d'économie est compilée depuis sources/api, un dépôt distant n'a plus lieu d'être")
 
 
 def verify_jar(jar_path: Path):
@@ -313,6 +374,32 @@ def verify_jar(jar_path: Path):
 
     for relative, old, new in PATCHES:
         verify_constant_pool(f"JAR : classe patchée {relative}", patched[relative], [new], [old])
+
+    for banned_tree in ("org/holoeasy", "net/milkbowl"):
+        check(f"JAR : {banned_tree}/ absent (bibliothèque tierce retirée)",
+              not any(n.startswith(banned_tree + "/") for n in names))
+    check("JAR : aucune métadonnée de bibliothèque retirée",
+          "META-INF/holoeasy-core.kotlin_module" not in names)
+    our_entries = ("xyz/arcadiadevs/valoriateconomy/Economy.class",
+                   "xyz/arcadiadevs/valoriateconomy/EconomyResponse.class",
+                   "xyz/arcadiadevs/valoriatycoon/hologram/HoloEasy.class",
+                   "xyz/arcadiadevs/valoriatycoon/hologram/HologramPool.class",
+                   "xyz/arcadiadevs/valoriatycoon/hologram/Hologram.class",
+                   "xyz/arcadiadevs/valoriatycoon/hologram/HologramBuilder.class",
+                   "xyz/arcadiadevs/valoriatycoon/hologram/HologramStore.class",
+                   "xyz/arcadiadevs/valoriatycoon/utils/HologramsUtil.class")
+    missing = [n for n in our_entries if n not in names]
+    check("JAR : nos classes d'API et d'hologrammes compilées", not missing,
+          f"manquants: {missing} — le renommage vise des types que le build doit compiler (<includes>)")
+    for entry in ("xyz/arcadiadevs/valoriatycoon/ValoriaTycoon.class",
+                  "xyz/arcadiadevs/valoriatycoon/utils/SellUtil.class",
+                  "xyz/arcadiadevs/valoriatycoon/guis/GeneratorsGui.class"):
+        if entry in names:
+            blob = jar.read(entry)
+            check(f"JAR : {entry.split('/')[-1]} sans référence à Vault/HoloEasy",
+                  b"milkbowl" not in blob and b"org/holoeasy" not in blob)
+            check(f"JAR : {entry.split('/')[-1]} sans contrôle de licence",
+                  b"spigotmc.org/legacy/premium" not in blob)
 
     if server_version is None:
         check("JAR : ServerVersion.class recompilée", False, f"{SERVER_VERSION_ENTRY} absent du JAR")

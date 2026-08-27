@@ -66,17 +66,25 @@ const modifiersOf = (node, key) =>
 function analyze(source) {
   const tree = parse(source);
   const methods = [];
-  for (const md of collect(tree, 'methodDeclaration')) {
-    const header = kids(md, 'methodHeader')[0];
-    const declarator = kids(header, 'methodDeclarator')[0];
+  // Les methodes d'INTERFACE sont des `constantDeclaration` (et non des `methodDeclaration`) :
+  // elles sont collectees pareil, sinon un contrat ne peut pas controler une surface d'interface.
+  const declarations = [
+    ...collect(tree, 'methodDeclaration'),
+    ...collect(tree, 'interfaceMethodDeclaration'),
+    ...collect(tree, 'constantDeclaration'),
+  ];
+  for (const md of declarations) {
+    const header = kids(md, 'methodHeader')[0] || md;
+    const declarator = collect(header, 'methodDeclarator')[0];
+    if (!declarator) continue;
     const list = kids(declarator, 'formalParameterList')[0];
     const params = kids(list, 'formalParameter');
-    const result = kids(header, 'result')[0];
+    const result = kids(header, 'result')[0] || kids(md, 'type')[0];
     methods.push({
       name: kids(declarator, 'Identifier')[0].image,
-      modifiers: modifiersOf(md, 'methodModifier'),
+      modifiers: [...modifiersOf(md, 'methodModifier'), ...modifiersOf(md, 'constantModifier')],
       arity: params.length,
-      varargs: params.some((p) => kids(p, 'variableArityParameter').length > 0),
+      varargs: params.some((x) => kids(x, 'variableArityParameter').length > 0),
       returns: result?.children?.void ? 'void' : (tokens(result).join('.') || 'void'),
     });
   }
@@ -186,10 +194,50 @@ const CONTRACTS = [
     ],
   },
   {
-    file: E + 'VaultEconomy.java',
-    why: "fournisseur Vault g\u00e9n\u00e9r\u00e9 : 43 m\u00e9thodes, banques en NOT_IMPLEMENTED",
-    mustNotContain: ['net.minecraft', 'System.out', 'printStackTrace'],
+    file: E + 'ValoriaEconomyProvider.java',
+    why: "fournisseur d'economie genere : toute la surface de l'interface, banques en NOT_IMPLEMENTED",
+    mustContain: ['implements Economy', 'EconomyResponse.NOT_IMPLEMENTED', 'Solde insuffisant', 'Double.isFinite'],
+    mustNotContain: ['net.minecraft', 'System.out', 'printStackTrace', 'milkbowl/', 'holoeasy/'],
+    forbidImports: ['net.milkbowl'],
     generated: true,
+  },
+  {
+    file: 'sources/api/xyz/arcadiadevs/valoriateconomy/Economy.java',
+    why: "surface appelee par le bytecode livre du plugin : 44 signatures, aucune ne doit disparaitre",
+    methods: [
+      { name: 'isEnabled', returns: 'boolean', arity: 0, static: false },
+      { name: 'formatMoney', returns: 'String', arity: 1, static: false },
+      { name: 'format', returns: 'String', arity: 1, static: false },
+      { name: 'getBalance', returns: 'double', arity: 1, static: false },
+      { name: 'has', returns: 'boolean', arity: 2, static: false },
+      { name: 'withdrawPlayer', returns: 'EconomyResponse', arity: 2, static: false },
+      { name: 'depositPlayer', returns: 'EconomyResponse', arity: 2, static: false },
+      { name: 'currencyNameSingular', returns: 'String', arity: 0, static: false },
+      { name: 'createPlayerAccount', returns: 'boolean', arity: 1, static: false },
+    ],
+    interfaceMembers: true,
+    mustContain: ['interface Economy', 'default String format(double amount)'],
+    mustNotContain: ['net.minecraft', 'milkbowl/', 'holoeasy/'],
+    forbidImports: ['net.milkbowl', 'org.holoeasy'],
+    generated: true,
+  },
+  {
+    file: 'sources/api/xyz/arcadiadevs/valoriateconomy/EconomyResponse.java',
+    why: "UpgradeGui/GeneratorsGui (bytecode livre) lisent errorMessage et appellent transactionSuccess()",
+    fields: [
+      { name: 'amount', modifiers: ['public', 'final'] },
+      { name: 'balance', modifiers: ['public', 'final'] },
+      { name: 'type', modifiers: ['public', 'final'] },
+      { name: 'errorMessage', modifiers: ['public', 'final'] },
+    ],
+    methods: [
+      { name: 'transactionSuccess', returns: 'boolean', arity: 0, static: false },
+      { name: 'hasUsableBalance', returns: 'boolean', arity: 0, static: false },
+    ],
+    enumOrder: ['SUCCESS', 'FAILURE', 'NOT_IMPLEMENTED', 'FAILURE_PARTIAL', 'UNSUPPORTED_OPERATION'],
+    interfaceMembers: false,
+    mustContain: ['static final EconomyResponse NOT_IMPLEMENTED', 'public EconomyResponse(double amount, double balance, ResponseType type, String errorMessage)'],
+    mustNotContain: ['net.minecraft', 'milkbowl/'],
   },
   {
     file: E + 'Balances.java',
@@ -208,6 +256,80 @@ const CONTRACTS = [
     why: "enregistrement du service avant l'onEnable de ValoriaTycoon",
     mustContain: ['ServicesManager', 'Economy.class', 'saveDefaultConfig'],
     mustNotContain: ['net.minecraft', 'System.out'],
+  },
+  {
+    file: 'sources/plugin/xyz/arcadiadevs/valoriatycoon/utils/HologramsUtil.java',
+    why: "3 signatures imposees par 4 classes precompilees (ValoriaTycoon, LocationsData, GeneratorLocation)",
+    methods: [
+      { name: 'createHologram', returns: 'Hologram', arity: 3, static: true },
+      { name: 'getHologram', returns: 'Hologram', arity: 1, static: true },
+      { name: 'removeHologram', returns: 'void', arity: 1, static: true },
+    ],
+    mustContain: ['Config.HOLOGRAMS_ENABLED.getBoolean()', 'subtract(0.0D, 1.0D, 0.0D)', 'pool.registerHolograms(', 'UUID.fromString'],
+    mustNotContain: ['net.minecraft', 'printStackTrace', 'milkbowl/'],
+  },
+  {
+    file: 'sources/plugin/xyz/arcadiadevs/valoriatycoon/hologram/HologramPool.java',
+    why: "le pool est stocke dans un champ de ValoriaTycoon (bytecode livre) : ces 3 methodes sont appelees en dur",
+    methods: [
+      { name: 'registerHolograms', returns: 'void', arity: 1, static: false },
+      { name: 'get', returns: 'Hologram', arity: 1, static: false },
+      { name: 'remove', returns: 'Hologram', arity: 1, static: false },
+    ],
+    mustContain: ['group.run()', 'spawnEntity(location, EntityType.ARMOR_STAND)', 'holograms.txt', 'adopt()', 'sweepOrphans()', 'setInvisible(true)', 'optional(stand, "setPersistent", true)'],
+    mustNotContain: ['net.minecraft', 'comphenix', 'HologramBuilder.hologram(', 'printStackTrace'],
+  },
+  {
+    file: 'sources/plugin/xyz/arcadiadevs/valoriatycoon/hologram/Hologram.java',
+    why: "Hologram.getId() est appele par LocationsData$GeneratorLocation pour persister hologramId",
+    methods: [
+      { name: 'getId', returns: 'UUID', arity: 0, static: false },
+      { name: 'getLines', returns: 'List', arity: 0, static: false },
+      { name: 'remove', returns: 'void', arity: 0, static: false },
+    ],
+    mustNotContain: ['net.minecraft', 'comphenix'],
+  },
+  {
+    file: 'sources/plugin/xyz/arcadiadevs/valoriatycoon/hologram/HologramBuilder.java',
+    why: "hologram/textline/item : les trois methodes statiques appelees par le bloc lambda du plugin",
+    methods: [
+      { name: 'hologram', returns: 'Hologram', arity: 2, static: true },
+      { name: 'textline', returns: 'void', arity: 2, varargs: true, static: true },
+      { name: 'item', returns: 'void', arity: 1, static: true },
+    ],
+    mustContain: ['ThreadLocal<Deque<Hologram>>', 'stack.pop()', 'usableItem'],
+    mustNotContain: ['net.minecraft', 'comphenix'],
+  },
+  {
+    file: 'sources/plugin/xyz/arcadiadevs/valoriatycoon/hologram/HologramSetupGroup.java',
+    interfaceMembers: true,
+    why: "interface fonctionnelle visee par le invokedynamic du bytecode livre",
+    methods: [{ name: 'run', returns: 'void', arity: 0, static: false }],
+    mustContain: ['@FunctionalInterface'],
+  },
+  {
+    file: 'sources/plugin/xyz/arcadiadevs/valoriatycoon/hologram/HologramRegisterGroup.java',
+    interfaceMembers: true,
+    why: "idem, pour pool.registerHolograms(() -> ...)",
+    methods: [{ name: 'run', returns: 'void', arity: 0, static: false }],
+    mustContain: ['@FunctionalInterface'],
+  },
+  {
+    file: 'sources/plugin/xyz/arcadiadevs/valoriatycoon/hologram/HologramStore.java',
+    why: "un hologramme qui ne survit pas a un restart est une perte de donnees visible par les joueurs",
+    mustContain: ['ATOMIC_MOVE', 'holograms.txt', 'HEADER', 'escape(', 'unescape('],
+    mustNotContain: ['net.minecraft', 'printStackTrace', 'System.out'],
+  },
+  {
+    file: 'sources/plugin/xyz/arcadiadevs/valoriatycoon/hologram/HoloEasy.java',
+    why: "façade appelee par ValoriaTycoon.startInteractivePool : la signature ne doit pas bouger",
+    methods: [
+      { name: 'startInteractivePool', returns: 'HologramPool', arity: 4, static: true },
+      { name: 'activePool', returns: 'HologramPool', arity: 0, static: true },
+      { name: 'color', returns: 'String', arity: 1, static: true },
+    ],
+    mustContain: ['new NamespacedKey("valoriatycoon", "hologram-entity")', 'legacyHex', 'instanceof ArmorStand'],
+    mustNotContain: ['net.minecraft', 'comphenix', 'printStackTrace', 'md_5'],
   },
   {
     file: 'sources/plugin/xyz/arcadiadevs/valoriatycoon/utils/ServerVersion.java',
@@ -271,13 +393,15 @@ for (const contract of CONTRACTS) {
     const issues = [];
     if (found.private === true) { /* placeholder */ }
     const wanted = expected.visibility ?? (expected.private ? 'private' : 'public');
-    if (wanted !== 'package' && !found.modifiers.includes(wanted)) {
+    // `implicit` : membre d'interface, donc public de droit sans que le mot-cle soit ecrit
+    const implicitOk = wanted === 'public' && contract.interfaceMembers === true && found.modifiers.length === 0;
+    if (wanted !== 'package' && !implicitOk && !found.modifiers.includes(wanted)) {
       issues.push(`visibilité ${found.modifiers.join('|') || 'package-private'} au lieu de ${wanted}`);
     }
     if (wanted === 'package' && found.modifiers.length > 0) {
       issues.push(`devrait être sans modificateur, trouvé ${found.modifiers.join('|')}`);
     }
-    const wantStatic = expected.static !== false;
+    const wantStatic = expected.static !== false && !(contract.interfaceMembers === true && expected.static === undefined);
     if (wantStatic !== found.modifiers.includes('static')) issues.push(wantStatic ? 'non statique' : 'statique (attendue d\'instance)');
     if (found.arity !== expected.arity) issues.push(`arité ${found.arity} au lieu de ${expected.arity}`);
     if (Boolean(expected.varargs) !== found.varargs) issues.push(`varargs ${found.varargs}`);

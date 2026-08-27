@@ -2,14 +2,22 @@
 
 ## Pourquoi un second plugin, et pas le code dans ValoriaTycoon
 
-`ValoriaTycoon` résout son fournisseur d'argent dans son `onEnable` : il exige un plugin nommé `Vault`
-(son bytecode contient la chaîne `Vault not found`) et lit le service `Economy` enregistré dans le
-`ServicesManager` de Bukkit. Un fournisseur enregistré **par** ValoriaTycoon ne peut donc pas être visible
-**par** ValoriaTycoon au moment où il le cherche. La seule solution propre est un plugin activé **avant**
-lui : `load: STARTUP` dans `resources-economy/plugin.yml` (ValoriaTycoon est en `POSTWORLD`).
+`ValoriaTycoon` résout son fournisseur d'argent dans son `onEnable` : il cherche un plugin à activer
+**avant** lui, puis lit le service `Economy` enregistré dans le `ServicesManager` de Bukkit. Un
+fournisseur enregistré par ValoriaTycoon lui-même ne serait pas visible au moment où il le cherche :
+d'où un second plugin, `load: STARTUP` dans `resources-economy/plugin.yml` (ValoriaTycoon est en
+`POSTWORLD`).
 
-Conséquences heureuses : aucun fichier de ValoriaTycoon n'est touché, et tous les autres plugins du
-serveur (boutiques, donneurs, téléports payants) voient le même argent sans configuration.
+Dans la version d'origine, ce service passait par l'API **Vault**, ce qui obligeait à installer aussi un
+plugin Vault (ou son fork VaultUnlocked). Ce n'est plus le cas : l'interface est écrite dans le dépôt,
+`sources/api/xyz/arcadiadevs/valoriateconomy/Economy.java`, générée depuis `docs/economy-api.txt` et
+embarquée dans le jar de ValoriaTycoon. Le bytecode livré a été renommé en conséquence
+(`scripts/selfmade-api-patch.py`) : `getPlugin("Vault")` est devenu `getPlugin("ValoriaEconomy")`, et
+tous les descripteurs `net/milkbowl/…` pointent sur nos classes.
+
+Conséquences heureuses : aucun fichier de config de ValoriaTycoon n'est touché, et tous les autres plugins
+du serveur (boutiques, donneurs, téléports payants) voient le même argent en implémentant la même
+interface.
 
 ## Ce qui remplace quoi
 
@@ -18,14 +26,15 @@ serveur (boutiques, donneurs, téléports payants) voient le même argent sans c
 | EssentialsX (coffre + `/money`, `/pay`) | `ValoriaEconomy` (`/bal`, `/pay`, `/baltop`, `/eco`) |
 | `plugins/Essentials/userdata/*.yml` | `plugins/ValoriaEconomy/economy.yml`, un seul fichier |
 | config de l'argent éparse | `plugins/ValoriaEconomy/config.yml` (`starting-balance`, `currency.*`) |
-| `Vault`/VaultUnlocked | **inchangé** : il reste obligatoire (c'est le pont d'API qu'exige ValoriaTycoon) |
+| `Vault` / VaultUnlocked (pont d'API) | **supprimé** : l'interface d'économie vit dans le dépôt et dans le jar |
+| `ProtocolLib` (exigé par les hologrammes HoloEasy) | **supprimé** : hologrammes rendus par des entités Bukkit |
 
 ## Installer
 
 1. Déposer **les deux** jars dans `plugins/` : `ValoriaTycoon-v1.6.3.jar` et `ValoriaEconomy-v1.6.3.jar`.
-2. Retirer `EssentialsX.jar` (ou le garder pour ses autres commandes, mais alors **une seule** des deux
-   économies doit s'enregistrer : ValoriaEconomy refuse de prendre la place d'un fournisseur déjà
-   enregistré et le dit dans le log).
+2. Retirer `EssentialsX.jar`, `Vault.jar`/`VaultUnlocked.jar` et `HoloEasy.jar` : ils ne servent plus.
+   Si un autre plugin s'enregistre déjà comme fournisseur, **une seule** économie gagne : ValoriaEconomy
+   refuse de prendre la place d'un fournisseur déjà enregistré et le dit dans le log.
 3. Redémarrer. Le log attendu :
    `[ValoriaEconomy] fournisseur d'économie enregistré (N compte(s)).`
 4. Premier lancement : chaque joueur reçoit `starting-balance` (500 par défaut, `0` pour désactiver).
@@ -53,10 +62,14 @@ serveur (boutiques, donneurs, téléports payants) voient le même argent sans c
   créée ni détruite au milieu d'une transaction.
 - **Banques non implémentées**, réponse `NOT_IMPLEMENTED` (jamais d'exception) : un plugin qui en a besoin
   reste libre d'utiliser un autre fournisseur.
-- **43 méthodes d'interface générées** : `VaultEconomy.java` est émis par
-  `scripts/generate-vault-economy.py` depuis `docs/vault-economy-api.txt` (snapshot de l'API Vault), et
-  `scripts/verify-economy-api.py` refuse tout écart. Une méthode oubliée = erreur de compilation ; une
-  signature décalée = `AbstractMethodError` silencieux en jeu pour les plugins tiers — d'où le contrôle.
+- **44 signatures, dont une générée deux fois** : l'interface `Economy` et le fournisseur
+  `ValoriaEconomyProvider.java` sont émis par `scripts/generate-economy-api.py` depuis
+  `docs/economy-api.txt`, et `scripts/verify-economy-api.py` refuse tout écart entre snapshot, interface,
+  fournisseur **et** les `.class` livrés. Une méthode oubliée = erreur de compilation ; une signature
+  décalée = `AbstractMethodError` silencieux en jeu — d'où le contrôle.
+- **Une seule copie de l'interface à l'exécution** : elle n'est embarquée que dans le jar de
+  ValoriaTycoon. Si elle était dans les deux, `getRegistration(Economy.class)` chercherait un `Class`
+  objet différent selon le classloader et renverrait `null` sans erreur visible.
 
 ## Importer les soldes EssentialsX (une fois)
 
@@ -72,6 +85,9 @@ touche pas à un compte déjà présent dans `economy.yml`.
 
 ## Rollback
 
-Supprimer `ValoriaEconomy-v1.6.3.jar`, remettre `EssentialsX.jar` : EssentialsX réenregistre son propre
-fournisseur au démarrage, `ValoriaTycoon` le retrouve, rien d'autre à changer. Les montants gagnés pendant
-la période ValoriaEconomy restent dans `economy.yml` (à recopier à la main dans Essentials si besoin).
+Supprimer `ValoriaEconomy-v1.6.3.jar`, remettre `EssentialsX.jar` **plus** un plugin exposant le
+service sous `xyz.arcadiadevs.valoriateconomy.Economy` (EssentialsX seul ne suffit pas : il parle
+l'API Vault). En pratique, un rollback complet = revenir au jar `ValoriaTycoon` livré par
+`artifacts/original/` **et** réinstaller Vault + EssentialsX. Les montants gagnés pendant la période
+ValoriaEconomy restent dans `economy.yml` (le script `scripts/import-essentials-balances.py` se relit
+dans l'autre sens à la main, un fichier par joueur).

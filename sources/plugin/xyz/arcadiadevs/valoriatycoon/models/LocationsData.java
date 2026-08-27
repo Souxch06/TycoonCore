@@ -25,7 +25,7 @@ import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.util.Vector;
-import org.holoeasy.hologram.Hologram;
+import xyz.arcadiadevs.valoriatycoon.hologram.Hologram;
 import xyz.arcadiadevs.valoriatycoon.ValoriaTycoon;
 import xyz.arcadiadevs.valoriatycoon.models.GeneratorsData;
 import xyz.arcadiadevs.valoriatycoon.models.events.DropEvent;

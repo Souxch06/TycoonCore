@@ -28,6 +28,13 @@ OUT = ROOT / "artifacts" / "reference" / "valoria-renamed.jar"
 # Le manifest du paquet livré n'a pas de sens pour un classpath de compilation.
 EXCLUDED = {"META-INF/MANIFEST.MF"}
 
+# Arbres qui ne doivent JAMAIS réapparaître dans le classpath de compilation : ce sont les API
+# tierces que le dépôt remplace par du code écrit ici (l'interface d'économie à la place de Vault,
+# notre moteur d'hologrammes à la place de HoloEasy). Les laisser passer masquerait nos sources :
+# javac résoudrait `Economy` depuis ce JAR et non depuis `sources/api`, et un membre oublié ne
+# serait jamais signalé.
+FORBIDDEN_PREFIXES = ("net/milkbowl/", "org/holoeasy/")
+
 
 def build() -> bytes:
     from io import BytesIO
@@ -40,6 +47,11 @@ def build() -> bytes:
             relative = path.relative_to(EXTRACTED).as_posix()
             if relative in EXCLUDED:
                 continue
+            if relative.startswith(FORBIDDEN_PREFIXES):
+                raise SystemExit(
+                    f"ERREUR: {relative} est une API tierce : artifacts/extracted ne doit plus la "
+                    "livrer (lancer scripts/selfmade-api-patch.py --check)"
+                )
             jar.write(path, relative)
     return buffer.getvalue()
 
@@ -61,6 +73,11 @@ def main() -> int:
         with zipfile.ZipFile(OUT) as existing, zipfile.ZipFile(__import__("io").BytesIO(payload)) as fresh:
             old_names = set(existing.namelist())
             new_names = set(fresh.namelist())
+        stale = sorted(n for n in old_names if n.startswith(FORBIDDEN_PREFIXES))
+        if stale:
+            print(f"ERREUR: {OUT.relative_to(ROOT)} embarque encore une API tierce: {stale[:5]}",
+                  file=__import__("sys").stderr)
+            return 1
         if old_names != new_names:
             missing = sorted(new_names - old_names)[:10]
             extra = sorted(old_names - new_names)[:10]

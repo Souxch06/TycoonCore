@@ -48,12 +48,26 @@ extracted_files = sorted(
     if path.is_file()
 )
 
-missing = sorted(set(jar_files) - set(extracted_files))
+# Arbres volontairement retires du paquet : ce sont des bibliothèques tierces remplacees par du
+# code ecrit dans ce depot (moteur d'hologrammes, API d'economie interne). Leur absence n'est pas
+# une perte d'extraction mais le resultat de `scripts/selfmade-api-patch.py`, et elle est controlee
+# separement (verify-paper26-compat.py refuse qu'elles reviennent).
+RETIRED = ("org/holoeasy/", "net/milkbowl/", "META-INF/holoeasy-core.kotlin_module",
+           "META-INF/maven/org.holoeasy/")
+
+
+def retired(name: str) -> bool:
+    return name.startswith(RETIRED)
+
+
+missing = sorted(n for n in set(jar_files) - set(extracted_files) if not retired(n))
+retired_missing = sorted(n for n in set(jar_files) - set(extracted_files) if retired(n))
 extra = sorted(set(extracted_files) - set(jar_files))
 
 print(f"Fichiers attendus          : {len(jar_files)}")
 print(f"Fichiers dans l'extraction : {len(extracted_files)}")
 print(f"Fichiers manquants         : {len(missing)}")
+print(f"Bibliotheque tierce retiree : {len(retired_missing)} entree(s) (volontaire, voir selfmade-api-patch.py)")
 print(f"Fichiers en trop           : {len(extra)}")
 
 if missing:
