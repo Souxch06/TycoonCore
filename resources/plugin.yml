@@ -6,11 +6,16 @@ authors:
   - Cuftica
   - OpenSource
 
-depend:
-  # Vault est réellement requis : setupEconomy() lève « Vault introuvable » sans lui.
-  - Vault
-
 softdepend:
+  # Économie : un fournisseur d'économie enregistré auprès de Vault est indispensable, mais il n'est
+  # PAS déclaré en `depend:`. Bukkit résout un depend: par le NOM exact du plugin et refuse alors de
+  # charger le paquet (UnknownDependencyException) : ce blocage a touché des serveurs 26.x qui
+  # n'utilisent pas l'original (figé à Vault 1.7.3 de 2020) mais le fork maintenu VaultUnlocked
+  # (compatibilité 26.x déclarée). Les deux exposent le même service Economy via l'API des services,
+  # donc la vraie vérification reste dans setupEconomy() : « Vault introuvable » ou « Aucun plugin
+  # d'économie trouvé », messages explicites au lieu d'un refus muet.
+  - Vault
+  - VaultUnlocked
   # ProtocolLib n'est appelé par aucune classe du plugin (vérifié dans les .class livrés) : il n'est
   # utile que via HoloEasy, qui le déclare déjà de son côté. En dépendance dure, son absence (ou
   # l'absence d'un build compatible 26.x) empêchait Bukkit de charger ValoriaTycoon, hologrammes

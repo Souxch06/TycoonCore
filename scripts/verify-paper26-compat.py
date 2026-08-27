@@ -139,9 +139,10 @@ def verify_tree():
     tree_yml = (ROOT / "resources" / "plugin.yml").read_text()
     depends = top_list(tree_yml, "depend")
     soft = top_list(tree_yml, "softdepend")
-    check("plugin.yml : Vault en dépendance dure, ProtocolLib en souple",
-          depends == ["Vault"] and "ProtocolLib" in soft,
-          f"depend={depends} softdepend(ProtocolLib)={'ProtocolLib' in soft}")
+    check("plugin.yml : aucune dépendance dure (Vault, VaultUnlocked, ProtocolLib en souple)",
+          not depends and {"Vault", "VaultUnlocked", "ProtocolLib"} <= set(soft),
+          f"depend={depends} softdepend={soft} — un depend: dur est résolu par NOM exact par Bukkit : "
+          "il refuse les équivalents (VaultUnlocked) et bloque tout le chargement")
     check("plugin.yml : miroir artifacts/extracted identique",
           (EXTRACTED / "plugin.yml").read_text() == tree_yml)
     check("pom.xml : descripteurs JPMS hors de portée de javac pendant compile",
@@ -190,10 +191,10 @@ def verify_jar(jar_path: Path):
           "le JAR ne doit pas contenir org/bukkit (fourni par le serveur)")
     # les descripteurs JPMS sont exclus de target/classes pendant compile puis réinsérés en
     # prepare-package : s'ils manquent dans le paquet, c'est que le pom a perdu l'étape de restauration
-    check("JAR : ProtocolLib en dépendance souple uniquement",
-          plugin_yml is not None and "ProtocolLib" not in top_list(plugin_yml, "depend"),
-          "ProtocolLib doit être en softdepend : seule la librairie HoloEasy embarquée l'utilise, "
-          "et une dépendance dure bloque le chargement du plugin tout entier")
+    check("JAR : aucun bloc depend: (sinon refus de chargement si le nom cité manque)",
+          plugin_yml is not None and not top_list(plugin_yml, "depend"),
+          "le JAR contient encore un bloc depend: — Bukkit refusera de charger le plugin si le nom "
+          "exact cité n'est pas installé (Vault, ProtocolLib), même avec un équivalent présent")
     check("JAR : descripteurs de module réinsérés", "module-info.class" in names,
           "module-info.class absent du paquet : l'exécution 'restore-module-descriptors' (prepare-package) "
           "du maven-resources-plugin est manquante ou mal ordonnée")
