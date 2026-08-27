@@ -22,11 +22,18 @@ OLD_PACKAGE = "gens" + "plus"
 NEW_BRAND = "ValoriaTycoon"
 NEW_PACKAGE = "valoriatycoon"
 
+# Le pont NBT (scripts/install-nbt-bridge.py) conserve l'implémentation d'origine sous un nouveau nom
+# binaire pour servir de repli ; NBTEditor est désormais fourni par la compilation depuis sources/.
+NBT_PACKAGE = "io/github/bananapuncher714/nbteditor/"
+NBT_ORIGINAL = NBT_PACKAGE + "NBTEditor"
+NBT_REPLI = NBT_PACKAGE + "LegacyNbtBridge"
+
 
 def rebranded_path(name: str) -> str:
-    """Applique le renommage du dépôt aux chemins historiques du JAR."""
+    """Applique les renommages du dépôt aux chemins historiques du JAR."""
     return (
         name.replace(f"xyz/arcadiadevs/{OLD_PACKAGE}/", f"xyz/arcadiadevs/{NEW_PACKAGE}/")
+        .replace(NBT_ORIGINAL, NBT_REPLI)
         .replace(OLD_BRAND, NEW_BRAND)
         .replace(OLD_PACKAGE, NEW_PACKAGE)
     )

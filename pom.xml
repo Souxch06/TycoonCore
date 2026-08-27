@@ -50,6 +50,10 @@
                         <!-- Détection de version serveur (Paper 26.x) : compilée depuis
                              sources/plugin, remplace la classe livrée dans le JAR. -->
                         <include>plugin/xyz/arcadiadevs/valoriatycoon/utils/ServerVersion.java</include>
+                        <!-- Pont NBT -> PersistentDataContainer : remplace la bibliothèque embarquée,
+                             dont les cibles obfusquées ont disparu des serveurs Paper récents. Le repli
+                             historique reste livré sous io.github...LegacyNbtBridge. -->
+                        <include>shaded/io/github/bananapuncher714/nbteditor/NBTEditor.java</include>
                     </includes>
                 </configuration>
             </plugin>

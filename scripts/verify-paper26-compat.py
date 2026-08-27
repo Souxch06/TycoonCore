@@ -37,6 +37,8 @@ PATCHES = patcher.PATCHES
 SERVER_VERSION_SOURCE = ROOT / "sources/plugin/xyz/arcadiadevs/valoriatycoon/utils/ServerVersion.java"
 SERVER_VERSION_ENTRY = "xyz/arcadiadevs/valoriatycoon/utils/ServerVersion.class"
 XMATERIAL_SOURCE = ROOT / "sources/shaded/com/cryptomorin/xseries/XMaterial.java"
+BRIDGE_SOURCE = ROOT / "sources/shaded/io/github/bananapuncher714/nbteditor/NBTEditor.java"
+NBT_DIR = EXTRACTED / "io" / "github" / "bananapuncher714" / "nbteditor"
 XREFLECTION_SOURCE = ROOT / "sources/shaded/com/cryptomorin/xseries/reflection/XReflection.java"
 
 # Motifs tels qu'ils sont écrits dans le source Java (backslashes doublés), comparés en sous-chaîne.
@@ -109,6 +111,25 @@ def verify_tree():
         check(f"ServerVersion.java : {label}", token in source)
     check("ServerVersion.java : plus de dépendance au paquet CraftBukkit pour la détection",
           "startsWith(serverVersion.name())" not in source)
+
+    # 4. pont NBT -> PersistentDataContainer (sans lui, les générateurs sont inertes sur 26.x)
+    bridge = BRIDGE_SOURCE.read_text(encoding="utf-8") if BRIDGE_SOURCE.is_file() else ""
+    check("pont NBTEditor.java présent", bool(bridge), f"attendu dans {BRIDGE_SOURCE.relative_to(ROOT)}")
+    if bridge:
+        for label, pattern in [("contains", r"public static boolean contains\(Object object, Object \.\.\. objectArray\)"),
+                               ("getInt", r"public static int getInt\(Object object, Object \.\.\. objectArray\)"),
+                               ("getString", r"public static String getString\(Object object, Object \.\.\. objectArray\)"),
+                               ("set", r"public static Object set\(Object object, Object object2, Object \.\.\. objectArray\)"),
+                               ("champ CUSTOM_DATA typé NBTEditor$Type", r"public static final Type CUSTOM_DATA"),
+                               ("enum imbriqué Type", r"public enum Type")]:
+            check(f"pont NBTEditor : {label}", re.search(pattern, bridge) is not None)
+        check("pont NBTEditor : aucun import Bukkit (build hors-ligne)",
+              not re.search(r"^import org\.bukkit", bridge, re.M))
+        check("pont NBTEditor : repli vers LegacyNbtBridge", "LegacyNbtBridge" in bridge)
+    for relative in sorted(NBT_DIR.glob("NBTEditor*.class")) if NBT_DIR.is_dir() else []:
+        check(f"pont : ancien nom retiré du JAR ({relative.name})", False, "devrait être LegacyNbtBridge.class")
+    check("pont : repli historique livré", (NBT_DIR / "LegacyNbtBridge.class").is_file(),
+          "artifacts/extracted/io/github/bananapuncher714/nbteditor/LegacyNbtBridge.class manquant")
 
 
 def verify_jar(jar_path: Path):

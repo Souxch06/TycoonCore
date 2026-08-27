@@ -17,6 +17,10 @@ Les joueurs peuvent placer des générateurs, récupérer automatiquement des dr
 - Les bibliothèques embarquées XSeries (`XMaterial`, `XReflection`) portent un correctif de parsing de version,
   reproduit de façon déterministe par `scripts/patch-class-version-patterns.py` et vérifié par
   `scripts/verify-paper26-compat.py`.
+- L'identification des générateurs ne passe plus par les noms NMS obfusqués de `NBTEditor` (inexistants sur
+  les serveurs récents) mais par le `PersistentDataContainer` de Bukkit, via un pont compilé depuis
+  `sources/shaded/io/github/bananapuncher714/nbteditor/NBTEditor.java` ; l'implémentation d'origine reste
+  disponible en repli sous le nom `LegacyNbtBridge` (`scripts/install-nbt-bridge.py`).
 - Le JAR est en bytecode Java 17 (exécutable sur Java 17+) ; un serveur 26.x exige Java 25.
 - Contrôle rapide, sans JDK ni serveur : `python3 scripts/verify-paper26-compat.py` (l'arbre du dépôt)
   puis `python3 scripts/verify-paper26-compat.py target/ValoriaTycoon-v1.6.3.jar` (JAR compilé).

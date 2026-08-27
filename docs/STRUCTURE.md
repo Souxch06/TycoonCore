@@ -93,6 +93,25 @@ python3 scripts/verify-paper26-compat.py target/ValoriaTycoon-v1.6.3.jar
 
 `scripts/classfile.py` est le lecteur de fichiers `.class` partagé par ces deux scripts.
 
+## Pont NBT (PersistentDataContainer)
+
+`sources/shaded/io/github/bananapuncher714/nbteditor/NBTEditor.java` remplace la bibliothèque
+embarquée d'origine, dont les cibles NMS obfusquées n'existent plus sur les serveurs Paper récents
+(plus de relocation de paquet depuis 1.20.6, plus de remapper interne ni de jar obfusqué depuis 26.1).
+L'implémentation d'origine est conservée comme repli sous le nom binaire `LegacyNbtBridge` : le
+renommage des 27 classes livrées est fait par `scripts/install-nbt-bridge.py`, qui ne réécrit que les
+constantes `CONSTANT_Utf8` (noms internes et descripteurs) et revalide la structure de chaque fichier.
+
+```bash
+python3 scripts/install-nbt-bridge.py                    # installe le pont
+python3 scripts/install-nbt-bridge.py --check             # CI, arbre du dépôt
+python3 scripts/install-nbt-bridge.py --check --jar <j>   # CI, JAR produit
+```
+
+Le pont est recompilé par le build (voir `<includes>` du `pom.xml`) ; c'est lui qui fournit
+`io/github/bananapuncher714/nbteditor/NBTEditor.class` et `NBTEditor$Type.class` dans le JAR, là où la
+bibliothèque d'origine les livrait précompilées.
+
 ## CI de validation
 
 `scripts/ci/build-workflow.yml` contient le workflow de validation des Pull Requests (compilation,
