@@ -40,6 +40,15 @@ petits carrés) en haut à droite du fichier. Ça copie les ~96 lignes d'un coup
 `https://github.com/Souxch06/ValoriaTycoon/actions` tu vois une nouvelle ligne
 **« Build and Validate ValoriaTycoon »** en cours (point jaune) ou déjà verte.
 
+**1.6 (le plus important) Le build est rouge ?** Ne recopie **rien** à la main :
+- si tu as collé la version la plus récente de `docs/CI-A-COLLER.yml`, le rapport d'erreurs arrive
+  **tout seul en commentaire de la PR #7** (fichier, ligne, extrait du code fautif) ;
+- sinon : page du run → en haut à droite, les **trois petits points ⋯** → **Re-run all jobs** →
+  attends ~3 min → clique l'étape rouge → **Ctrl+F** `ERROR` → colle-moi ce que tu vois.
+- variante « zéro copier-coller », si tu préfères : ajoute les 3 blocs de `docs/DEPLOY-2-JARS.md`
+  (section « Option rapport de compilation ») à `deploy.yml`, puis **Run workflow** sur la branche en
+  cochant **Diagnostic** — le rapport est publié sur la PR, sans toucher au serveur.
+
 **⚠️ Si GitHub refuse** avec un message du type *« this workflow requires approval »* : sur la page
 Actions, clique sur le bouton **I understand my workflows, go ahead and enable them** (une seule fois
 pour tout le dépôt), puis relance l'étape 1.4.
