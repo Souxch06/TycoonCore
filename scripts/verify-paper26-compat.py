@@ -118,6 +118,10 @@ def verify_tree():
           "sources/module-info.java ferait basculer javac en mode module (« module not found: com.google.gson ») ; "
           "déplacer ce résidu sous sources/shaded/com/google/gson/")
     pom = (ROOT / "pom.xml").read_text()
+    check("pom.xml : descripteurs JPMS hors de portée de javac pendant compile",
+          "<exclude>module-info.class</exclude>" in pom and "restore-module-descriptors" in pom,
+          "il faut exclure module-info.class de la copie de ressources ET le réinsérer en prepare-package, "
+          "sinon javac traite target/classes comme un module et échoue sur « module not found: com.google.gson »")
     check("pom.xml : compilation limitée aux sources maintenues",
           "<includes>" in pom and "ServerVersion.java" in pom and "nbteditor/NBTEditor.java" in pom,
           "les <includes> du maven-compiler-plugin doivent lister les fichiers maintenus")
@@ -158,6 +162,11 @@ def verify_jar(jar_path: Path):
         check("JAR : plugin.yml api-version >= 1.13", api_ok, "api-version absente ou antérieure à 1.13")
     check("JAR : API Bukkit non embarquée", not any(n.startswith("org/bukkit/") for n in names),
           "le JAR ne doit pas contenir org/bukkit (fourni par le serveur)")
+    # les descripteurs JPMS sont exclus de target/classes pendant compile puis réinsérés en
+    # prepare-package : s'ils manquent dans le paquet, c'est que le pom a perdu l'étape de restauration
+    check("JAR : descripteurs de module réinsérés", "module-info.class" in names,
+          "module-info.class absent du paquet : l'exécution 'restore-module-descriptors' (prepare-package) "
+          "du maven-resources-plugin est manquante ou mal ordonnée")
 
     for relative, old, new in PATCHES:
         verify_constant_pool(f"JAR : classe patchée {relative}", patched[relative], [new], [old])

@@ -32,6 +32,15 @@
                 <directory>artifacts/extracted</directory>
                 <excludes>
                     <exclude>META-INF/MANIFEST.MF</exclude>
+                    <!-- Les descripteurs JPMS sont réinsérés en prepare-package (voir maven-resources-plugin
+                         ci-dessous). Ils ne doivent PAS être présents dans target/classes pendant la
+                         compilation : ce dossier est sur le classpath de javac, et une entrée de classpath
+                         contenant module-info.class est traitée comme un module nommé. module-info.class y
+                         déclare « requires com.google.gson » (le module de gson/recordadapter embarqué),
+                         impossible à résoudre depuis un classpath de compilation vide :
+                         « module not found: com.google.gson », et le build échoue avant même de compiler. -->
+                    <exclude>module-info.class</exclude>
+                    <exclude>META-INF/versions/9/module-info.class</exclude>
                 </excludes>
             </resource>
             <resource>
@@ -61,6 +70,35 @@
                         <include>shaded/io/github/bananapuncher714/nbteditor/NBTEditor.java</include>
                     </includes>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+                <version>3.3.1</version>
+                <executions>
+                    <execution>
+                        <!-- prepare-package s'exécute après compile et avant package : les descripteurs
+                             reviennent dans target/classes juste à temps pour le JAR, sans jamais gêner
+                             javac. Le paquet final reste identique à artifacts/extracted. -->
+                        <id>restore-module-descriptors</id>
+                        <phase>prepare-package</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.build.outputDirectory}</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>artifacts/extracted</directory>
+                                    <includes>
+                                        <include>module-info.class</include>
+                                        <include>META-INF/versions/9/module-info.class</include>
+                                    </includes>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
