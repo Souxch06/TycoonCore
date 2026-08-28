@@ -201,6 +201,44 @@ def verify_tree():
           "d'extérieur : l'économie et les hologrammes viennent du dépôt")
     check("plugin.yml : miroir artifacts/extracted identique",
           (EXTRACTED / "plugin.yml").read_text() == tree_yml)
+    # 4c. assemblage du second plugin : le schema du descripteur est petit et ne dit rien de clair,
+    # donc on le verifie a la main. `finalName` n'est licite que dans un <format> (assemblages
+    # multi-formats) ; au niveau racine, maven-assembly-plugin meurt sur `Unrecognised tag` AVANT
+    # d'emballer quoi que ce soit (build #33155795647). Le nom final vient alors du pom.
+    assembly = (ROOT / "src/assembly/economy.xml").read_text(encoding="utf-8") if (ROOT / "src/assembly/economy.xml").is_file() else ""
+    if assembly:
+        import xml.etree.ElementTree as _ET
+        try:
+            root_tag = _ET.fromstring(assembly)
+        except _ET.ParseError as bad:
+            root_tag = None
+            check("src/assembly/economy.xml : XML valide", False, str(bad))
+        if root_tag is not None:
+            stripped = root_tag.tag.split("}")[-1]
+            kids = {c.tag.split("}")[-1] for c in root_tag}
+            formats = [f.text.strip() for f in root_tag.iter() if f.tag.endswith("}format") and f.text]
+            check("src/assembly/economy.xml : XML valide et racine <assembly>", stripped == "assembly")
+            check("src/assembly/economy.xml : pas de <finalName> au niveau racine",
+                  "finalName" not in kids,
+                  "l'XSD ne definit finalName QUE comme enfant de <format> (assemblage multi-formats) ; "
+                  "au niveau racine Maven lit le descripteur et echoue sur `Unrecognised tag: 'finalName'`")
+            check("src/assembly/economy.xml : <id> et <formats> presents",
+                  "id" in kids and "formats" in kids and len(formats) == 1,
+                  f"formats lus: {formats}")
+            check("pom.xml : le nom final du jar d'economie est pose par un rename (appendAssemblyId=VRAI)",
+                  "appendAssemblyId>true" in pom and "rename-economy-jar" in pom
+                  and "ValoriaEconomy-v${project.version}.jar" in pom,
+                  "sans le tag <finalName> dans le descripteur, c'est le pom qui doit renommer "
+                  "`ValoriaEconomy-<version>-economy.jar` en `ValoriaEconomy-v<version>.jar`")
+            check("pom.xml : l'execution de rename est declaree apres maven-assembly-plugin",
+                  pom.index("rename-economy-jar") > pom.index("maven-assembly-plugin"),
+                  "a la phase `package`, Maven execute les plugins dans l'ordre du pom : le jar doit "
+                  "exister quand le move s'execute")
+            check("pom.xml : le jar d'economie n'est PAS nominal dans le descripteur",
+                  "appendAssemblyId>false" not in pom,
+                  "appendAssemblyId=false produit `ValoriaEconomy-1.6.3.jar` (sans -v), alors que "
+                  "plugin.yml/docs/CI nomment `ValoriaEconomy-v1.6.3.jar`")
+
     check("pom.xml : descripteurs JPMS hors de portée de javac pendant compile",
           "<exclude>module-info.class</exclude>" in pom and "restore-module-descriptors" in pom,
           "il faut exclure module-info.class de la copie de ressources ET le réinsérer en prepare-package, "

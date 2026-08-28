@@ -1,5 +1,13 @@
 # Déployer les deux jars
 
+> **Le second jar s'appelle `ValoriaEconomy-v<version>.jar`** et c'est le `pom.xml` qui nomme :
+> le descripteur d'assemblage **ne peut pas** porter de `<finalName>` (l'XSD ne le définit que dans un
+> `<format>`, pour les assemblages multi‑formats) — `src/assembly/economy.xml` produit donc
+> `ValoriaEconomy-<version>-economy.jar`, que l'exécution `rename-economy-jar` (maven‑antrun‑plugin,
+> déclarée après maven‑assembly‑plugin) renomme. Les 6 contrôles de `scripts/verify-paper26-compat.py`
+> (« pas de `<finalName>` au niveau racine », « rename déclaré après l'assembleur », …) empêchent la
+> rechute constatée sur le build `#33155795647`.
+
 `deploy.yml` ne copie qu'un seul fichier (`find target -maxdepth 1 -name "*.jar" | head -n 1`). Depuis
 l'ajout de `ValoriaEconomy`, il faut déposer **les deux** jars dans `plugins/`.
 

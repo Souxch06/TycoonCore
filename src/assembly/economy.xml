@@ -9,7 +9,12 @@
     <format>jar</format>
   </formats>
   <includeBaseDirectory>false</includeBaseDirectory>
-  <finalName>ValoriaEconomy-v${project.version}</finalName>
+  <!-- PAS de <finalName> ici : l'XSD du descripteur d'assemblage ne le definit QUE pour un format
+       multiple (<formats><format><finalName>). Avec un seul <format>jar</format>, la lecture du
+       descripteur echoue (`Unrecognised tag: 'finalName'`, vu sur le build #33155795647) : Maven
+       n'attend PAS un message plus clair, il casse avant d'avoir compile quoi que ce soit.
+       Le nom final est donc pose par l'execution `rename-economy-jar` (maven-antrun-plugin) du
+       pom.xml, qui depend de cette presence de <id>economy</id>. -->
   <fileSets>
     <fileSet>
       <directory>${project.build.directory}/classes</directory>

@@ -185,6 +185,30 @@
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>3.1.0</version>
+                <executions>
+                    <execution>
+                        <!-- Declarée APRES maven-assembly-plugin : a la meme phase `package`, Maven
+                             execute les plugins dans l'ordre du pom, donc le jar d'assemblage existe
+                             deja quand il est renomme. -->
+                        <id>rename-economy-jar</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <target>
+                                <move file="${project.build.directory}/ValoriaEconomy-${project.version}-economy.jar"
+                                      tofile="${project.build.directory}/ValoriaEconomy-v${project.version}.jar"
+                                      failonerror="true"/>
+                            </target>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>
                 <version>3.7.1</version>
                 <executions>
@@ -198,7 +222,12 @@
                             <descriptors>
                                 <descriptor>src/assembly/economy.xml</descriptor>
                             </descriptors>
-                            <appendAssemblyId>false</appendAssemblyId>
+                            <!-- Le nom voulu (`ValoriaEconomy-v<version>.jar`) ne peut pas venir du
+                                 descripteur (voir son commentaire) : on laisse l'assembleur produire
+                                 `ValoriaEconomy-<version>-economy.jar`, puis une execution antrun le
+                                 renomme. `appendAssemblyId=false` + un `<finalName>` dans le
+                                 descripteur etait la combinaison qui faisait echouer le build. -->
+                            <appendAssemblyId>true</appendAssemblyId>
                         </configuration>
                     </execution>
                 </executions>
