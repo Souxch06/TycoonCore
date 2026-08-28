@@ -40,6 +40,7 @@ import classfile  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[1]
 EXTRACTED = ROOT / "artifacts" / "extracted"
+BRIDGE_SOURCE = ROOT / "sources/shaded/io/github/bananapuncher714/nbteditor/NBTEditor.java"
 PACKAGE_DIR = EXTRACTED / "io" / "github" / "bananapuncher714" / "nbteditor"
 
 # Le jeton complet est remplacé partout dans les seules classes legacy : il couvre à la fois les noms
@@ -89,6 +90,32 @@ def outside_references() -> list:
     return problems
 
 
+def inner_name(jar_entry: str) -> str:
+    """`…/NBTEditor$Keys.class` -> `NBTEditor$Keys`."""
+    return jar_entry.rsplit("/", 1)[-1][: -len(".class")]
+
+
+def pont_inner_classes() -> set:
+    """Les classes internes LEGITIMES du pont : celles que nos sources declarent.
+
+    Le pont NBT est recompilé depuis sources/shaded/…/NBTEditor.java ; javac en tire des classes
+    internes (`NBTEditor$Type`, `NBTEditor$Keys`, `NBTEditor$Bukkit`, `NBTEditor$Legacy`). Les traiter
+    comme des residus de l'ancienne librairie faisait echouer le controle « Pont NBT installe dans le
+    JAR » sur un paquet PARFAITEMENT valide (run #33158279751) : le controle doit lire les sources,
+    pas une liste tenue a la main.
+    """
+    if not BRIDGE_SOURCE.is_file():
+        return {"NBTEditor$Type"}
+    import re as _re
+
+    text = BRIDGE_SOURCE.read_text(encoding="utf-8", errors="replace")
+    text = _re.sub(r"/\*.*?\*/", "", text, flags=_re.S)
+    names = set(_re.findall(r"\b(?:class|interface|enum|record)\s+([A-Z]\w*)", text))
+    out = {f"NBTEditor${name}" for name in names if name != "NBTEditor"}
+    out.add("NBTEditor")
+    return out
+
+
 def check_jar(jar_path: Path, problems: list):
     with zipfile.ZipFile(jar_path) as jar:
         names = set(jar.namelist())
@@ -98,7 +125,8 @@ def check_jar(jar_path: Path, problems: list):
             problems.append(f"{jar_path.name}: pont {bridge} absent (le build ne l'a pas compilé ?)")
         if legacy not in names:
             problems.append(f"{jar_path.name}: repli {legacy} absent")
-        stale = [n for n in names if n.startswith("io/github/bananapuncher714/nbteditor/NBTEditor$") and not n.endswith("NBTEditor$Type.class")]
+        stale = [n for n in names if n.startswith("io/github/bananapuncher714/nbteditor/NBTEditor$")
+                 and inner_name(n) not in pont_inner_classes()]
         if stale:
             problems.append(f"{jar_path.name}: classes legacy non renommées : {sorted(stale)[:4]}")
         if bridge in names:
@@ -162,14 +190,12 @@ def main() -> int:
         print(f"\n{len(problems)} problème(s) :", file=sys.stderr)
         for problem in problems[:20]:
             print(f"  - {problem}", file=sys.stderr)
+        ci_publish.fail("Contrôle NBT : " + ("JAR " + args.jar if args.jar else "arbre du dépôt"),
+                        problems[:40])
         return 1
     print("OK: pont NBT installé (LegacyNbtBridge en repli, NBTEditor fourni par la compilation).")
     return 0
 
 
 if __name__ == "__main__":
-    code = main()
-    if code:
-        ci_publish.fail("Pont NBT installe dans le JAR",
-                       ["voir la sortie de scripts/install-nbt-bridge.py --check --jar"])
-    sys.exit(code)
+    sys.exit(main())

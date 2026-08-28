@@ -441,12 +441,20 @@ def verify_tree():
 
 
 def verify_jar(jar_path: Path):
+    # TOUTES les lectures du paquet se font ici, dans le `with` : la suite de la fonction se poursuit
+    # APRES la fermeture de l'archive, et un `jar.read(...)` y leve `ValueError: Attempt to use ZIP
+    # archive that was already closed` (le bug a ete revele en rejouant le controle contre un jar de
+    # test, jamais par la CI car une etape precedente echouait avant). Les blocs sont donc caches.
+    blobs = {}
     with zipfile.ZipFile(jar_path) as jar:
         names = set(jar.namelist())
-        server_version = jar.read(SERVER_VERSION_ENTRY) if SERVER_VERSION_ENTRY in names else None
-        patched = {relative: (jar.read(relative) if relative in names else None) for relative, _o, _n in PATCHES}
-        plugin_yml = jar.read("plugin.yml").decode("utf-8") if "plugin.yml" in names else None
-        manifest = jar.read("META-INF/MANIFEST.MF") if "META-INF/MANIFEST.MF" in names else None
+        for entry in sorted(names):
+            if entry.endswith(".class") or entry in ("plugin.yml", "config.yml", "META-INF/MANIFEST.MF"):
+                blobs[entry] = jar.read(entry)
+    server_version = blobs.get(SERVER_VERSION_ENTRY)
+    patched = {relative: blobs.get(relative) for relative, _o, _n in PATCHES}
+    plugin_yml = blobs["plugin.yml"].decode("utf-8") if "plugin.yml" in blobs else None
+    manifest = blobs.get("META-INF/MANIFEST.MF")
 
     print(f"\nJAR analysé : {jar_path.name}")
     check("JAR : META-INF/MANIFEST.MF présent", manifest is not None)
@@ -488,8 +496,8 @@ def verify_jar(jar_path: Path):
     for entry in ("xyz/arcadiadevs/valoriatycoon/ValoriaTycoon.class",
                   "xyz/arcadiadevs/valoriatycoon/utils/SellUtil.class",
                   "xyz/arcadiadevs/valoriatycoon/guis/GeneratorsGui.class"):
-        if entry in names:
-            blob = jar.read(entry)
+        if entry in blobs:
+            blob = blobs[entry]
             check(f"JAR : {entry.split('/')[-1]} sans référence à Vault/HoloEasy",
                   b"milkbowl" not in blob and b"org/holoeasy" not in blob)
             check(f"JAR : {entry.split('/')[-1]} sans contrôle de licence",
@@ -509,23 +517,23 @@ def verify_jar(jar_path: Path):
                      "xyz/arcadiadevs/valoriatycoon/commands/SellCommandListener.class"):
         check(f"JAR : {ah_entry.split('/')[-1]} compilée", ah_entry in names,
               "le pom n'a pas compilé le marché des joueurs (voir <includes> du maven-compiler-plugin)")
-    if "xyz/arcadiadevs/valoriatycoon/commands/AuctionHouse.class" in names:
-        ah_blob = jar.read("xyz/arcadiadevs/valoriatycoon/commands/AuctionHouse.class")
+    if "xyz/arcadiadevs/valoriatycoon/commands/AuctionHouse.class" in blobs:
+        ah_blob = blobs["xyz/arcadiadevs/valoriatycoon/commands/AuctionHouse.class"]
         check("JAR : AuctionHouse sans NMS", b"net/minecraft" not in ah_blob and b"craftbukkit" not in ah_blob)
         check("JAR : AuctionHouse branché sur le rafraîchissement des vues", b"AuctionGui" in ah_blob)
     for sb_entry in ("xyz/arcadiadevs/valoriatycoon/utils/ScoreboardService.class",):
         check(f"JAR : {sb_entry.split('/')[-1]} compilée", sb_entry in names, "le pom ne compile pas le tableau de bord")
-    if "xyz/arcadiadevs/valoriatycoon/commands/SellCommandListener.class" in names:
-        listener_blob = jar.read("xyz/arcadiadevs/valoriatycoon/commands/SellCommandListener.class")
+    if "xyz/arcadiadevs/valoriatycoon/commands/SellCommandListener.class" in blobs:
+        listener_blob = blobs["xyz/arcadiadevs/valoriatycoon/commands/SellCommandListener.class"]
         check("JAR : SellCommandListener branché sur /ah et le scoreboard",
               b"AuctionGui" in listener_blob and b"ScoreboardService" in listener_blob,
               "le .class livré ne référence ni AuctionGui ni ScoreboardService")
-    if "xyz/arcadiadevs/valoriatycoon/guis/AuctionGui.class" in names:
-        blob = jar.read("xyz/arcadiadevs/valoriatycoon/guis/AuctionGui.class")
+    if "xyz/arcadiadevs/valoriatycoon/guis/AuctionGui.class" in blobs:
+        blob = blobs["xyz/arcadiadevs/valoriatycoon/guis/AuctionGui.class"]
         check("JAR : AuctionGui sans NMS", b"net/minecraft" not in blob and b"craftbukkit" not in blob)
     upgrade_entry = "xyz/arcadiadevs/valoriatycoon/guis/UpgradeGui.class"
-    if upgrade_entry in names:
-        blob = jar.read(upgrade_entry)
+    if upgrade_entry in blobs:
+        blob = blobs[upgrade_entry]
         check("JAR : UpgradeGui.class recompilée (case statistiques câblée)",
               b"guis.upgrade-gui.stats.lore" in blob,
               "la classe livrée est encore l'ancienne (le build n'a pas compilé UpgradeGui.java)")
