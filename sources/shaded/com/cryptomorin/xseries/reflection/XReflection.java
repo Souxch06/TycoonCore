@@ -272,13 +272,7 @@ public final class XReflection {
     }
 
     static {
-        // Patch ValoriaTycoon: le motif d'origine "^(?<major>\d+)\.(?<minor>\d+)..." lit la version
-        // Mineure APRÈS le point, ce qui est faux depuis le versionnage calendaire de Minecraft
-        // ("26.2.build.112-stable" donnait MINOR_NUMBER=2 et donc supports(17)==false, d'où un
-        // NMS_PACKAGE invalide et une ExceptionInInitializerError sur Paper 26.x). Le motif ignore
-        // le préfixe "1." quand il est présent et garde MINOR_NUMBER/PATCH_NUMBER identiques sur
-        // toutes les versions 1.x.
-        Object object = Pattern.compile("^(?:1\\.)?(?<minor>(?<major>\\d{1,2}))(?:\\.(?<patch>\\d+))?").matcher(Bukkit.getBukkitVersion());
+        Object object = Pattern.compile("^(?<major>\\d+)\\.(?<minor>\\d+)(?:\\.(?<patch>\\d+))?").matcher(Bukkit.getBukkitVersion());
         if (((Matcher)object).find()) {
             try {
                 String string = ((Matcher)object).group("patch");

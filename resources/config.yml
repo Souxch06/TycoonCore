@@ -211,7 +211,6 @@ guis:
       # - %nextSellPrice% correspond au prochain prix de vente du générateur
       # - %nextSpawnItem% correspond au prochain item généré
       # - %nextBlockType% correspond au prochain type de bloc du générateur
-      # - %upgradePrice% correspond au coût d'amélioration de ce générateur
       lore:
         - ""
         - "&fArgent : &a%money%"
@@ -264,30 +263,6 @@ guis:
             - "&e⌊ &fPrix de vente : &a%nextSellPrice%"
             - ""
 
-    # Case « statistiques » : montre les caractéristiques du générateur, sans action au clic
-    # (aucune dépense d'argent possible depuis cette case).
-    # Placeholders disponibles : %money% %upgradePrice% %tier% %speed% %price% %sellPrice%
-    #                            %spawnItem% %blockType% %nextTier% %nextSpeed% %nextPrice% %nextSellPrice%
-    stats:
-      first-line: "&e》 &fStatistiques du générateur&e 《"
-      lore:
-        - ""
-        - "&fArgent : &a%money%"
-        - "&fProchaine amélioration : &a%upgradePrice%"
-        - ""
-        - "&eDétails actuels :"
-        - "&e⌈ &fPalier : &a%tier%"
-        - "&eⅠ &fVitesse : &a%speed%"
-        - "&eⅠ &fPrix : &a%price%"
-        - "&e⌊ &fPrix de vente : &a%sellPrice%"
-        - ""
-        - "&eDétails suivants :"
-        - "&e⌈ &fPalier : &a%nextTier%"
-        - "&eⅠ &fVitesse : &a%nextSpeed%"
-        - "&eⅠ &fPrix : &a%nextPrice%"
-        - "&e⌊ &fPrix de vente : &a%nextSellPrice%"
-        - ""
-
     # Titre de l'interface
     title: "Améliorer le générateur"
 
@@ -306,13 +281,9 @@ guis:
 
 holograms:
   # Si enabled vaut false, les hologrammes ne seront pas affichés.
-  # Les hologrammes sont rendus par le moteur interne du plugin (des entités armures, API Bukkit
-  # seule) : ni HoloEasy, ni ProtocolLib n'est nécessaire. Le contenu est sauvegardé dans
-  # plugins/ValoriaTycoon/holograms.txt et relu au démarrage ; les lignes restent modifiables à la
-  # main dans ce fichier si un admin veut corriger une étiquette.
   enabled: true
 
-  # Distance d'affichage des hologrammes (indicative : les entités suivent la portée du serveur)
+  # Distance d'affichage des hologrammes
   view-distance: 300
 
 events:
@@ -886,51 +857,3 @@ developer-options:
   # Active les logs de debug du plugin.
   enabled: false
 #YDVZZWN0hFVDhUVvZlUwgld4VkVPVTRWpUOrJGUSxGVKFTaUt0NP5GVJhFTOt0NP5GVJ92b
-# Marché entre joueurs (/ah) : les items sont gardés en séquestre dans plugins/ValoriaTycoon/auction.yml
-auction-house:
-  enabled: true
-  title: "&aMarché des joueurs"
-  # Frais de mise en vente, en proportion du total de l'annonce (0 = gratuit). Ils découragent
-  # le spam d'annonces ; ils ne sont PAS remboursés si l'annonce expire.
-  listing-fee: 0.0
-  # Taxe prélevée sur le vendeur à chaque vente effective (0.02 = 2 %).
-  sales-tax: 0.02
-  # Prix unitaire accepté, par pièce (le marché affiche des prix à l'unité, pas au lot).
-  min-price: 0.5
-  max-price: 10000000.0
-  # Annonce refusée si son prix sort de [moyenne / bande ; moyenne x bande] dès qu'au moins une
-  # vente du même item est connue. C'est ce qui bloque dump, vente cadeau et blanchiment.
-  enforce-price-band: true
-  price-band: 12.0
-  # Annonces simultanées maximum par joueur.
-  max-listings-per-player: 6
-  # Une annonce non vendue expire et l'item est rendu (en jeu si le vendeur est connecté, sinon
-  # mis de côté et rendu à sa prochaine connexion). 0 = pas d'expiration.
-  expiry-hours: 72
-  # Période du ménage d'expirations, en ticks (1200 = 60 s).
-  sweep-ticks: 1200
-  # Items refusés à la vente (le plugin refuse aussi ses propres items de générateur).
-  blacklist:
-    - BEDROCK
-    - BARRIER
-    - COMMAND_BLOCK
-    - CHAIN_COMMAND_BLOCK
-    - REPEATING_COMMAND_BLOCK
-    - STRUCTURE_BLOCK
-    - JIGSAW
-    - END_PORTAL
-    - END_GATEWAY
-    - LIGHT
-    - STRUCTURE_VOID
-    - DEBUG_STICK
-# Petit tableau de bord latéral (sidebar) : pseudo, solde, et lignes personnalisables.
-scoreboard:
-  enabled: true
-  # 40 ticks = 2 secondes. Rester au-dessus de 10 pour ne pas bombarder le client.
-  update-ticks: 40
-  title: "&a&lValoriaTycoon"
-  # Placeholders : %player% %money% %balance% %generators% %server% %ping%
-  lines:
-    - "&7Joueur : &f%player%"
-    - "&7Solde : &a%money%"
-    - "&7Connectés : &f%server%"

@@ -10,67 +10,18 @@
     <name>ValoriaTycoon</name>
     <description>Plugin ValoriaTycoon pour serveur Minecraft Tycoon et SkyBlock</description>
 
-    <!-- Dépôt de l'API serveur, en portée « provided » uniquement : rien n'est embarqué dans le
-         JAR (le serveur fournit déjà ces classes). Aucune autre dépendance externe : l'API
-         d'économie est écrite dans ce dépôt et compilée ici (plus aucun artifact d'API distant),
-         voir sources/api/xyz/arcadiadevs/valoriateconomy/. -->
-    <repositories>
-        <repository>
-            <id>papermc</id>
-            <url>https://repo.papermc.io/repository/maven-public/</url>
-        </repository>
-    </repositories>
-
-    <dependencies>
-        <dependency>
-            <groupId>io.papermc.paper</groupId>
-            <artifactId>paper-api</artifactId>
-            <version>1.20.4-R0.1-SNAPSHOT</version>
-            <scope>provided</scope>
-        </dependency>
-        <!-- Classes déjà livrées (GuiLib, XSeries, ChatUtil, classes du plugin) : generated
-             par scripts/build-reference-jar.py, pour compiler une classe isolément contre le
-             binaire réellement distribué. -->
-        <dependency>
-            <groupId>local.reference</groupId>
-            <artifactId>valoria-reference</artifactId>
-            <version>${project.version}</version>
-            <scope>system</scope>
-            <systemPath>${project.basedir}/artifacts/reference/valoria-renamed.jar</systemPath>
-        </dependency>
-    </dependencies>
-
     <properties>
-        <!-- Bytecode 17 : c'est la version de classe déjà utilisée par les classes livrées dans
-             artifacts/extracted (major 61). Viser 25 rendrait le JAR inutilisable sur les
-             serveurs plus anciens, sans rien apporter sur Paper 26.2 (qui exige Java 25 au
-             runtime mais accepte une classe majeure 61). -->
-        <maven.compiler.release>17</maven.compiler.release>
+        <maven.compiler.release>25</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
     <build>
         <finalName>ValoriaTycoon-v1.6.3</finalName>
-        <!-- Le dépôt conserve les sources décompilées du JAR comme référence relisible : elles ne
-             sont pas toutes compilables en l'état. La compilation est donc ciblée (voir <includes>
-             du maven-compiler-plugin) sur les classes maintenues ici. La phase compile s'exécute
-             après process-resources, la classe produite écrase donc son équivalent précompilé copié
-             depuis artifacts/extracted et se retrouve dans le JAR final. -->
-        <sourceDirectory>${project.basedir}/sources</sourceDirectory>
         <resources>
             <resource>
                 <directory>artifacts/extracted</directory>
                 <excludes>
                     <exclude>META-INF/MANIFEST.MF</exclude>
-                    <!-- Les descripteurs JPMS sont réinsérés en prepare-package (voir maven-resources-plugin
-                         ci-dessous). Ils ne doivent PAS être présents dans target/classes pendant la
-                         compilation : ce dossier est sur le classpath de javac, et une entrée de classpath
-                         contenant module-info.class est traitée comme un module nommé. module-info.class y
-                         déclare « requires com.google.gson » (le module de gson/recordadapter embarqué),
-                         impossible à résoudre depuis un classpath de compilation vide :
-                         « module not found: com.google.gson », et le build échoue avant même de compiler. -->
-                    <exclude>module-info.class</exclude>
-                    <exclude>META-INF/versions/9/module-info.class</exclude>
                 </excludes>
             </resource>
             <resource>
@@ -85,83 +36,7 @@
                 <version>3.13.0</version>
                 <configuration>
                     <release>${maven.compiler.release}</release>
-                    <!-- Aucun fichier implicite ne doit être compilé au passage : la seule source
-                         reachable depuis les deux fichiers maintenus doit être le JDK. -->
-                    <compilerArgs>
-                        <arg>-implicit:none</arg>
-                    </compilerArgs>
-                    <includes>
-                        <!-- Détection de version serveur (Paper 26.x) : compilée depuis
-                             sources/plugin, remplace la classe livrée dans le JAR. -->
-                        <include>plugin/xyz/arcadiadevs/valoriatycoon/utils/ServerVersion.java</include>
-                        <!-- Économie interne (plugin séparé, même build) : le fournisseur est
-                             généré (surface d'interface vérifiée), les autres sont écrits à la main. -->
-                        <include>economy/xyz/arcadiadevs/valoriaeconomy/ValoriaEconomy.java</include>
-                        <include>economy/xyz/arcadiadevs/valoriaeconomy/Balances.java</include>
-                        <include>economy/xyz/arcadiadevs/valoriaeconomy/MoneyCommand.java</include>
-                        <include>economy/xyz/arcadiadevs/valoriaeconomy/ValoriaEconomyProvider.java</include>
-                        <!-- API d'économie interne : la meme classe est compilee ici (pour le code
-                             du plugin qui l'appelle) et reprise dans le jar de ValoriaEconomy (pour
-                             le fournisseur qui l'implémente). Une seule source, deux jars. -->
-                        <include>api/xyz/arcadiadevs/valoriateconomy/Economy.java</include>
-                        <include>api/xyz/arcadiadevs/valoriateconomy/EconomyResponse.java</include>
-                        <!-- Hologrammes écrits ici (entités armures, API Bukkit seule) : remplacent
-                             la bibliothèque embarquée qui exigeait ProtocolLib + un plugin HoloEasy.
-                             Le bytecode livré appelle ces signatures exactes. -->
-                        <include>plugin/xyz/arcadiadevs/valoriatycoon/hologram/HoloEasy.java</include>
-                        <include>plugin/xyz/arcadiadevs/valoriatycoon/hologram/HologramPool.java</include>
-                        <include>plugin/xyz/arcadiadevs/valoriatycoon/hologram/Hologram.java</include>
-                        <include>plugin/xyz/arcadiadevs/valoriatycoon/hologram/HologramBuilder.java</include>
-                        <include>plugin/xyz/arcadiadevs/valoriatycoon/hologram/HologramSetupGroup.java</include>
-                        <include>plugin/xyz/arcadiadevs/valoriatycoon/hologram/HologramRegisterGroup.java</include>
-                        <include>plugin/xyz/arcadiadevs/valoriatycoon/hologram/HologramStore.java</include>
-                        <include>plugin/xyz/arcadiadevs/valoriatycoon/utils/HologramsUtil.java</include>
-                        <!-- Pont NBT -> PersistentDataContainer : remplace la bibliothèque embarquée,
-                             dont les cibles obfusquées ont disparu des serveurs Paper récents. Le repli
-                             historique reste livré sous io.github...LegacyNbtBridge. -->
-                        <include>shaded/io/github/bananapuncher714/nbteditor/NBTEditor.java</include>
-                        <!-- Interface d'amélioration : un bouton d'action + une case statistiques,
-                             et substitution de %upgradePrice% sur les deux cases. -->
-                        <include>plugin/xyz/arcadiadevs/valoriatycoon/guis/UpgradeGui.java</include>
-                        <!-- Marché entre joueurs (/ah) : le listener est le point d'entrée des
-                             commandes, AuctionHouse garde le séquestre, AuctionGui la vue partagée. -->
-                        <include>plugin/xyz/arcadiadevs/valoriatycoon/commands/SellCommandListener.java</include>
-                        <include>plugin/xyz/arcadiadevs/valoriatycoon/commands/AuctionHouse.java</include>
-                        <include>plugin/xyz/arcadiadevs/valoriatycoon/guis/AuctionGui.java</include>
-                        <!-- Tableau de bord latéral : affichage résolu par réflexion (API scoreboard
-                             redéfinie en 1.21+), donc insensible aux suppressions de Paper 26.x. -->
-                        <include>plugin/xyz/arcadiadevs/valoriatycoon/utils/ScoreboardService.java</include>
-                    </includes>
                 </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-resources-plugin</artifactId>
-                <version>3.3.1</version>
-                <executions>
-                    <execution>
-                        <!-- prepare-package s'exécute après compile et avant package : les descripteurs
-                             reviennent dans target/classes juste à temps pour le JAR, sans jamais gêner
-                             javac. Le paquet final reste identique à artifacts/extracted. -->
-                        <id>restore-module-descriptors</id>
-                        <phase>prepare-package</phase>
-                        <goals>
-                            <goal>copy-resources</goal>
-                        </goals>
-                        <configuration>
-                            <outputDirectory>${project.build.outputDirectory}</outputDirectory>
-                            <resources>
-                                <resource>
-                                    <directory>artifacts/extracted</directory>
-                                    <includes>
-                                        <include>module-info.class</include>
-                                        <include>META-INF/versions/9/module-info.class</include>
-                                    </includes>
-                                </resource>
-                            </resources>
-                        </configuration>
-                    </execution>
-                </executions>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -171,37 +46,7 @@
                     <archive>
                         <manifestFile>artifacts/extracted/META-INF/MANIFEST.MF</manifestFile>
                     </archive>
-                    <excludes>
-                        <!-- Les classes du plugin d'économie vivent dans leur propre paquet. -->
-                        <exclude>xyz/arcadiadevs/valoriaeconomy/**</exclude>
-                        <!-- Filets : ces arbres ne doivent plus jamais revenir dans un paquet livré,
-                             ils étaient ceux de bibliothèques tierces remplacées par du code du dépôt. -->
-                        <exclude>org/holoeasy/**</exclude>
-                        <exclude>net/milkbowl/**</exclude>
-                        <!-- l'API d'economie ne vit que dans ce jar : voir src/assembly/economy.xml -->
-                        <exclude>META-INF/holoeasy-core.kotlin_module</exclude>
-                    </excludes>
                 </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-assembly-plugin</artifactId>
-                <version>3.7.1</version>
-                <executions>
-                    <execution>
-                        <id>economy-plugin-jar</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>single</goal>
-                        </goals>
-                        <configuration>
-                            <descriptors>
-                                <descriptor>src/assembly/economy.xml</descriptor>
-                            </descriptors>
-                            <appendAssemblyId>false</appendAssemblyId>
-                        </configuration>
-                    </execution>
-                </executions>
             </plugin>
         </plugins>
     </build>

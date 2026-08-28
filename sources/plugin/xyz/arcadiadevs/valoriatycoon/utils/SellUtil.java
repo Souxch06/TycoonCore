@@ -1,7 +1,7 @@
 package xyz.arcadiadevs.valoriatycoon.utils;
 
 import io.github.bananapuncher714.nbteditor.NBTEditor;
-import xyz.arcadiadevs.valoriateconomy.Economy;
+import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.CommandSender;
