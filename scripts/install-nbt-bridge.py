@@ -135,19 +135,39 @@ def check_jar(jar_path: Path, problems: list):
             for member in ("contains", "getInt", "getString", "set", "CUSTOM_DATA"):
                 if member not in values:
                     problems.append(f"{jar_path.name}: pont sans membre {member!r}")
-            # Le pont resout TOUT par reflexion (Class.forName + Method_handles) : ces noms n'existent
-            # donc pas en tant que CONSTANT_Class, mais bien en chaines UTF8 du constant-pool. Les
-            # tester sur les octets bruts du .class marchait avec l'ancienne version (qui importait
-            # NamespacedKey en dur) et echouait sur la notre — le controle #33158841547 condamnait un
-            # paquet valide. On compare desormais aux valeurs du constant-pool, comme le reste du depot.
-            # chaque nom ci-dessous est verifie comme presente DANS LA SOURCE du pont : un controle
-            # qui demande plus que ce que le code promet est un faux positif garanti (c'est ce qui
-            # s'est passe avec `getBukkitVersion`, absent du pont et donc du paquet).
+            # Le pont resout tout par reflexion : ces noms n'existent pas en tant que CONSTANT_Class,
+            # mais bien en chaines du constant-pool. On les verifie la, ET sur le fichier produit par
+            # javac dans target/classes — la difference entre les deux designe le coupable :
+            #   present dans target/classes + absent du jar  -> la copie de ressources a gagne (conflit
+            #                                                    de doublons dans le paquet)
+            #   absent des deux                              -> le pom ne compile pas notre source
             for token in ("PersistentDataContainer", "PersistentDataType", "NamespacedKey",
                           "LegacyNbtBridge"):
                 if not any(token in value for value in values):
-                    problems.append(f"{jar_path.name}: pont sans reference {token!r} dans son "
-                                    "constant-pool (le pont doit resoudre ces noms par reflexion)")
+                    problems.append(f"{jar_path.name}: pont sans reference {token!r} dans le constant-pool "
+                                    "du paquet")
+            compiled = PACKAGE_DIR.parent.parent.parent.parent.parent / "target" / "classes" / \
+                "io/github/bananapuncher714/nbteditor/NBTEditor.class"
+            if compiled.is_file():
+                cv = set(classfile.utf8_values(compiled.read_bytes()))
+                missing = [t for t in ("PersistentDataType", "NamespacedKey", "LegacyNbtBridge")
+                           if not any(t in v for v in cv)]
+                size_jar = len(blob)
+                size_cls = compiled.stat().st_size
+                problems.append(
+                    f"cible: target/classes/io/github/.../NBTEditor.class ({size_cls} o, "
+                    f"{'CONTRAT COMPLET' if not missing else 'manquant ' + str(missing)}) vs "
+                    f"entrée du jar ({size_jar} o) — "
+                    + ("mêmes tailles : le paquet embarque BIEN le fichier compilé, et la SOURCE du pont "
+                       "ne contient pas ces references (controle a revoir)"
+                       if size_jar == size_cls else
+                       "tailles differentes : le paquet embarque un AUTRE NBTEditor.class que celui "
+                       "compilé — la copie de ressources (artifacts/extracted) doit exclure ce fichier"))
+            else:
+                problems.append("cible: target/classes/io/github/.../NBTEditor.class ABSENT — le pom ne "
+                                "compile pas la source du pont (verifier <includes> et sourceDirectory)")
+        if not any(n.endswith("NBTEditor.class") and n != bridge for n in names):
+            pass  # un seul exemplaire du pont dans le paquet : normal
 
 
 def main() -> int:
