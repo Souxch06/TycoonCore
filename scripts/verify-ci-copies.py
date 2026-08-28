@@ -116,6 +116,33 @@ def main() -> int:
               "supprimer ce fichier et pointer docs/CI-A-COLLER.yml ou docs/CI-DEPLOY-A-COLLER.yml a la place")
 
         # un script supprime ne doit plus etre cite nulle part (sinon le prochain admin le recree)
+    # chaine de declenchement : un build qui s'interdit `main` ne publie jamais, et le silence est total
+    import os
+    for path in (SOURCE, MIRROR):
+        text = path.read_text(encoding="utf-8")
+        trig = re.search(r"^on:\n(?:.*\n)*?jobs:", text, re.M)
+        block = trig.group(0) if trig else ""
+        ignores_main = bool(re.search(r"branches-ignore:[^\n]*\n[ \t]*-[ \t]+main", block)) \
+            or bool(re.search(r"branches-ignore:\s*\[[^\]]*main", block))
+        check(f"{rel(path)} se déclenche sur les pushes de `main`", not ignores_main,
+              "`push: branches-ignore: [main]` casse toute la chaîne : le merge ne construit rien, la"
+              " release n'est pas publiée, deploy-serveur.yml ne part pas, et `plugins/` ne reçoit aucun"
+              " fichier — sans une seule erreur affichée nulle part. C'est le défaut corrigé ici.")
+        check(f"{rel(path)} ne publie la release que depuis `main`",
+              "Publier la release" in text and "refs/heads/main" in text,
+              "sans cette porte, n'importe quelle branche en cours mettrait le serveur à jour")
+
+    # la branche ne versionne PAS les workflows : ils vivent sur main, collés par l'humain (l'App GitHub
+    # d'un agent n'a pas la permission `workflows`), et un fichier de workflow modifié des deux côtés du
+    # merge = conflit add/add sur le maillon le plus fragile de la chaîne.
+    if os.environ.get("GITHUB_REF") != "refs/heads/main":
+        installs = sorted(f.name for f in (ROOT / ".github/workflows").glob("*.yml")) \
+            if (ROOT / ".github/workflows").is_dir() else []
+        check("aucun workflow n'est versionné hors de `main`", not installs,
+              f"{installs} : `.github/workflows` doit exister uniquement sur `main`, collé depuis"
+              " docs/CI-A-COLLER.yml et docs/CI-DEPLOY-A-COLLER.yml — c'est ce doublon qui a rendu la PR"
+              " inconciliable (CONFLICTING) et le merge impossible en silence")
+
     here = Path(__file__).resolve()
     for path in sorted(list(ROOT.glob("scripts/*")) + list(ROOT.glob("docs/*"))):
         # ce fichier-la nomme le script supprime pour dire qu'il ne faut plus le citer : se lire soi-meme
@@ -150,7 +177,7 @@ def main() -> int:
             check(f"lien collable {tail}", False, "le fichier n'existe pas dans le dépôt")
 
     if problems:
-        print(f"\n{len(problems)} incoherence(s) de workflow — la CIrefuserait le depot.", file=sys.stderr)
+        print(f"\n{len(problems)} incoherence(s) de workflow — la CI refuserait le dépôt.", file=sys.stderr)
         return 1
     print(f"\nOK : les copies des workflows sont coherentes ({len(notes)} verifications).")
     return 0

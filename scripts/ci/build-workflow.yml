@@ -9,10 +9,13 @@ name: Build and Validate ValoriaTycoon
 # fichier installe : le pipeline etait donc muet). Si tu modifies l'un, modifie ce fichier d'abord.
 
 on:
-  # chaque push sur la branche relance le build tout seul : plus rien a cliquer
+  # TOUS les pushes, main compris. `branches-ignore: main` (la version precedente d'ici) rendait toute
+  # la chaine muette : le merge deployait `main`, le build ne se lancait pas, la release `build-latest`
+  # n'etait pas publiee, donc `deploy-serveur.yml` (declenche par la release) ne partait jamais — et le
+  # dossier `plugins/` du serveur ne voyait rien arriver, sans une seule ligne d'erreur nulle part.
+  # Le build ne peut donc JAMAIS s'interdire main ; c'est la publication de la release qui est filtree
+  # (etape « Publier la release », `if: github.ref == refs/heads/main`).
   push:
-    branches-ignore:
-      - main
   pull_request:
   workflow_dispatch:
 
