@@ -25,19 +25,25 @@ VERSION="${PROJECT_VERSION:-1.6.3}"
 TAG="${RELEASE_TAG:-build-latest}"
 MAIN_JAR="target/ValoriaTycoon-v${VERSION}.jar"
 ECONOMY_JAR="target/ValoriaEconomy-v${VERSION}.jar"
+# Le multi-outil est OPTIONNEL a ce niveau : un serveur qui n'a pas encore le troisieme jar ne doit
+# pas voir son deploiement bloque. Present => publiere et envoye ; absent => ignore, et le log le dit.
+TOOLS_JAR="target/ValoriaTools-v${VERSION}.jar"
 PLUGINS_DIR="${SFTP_PLUGINS_DIR:-plugins}"
 DEPLOY="${DEPLOY:-0}"
 DRY_RUN="${DRY_RUN:-0}"
 JAR_NAMES=()
 
+
 say() { printf '%s\n' "$*"; }
 die() { printf 'ERREUR: %s\n' "$*" >&2; exit 1; }
 
 # ------------------------------------------------------------------ 1. les deux jars, ou rien
-for jar in "$MAIN_JAR" "$ECONOMY_JAR"; do
+JARS=("$MAIN_JAR" "$ECONOMY_JAR")
+[ -f "$TOOLS_JAR" ] && JARS+=("$TOOLS_JAR") || say "info: $(basename "$TOOLS_JAR") absent du build — non publie (ValoriaTools optionnel)"
+for jar in "${JARS[@]}"; do
   [ -f "$jar" ] || die "$jar absent — lancer d'abord « mvn -B clean package » (le build doit produire les DEUX jars)"
 done
-for jar in "$MAIN_JAR" "$ECONOMY_JAR"; do
+for jar in "${JARS[@]}"; do
   size=$(stat -c %s "$jar")
   # Un zip valide commence par « PK\x03\x04 » ; le controle de CONTENU (classes attendues, API tierce
   # absente) est fait par le workflow avant cette etape, pas ici.
@@ -47,7 +53,7 @@ for jar in "$MAIN_JAR" "$ECONOMY_JAR"; do
 done
 
 mkdir -p target
-sha256sum "$MAIN_JAR" "$ECONOMY_JAR" > target/SHA256SUMS.txt
+sha256sum "${JARS[@]}" > target/SHA256SUMS.txt
 
 # ------------------------------------------------------------------ 2. la release permanente
 NOTES="Construit par le workflow de validation (15 etapes : compilation des 21 fichiers maintenus, surface publique, contenu des deux jars, absence de toute API tierce).
@@ -74,7 +80,7 @@ if [ "$RELEASE" = "1" ] && [ -n "${GITHUB_TOKEN:-${GH_TOKEN:-}}" ]; then
   gh release delete "$TAG" --cleanup-tag --yes >/dev/null 2>&1 || true
   if gh release create "$TAG" --target "$(git rev-parse HEAD)" \
         --title "Dernier build vérifié (ValoriaTycoon + ValoriaEconomy)" --notes "$NOTES"; then
-    gh release upload "$TAG" "$MAIN_JAR" "$ECONOMY_JAR" target/SHA256SUMS.txt \
+    gh release upload "$TAG" "${JARS[@]}" target/SHA256SUMS.txt \
       || say "AVERTISSEMENT : televersement des assets refuse (droits de release ?) — les jar restent disponibles en artefact du run."
     for asset in "${JAR_NAMES[@]}"; do
       want=$(stat -c %s "target/$asset")
@@ -118,12 +124,12 @@ done
 if [ "$DRY_RUN" = "1" ]; then
   say "DRY_RUN : la session SFTP qui serait jouee :"
   say "  ${SFTP[*]}"
-  printf '  %s\n' "${REMOTE_CMDS[@]}" "put $MAIN_JAR $ECONOMY_JAR $PLUGINS_DIR/" "ls -l $PLUGINS_DIR"
+  printf '  %s\n' "${REMOTE_CMDS[@]}" "put ${JARS[*]} $PLUGINS_DIR/" "ls -l $PLUGINS_DIR"
   exit 0
 fi
 
 say "sauvegarde des jar en place dans $PLUGINS_DIR/_sauvegarde-$STAMP, puis envoi des deux jar…"
-printf '%s\n' "${REMOTE_CMDS[@]}" "put $MAIN_JAR $ECONOMY_JAR $PLUGINS_DIR/" "bye" \
+printf '%s\n' "${REMOTE_CMDS[@]}" "put ${JARS[*]} $PLUGINS_DIR/" "bye" \
   | "${SFTP[@]}" >/dev/null 2>&1 || die "session SFTP en echec (reseau, droits, ou serveur en cours de demarrage)"
 
 # ls -l distant : "droits liens user group TAILLE date heure nom" -> la 5e colonne.

@@ -58,6 +58,29 @@ du JAR ; il n'est jamais compilé. `scripts/verify-paper26-compat.py` contrôle 
 - `scripts/import-essentials-balances.py` : import ponctuel des soldes EssentialsX vers `economy.yml`
   (`--dry-run` d'abord ; ne touche jamais un compte déjà présent).
 
+## `sources/tools/` — ValoriaTools
+
+Troisième plugin du build, entièrement écrit ici (contrairement à ValoriaTycoon, qui mélange classes
+précompilées et sources maintenues) : 11 fichiers, `ValoriaTools`, `ToolsConfig`, `ToolKind`,
+`ToolStore`, `EconomyService`, `BlockMatcher`, `Abilities`, `ToolListener`, `MultiTool`, `ToolsGui`,
+`ToolsCommand`. `resources-tools/` porte `plugin.yml` et `config.yml` (renommés en vol dans le jar,
+cf. `src/assembly/tools.xml`) et **le modèle de configuration est `docs/CI-A-COLLER.yml` pour le CI,
+`resources-tools/config.yml` pour le jeu**.
+
+Trois invariants, contrôlés par `scripts/verify-tools-config.py` :
+
+1. `tools.yml` (paliers) est écrit atomiquement, **jamais l'item** : un palier dans l'item se duplique ;
+2. l'économie est atteinte par **réflexion** (`EconomyService`) : aucun import d'API de banque, donc le
+   plugin démarre même sans ValoriaEconomy ;
+3. `abilities` de la config ne contient que des clés connues du moteur, et `upgrade.prices` a
+   exactement `max-tier - 1` entrées — sinon un palier est gratuit ou inatteignable.
+
+`scripts/parse-java.mjs` (node, via `java-parser`) vérifie la grammaire **et** que chaque type cité dans
+une signature ou une déclaration est importé : `java-parser` ne résout pas les symboles, la liste de ce
+qui est résoluble (java.lang, imports, paquet) est passée à côté. Une regex maison pour trouver les
+types avait été essayée, et rejetée : elle prenait `void` et `public` pour des types — un contrôle à
+faux négatifs est plus dangereux que pas de contrôle.
+
 ## `sources/plugin/`
 
 Contient le code Java principal du plugin :

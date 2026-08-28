@@ -131,6 +131,21 @@
                         <!-- Tableau de bord latéral : affichage résolu par réflexion (API scoreboard
                              redéfinie en 1.21+), donc insensible aux suppressions de Paper 26.x. -->
                         <include>plugin/xyz/arcadiadevs/valoriatycoon/utils/ScoreboardService.java</include>
+                        <!-- Multi-outil a ames commutantes (troisieme jar du meme build). Chaque
+                             fichier est ici parce que le paquet est compile en bloc : un seul
+                             include par source, sinon javac perd la trace de ce qui doit etre
+                             ecrit dans target/classes. -->
+                        <include>tools/xyz/arcadiadevs/valariatools/ValoriaTools.java</include>
+                        <include>tools/xyz/arcadiadevs/valariatools/ToolKind.java</include>
+                        <include>tools/xyz/arcadiadevs/valariatools/ToolsConfig.java</include>
+                        <include>tools/xyz/arcadiadevs/valariatools/ToolStore.java</include>
+                        <include>tools/xyz/arcadiadevs/valariatools/EconomyService.java</include>
+                        <include>tools/xyz/arcadiadevs/valariatools/BlockMatcher.java</include>
+                        <include>tools/xyz/arcadiadevs/valariatools/Abilities.java</include>
+                        <include>tools/xyz/arcadiadevs/valariatools/ToolListener.java</include>
+                        <include>tools/xyz/arcadiadevs/valariatools/MultiTool.java</include>
+                        <include>tools/xyz/arcadiadevs/valariatools/ToolsGui.java</include>
+                        <include>tools/xyz/arcadiadevs/valariatools/ToolsCommand.java</include>
                     </includes>
                 </configuration>
             </plugin>
@@ -174,6 +189,7 @@
                     <excludes>
                         <!-- Les classes du plugin d'économie vivent dans leur propre paquet. -->
                         <exclude>xyz/arcadiadevs/valoriaeconomy/**</exclude>
+                        <exclude>xyz/arcadiadevs/valariatools/**</exclude>
                         <!-- Filets : ces arbres ne doivent plus jamais revenir dans un paquet livré,
                              ils étaient ceux de bibliothèques tierces remplacées par du code du dépôt. -->
                         <exclude>org/holoeasy/**</exclude>
@@ -208,6 +224,23 @@
                                  target/ValoriaEconomy-v1.6.3.jar, le nom attendu par plugin.yml, la CI
                                  et docs/DEPLOY-2-JARS.md, sans seconde étape de renommage. -->
                             <finalName>ValoriaEconomy-v${project.version}</finalName>
+                            <appendAssemblyId>false</appendAssemblyId>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <!-- ValoriaTools : troisieme plugin du build. Meme mecanique de nommage que
+                             l'economie — le nom final est un PARAMETRE du plugin, jamais un tag du
+                             descripteur (l'XSD ne le permet qu'a l'interieur d'un format). -->
+                        <id>tools-plugin-jar</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                        <configuration>
+                            <descriptors>
+                                <descriptor>src/assembly/tools.xml</descriptor>
+                            </descriptors>
+                            <finalName>ValoriaTools-v${project.version}</finalName>
                             <appendAssemblyId>false</appendAssemblyId>
                         </configuration>
                     </execution>

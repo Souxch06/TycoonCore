@@ -1,7 +1,12 @@
 name: Build and Validate ValoriaTycoon
 
-# Workflow de validation : il compile et contrôle les deux jar, il ne deploie JAMAIS
-# (le SFTP reste uniquement dans .github/workflows/deploy.yml, reserve a main).
+# Workflow de validation : il compile et contrôle les TROIS jar, il ne deploie JAMAIS
+# (le depot sur le serveur passe par la release `build-latest` puis deploy-serveur.yml).
+#
+# CE FICHIER EST LA SOURCE UNIQUE : `scripts/ci/build-workflow.yml` n'en est qu'une copie, et
+# `.github/workflows/build.yml` doit en etre la copie conforme. Deux copies qui divergent, c'est
+# exactement ce qui s'est passe ici (le bloc `Publier la release` existait dans le depot, pas dans le
+# fichier installe : le pipeline etait donc muet). Si tu modifies l'un, modifie ce fichier d'abord.
 
 on:
   # chaque push sur la branche relance le build tout seul : plus rien a cliquer
@@ -12,8 +17,8 @@ on:
   workflow_dispatch:
 
 permissions:
-  # sert UNIQUEMENT a publier le rapport d'erreurs (commentaire de PR, puis repli en commit de
-  # docs/DERNIER-LOG-CI.md). Aucune etape ne deploie, aucun secret serveur n'est utilise.
+  # sert UNIQUEMENT a publier le rapport d'erreurs (commentaire de PR) et la release `build-latest`.
+  # Aucune etape de ce fichier n'ouvre de connexion vers le serveur de jeu.
   contents: write
   pull-requests: write
 
@@ -46,32 +51,40 @@ jobs:
         run: python3 scripts/selfmade-api-patch.py --check
 
       - name: Vérifier les imports des fichiers compilés (sans JDK)
+        # Le build #33144799989 a echoue pour UN import absent (`OfflinePlayer`) dans une classe generee,
+        # multiplie en ~110 erreurs javac. Ce controle le voit avant Maven.
         run: python3 scripts/verify-source-imports.py
 
       - name: Vérifier la cohérence de l'extraction
         run: python3 scripts/verify-extraction.py
 
-      - name: Compiler le plugin et le plugin d'économie
-        # capte la sortie maven, publie les erreurs javac en annotation + commentaire de PR,
-        # puis rejoue les controles du depot
+      - name: Compiler les trois plugins
+        # Le script capte la sortie de maven, publie les erreurs javac (fichier + ligne + extrait du
+        # source) en commentaire de PR, puis rejoue les controles du depot.
         run: bash scripts/ci-maven-report.sh
 
-      - name: Vérifier la surface publique des sources recompilées (sans JDK)
+      - name: Vérifier la surface publique et la grammaire des sources (sans JDK)
+        # Le parseur Java signale ce que javac signalerait plus tard : methode renommee, type change,
+        # parenthesse orpheline. `parse-java.mjs` couvre en plus les sources ecrites ici (ValoriaTools).
         run: |
           npm install --no-save java-parser@3
           node scripts/check-sources-java.mjs
+          node scripts/parse-java.mjs sources/tools
+
+      - name: Vérifier la configuration du multi-outil (ValoriaTools)
+        # Apres l'etape node: le controle des types de signatures s'appuie sur java-parser.
+        run: python3 scripts/verify-tools-config.py --quiet
 
       - name: Vérifier la couverture de l'API d'économie interne
         run: |
           python3 scripts/generate-economy-api.py --check
           python3 scripts/verify-economy-api.py
 
-      - name: Vérifier la compatibilité Paper 26.x du JAR
-        # Les echecs d'un simple « exit code 1 » ne sont exploitables a distance : chaque controle est
-        # execute par scripts/ci-step.sh, qui recopie ses dernieres lignes dans le resume du job.
+      - name: Vérifier la compatibilité Paper 26.x des JAR
         run: |
-          bash scripts/ci-step.sh "compatibilite du jar" \
-            python3 scripts/verify-paper26-compat.py target/ValoriaTycoon-v1.6.3.jar -report-annotations
+          set -o pipefail
+          bash scripts/ci-step.sh "compatibilite du jar ValoriaTycoon" \
+            python3 scripts/verify-paper26-compat.py target/ValoriaTycoon-v1.6.3.jar
           bash scripts/ci-step.sh "renommage de marque dans le jar" \
             python3 scripts/rebrand-classes.py --check --jar target/ValoriaTycoon-v1.6.3.jar
           bash scripts/ci-step.sh "pont NBT dans le jar" \
@@ -79,35 +92,39 @@ jobs:
           bash scripts/ci-step.sh "api tierces absentes du jar" \
             python3 scripts/selfmade-api-patch.py --check --jar target/ValoriaTycoon-v1.6.3.jar
 
-      - name: Vérifier les deux JAR produits
+      - name: Vérifier les trois JAR produits
         run: |
-          bash scripts/ci-step.sh "contenu des deux jars" bash -c '
+          bash scripts/ci-step.sh "contenu des trois jars" bash -c '
             set -e
-            for jar in target/ValoriaTycoon-v1.6.3.jar target/ValoriaEconomy-v1.6.3.jar; do
+            for jar in target/ValoriaTycoon-v1.6.3.jar target/ValoriaEconomy-v1.6.3.jar target/ValoriaTools-v1.6.3.jar; do
               echo "--- $jar"; test -f "$jar"; ls -l "$jar"; unzip -l "$jar" | tail -3
             done
-            unzip -l target/ValoriaEconomy-v1.6.3.jar | grep -q "plugin.yml"
-            unzip -l target/ValoriaEconomy-v1.6.3.jar | grep -q "valoriaeconomy/ValoriaEconomyProvider.class"
-            unzip -l target/ValoriaEconomy-v1.6.3.jar | grep -q "valoriaeconomy/ValoriaEconomy.class"
+            # Chacun des trois paquets doit porter son propre descripteur et sa config.
+            for jar in target/ValoriaTycoon-v1.6.3.jar target/ValoriaEconomy-v1.6.3.jar target/ValoriaTools-v1.6.3.jar; do
+              unzip -l "$jar" | grep -q "plugin.yml"
+              unzip -l "$jar" | grep -q "config.yml"
+              ! unzip -l "$jar" | grep -qE "net/milkbowl|org/holoeasy"
+            done
+            # L'API d economie est vue par les deux plugins, mais n est ecrite qu une fois : elle vit
+            # dans le jar de ValoriaTycoon (ValoriaEconomy, charge en STARTUP, la resout par delegation).
             unzip -l target/ValoriaTycoon-v1.6.3.jar | grep -q "valoriateconomy/Economy.class"
             unzip -l target/ValoriaTycoon-v1.6.3.jar | grep -q "valoriatycoon/hologram/HologramPool.class"
             unzip -l target/ValoriaTycoon-v1.6.3.jar | grep -q "module-info.class"
+            unzip -l target/ValoriaEconomy-v1.6.3.jar | grep -q "valoriaeconomy/ValoriaEconomyProvider.class"
+            unzip -l target/ValoriaTools-v1.6.3.jar | grep -q "valariatools/ToolListener.class"
+            # Aucun paquet ne doit embarquer un autre plugin : trois plugin.yml dans un jar = chargement aleatoire.
             ! unzip -l target/ValoriaTycoon-v1.6.3.jar | grep -q "xyz/arcadiadevs/valoriaeconomy/"
-            ! unzip -l target/ValoriaTycoon-v1.6.3.jar | grep -qE "net/milkbowl|org/holoeasy"
-            ! unzip -l target/ValoriaEconomy-v1.6.3.jar | grep -qE "net/milkbowl|org/holoeasy"
-            echo "OK : contenu des deux jars conforme"
+            ! unzip -l target/ValoriaTycoon-v1.6.3.jar | grep -q "xyz/arcadiadevs/valariatools/"
+            ! unzip -l target/ValoriaEconomy-v1.6.3.jar | grep -q "xyz/arcadiadevs/valariatools/"
+            ! unzip -l target/ValoriaTools-v1.6.3.jar | grep -q "xyz/arcadiadevs/valoriatycoon/"
+            echo "OK : contenu des trois jars conforme"
           '
 
-
       - name: Publier la release `build-latest` (déclencheur du déploiement)
-        # Le script fait TOUT ici (logique dans le depot, pas dans le YAML que l'agent ne peut pas
-        # ecrire) : il valide les deux jar, (re)ecrit le tag `build-latest`, televerse les assets,
-        # verifie leur taille cote GitHub. La publication de la release est ce qui declenche le
-        # workflow docs/CI-DEPLOY-A-COLLER.yml -> depot sur le serveur. Hors `main`, la release n'est
-        # pas publiee pour eviter qu'une branche en cours deploie en production.
-        # La release est le SEUL declencheur du depot : on ne la reecrit donc que depuis main, sinon
-        # chaque push d'une branche en cours remplacerait `build-latest` et mettrait le serveur a jour
-        # d'un etat non merge. Les runs de branche gardent leurs artefacts (telechargeables a la main).
+        # Le script fait tout (logique dans le depot, pas dans le YAML) : valide les jar, (re)ecrit le
+        # tag, televerse les assets, verifie leur taille. La publication de la release est ce qui
+        # declenche `deploy-serveur.yml`. Hors `main`, pas de release : une branche en cours ne doit
+        # pas mettre le serveur a jour d'un etat non merge.
         if: ${{ success() && github.ref == 'refs/heads/main' }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -123,4 +140,5 @@ jobs:
           path: |
             target/ValoriaTycoon-v1.6.3.jar
             target/ValoriaEconomy-v1.6.3.jar
+            target/ValoriaTools-v1.6.3.jar
           if-no-files-found: error

@@ -1,0 +1,39 @@
+name: ValoriaTools
+version: '1.6.3'
+main: xyz.arcadiadevs.valariatools.ValoriaTools
+# POSTWORLD (defaut) : l'outil n'a besoin de personne au demarrage. L'economie est detectee par
+# reflexion (voir EconomyService) et relue 20 ticks apres l'activation, ce qui laisse le temps a
+# ValoriaEconomy (load: STARTUP) de s'enregistrer — un ordre de chargement n'est donc PAS une
+# condition de fonctionnement.
+api-version: '1.13'
+# PAS de `depend:` : Bukkit resout cette liste par le NOM EXACT du plugin et refuse alors de charger
+# le paquet si une seule entree manque ou differe (UnknownDependencyException — le plantage qui a fait
+# rougir le plugin sur ce serveur). ValoriaTools ne depend d'aucun plugin, y compris pas de
+# ValoriaTycoon : tout est souplesse, tout a un repli.
+softdepend:
+  - ValoriaEconomy
+  - ValoriaTycoon
+  - PlaceholderAPI
+  - IridiumSkyblock
+  - SuperiorSkyblock2
+  - BentoBox
+description: Multi-outil à âmes commutantes (pioche, hache, canne à pêche, épée), améliorations par âme.
+authors:
+  - ArcadieDevs
+
+commands:
+  valariatools:
+    description: Ouvre l'interface du multi-outil et ses sous-commandes
+    usage: /<command> [give|sell|set|stats|reload|help]
+    aliases: [tools, outil, multitool]
+
+permissions:
+  valoria.tools.use:
+    description: Ouvrir l'interface, donner/casser avec l'outil.
+    default: true
+  valoria.tools.give:
+    description: Recevoir un multi-outil.
+    default: true
+  valoria.tools.admin:
+    description: Forcer un palier, recharger la configuration, donner a autrui.
+    default: op

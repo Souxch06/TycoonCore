@@ -1,0 +1,208 @@
+# ValoriaTools — multi-outil à âmes commutantes
+#
+# Principe : UN item, quatre comportements, choisis par le bloc visé. Chaque âme (pioche, hache,
+# canne, épée) a SES paliers, SES prix, SES capacités. Rien n'est codé en dur dans le plugin : pour
+# aligner ce fichier sur un barème existant, il suffit d'éditer les nombres ci-dessous, puis
+# `/tools reload` (aucun redémarrage, aucune recompilation).
+#
+# Les capacités sont des lignes `- {type: …, …}` :
+#   type          : ce que le moteur sait faire (liste en bas de ce fichier)
+#   label         : le nom affiché dans le chat et l'interface
+#   from-tier     : le palier à partir duquel la capacité s'active (1 = dès le départ)
+#   max-blocks    : une liste, une valeur PAR palier (le 1er nombre = palier 1, etc.)
+#   chance        : probabilité, 0.0 à 1.0 ; `multiplier`, `strength` : multiplicateurs
+# Un admin qui veut publier les valeurs exactes d'un wiki n'a que ces nombres à changer.
+
+# Coupe tout le plugin (aucun événement traité). Utile pour tester sans retirer le jar.
+enabled: true
+
+tool:
+  # Matériau de l'item. Le comportement ne vient PAS de là : un NETHERITE_PICKAXE marqué vaut
+  # pioche + hache + canne + épée. Ce n'est que l'apparence (et la solidité de base).
+  material: NETHERITE_PICKAXE
+  display-name: "&6⚒ Multi-outil de Valoria"
+  lore:
+    - "&7Un seul outil : il change d'âme"
+    - "&7selon le bloc que tu regardes."
+    - ""
+  # true = l'item ne s'use jamais. Recommandé : un outil qui se casse emporte l'ergonomie
+  # (le joueur doit le redemander) et les paliers, eux, restent dans tools.yml.
+  unbreakable: true
+  # Cache les counters d'enchantement et de durabilité dans la tooltip.
+  hide-flags: true
+  # L'âme utilisée quand le joueur ne vise aucun bloc reconnu (clic dans le vide).
+  fallback-tool: PICKAXE
+  # Réservoir de la capacité LUCK de la canne. On ne touche pas à la table de trésors interne du
+  # serveur (ce serait de la reflection dans du privé, cassable à chaque version) : on ajoute les
+  # objets listés ici, avec une probabilité `treasure-chance`.
+  treasure:
+    items:
+      - NAME_TAG
+      - SAPLING
+
+sell-on-break:
+  # Multiplicateur global appliqué aux prix de `sell.prices` ci-dessous.
+  multiplier: 1.0
+  # En dessous de ce prix unitaire, rien n'est vendu (le joueur ramasse, sinon le chat sature).
+  min-value: 0.05
+  # true = la vente automatique ne se déclenche que accroupi (le geste du « je veux vendre »).
+  only-when-sneaking: false
+  # true = les blocs reconnus par une âme mais sans prix déclaré sont quand même mis dans le sac ;
+  # false = ils tombent au sol. Les deux évitent l'accumulation d'un inventaire qui ne vend rien.
+  auto-sell-unmatched: true
+
+tools:
+
+  # ─────────────────────────────────────────────── PIOCHE ──────────────────────────────────────────
+  pickaxe:
+    material: DIAMOND_PICKAXE
+    matches:
+      # Les tags suivent les nouveaux blocs tout seuls ; les noms sont le filet pour les serveurs
+      # anciens (1.7-1.12) qui n'ont pas de registre de tags.
+      tags:
+        - "#minecraft:mineable/pickaxe"
+      blocks: []
+      namespaces: []
+    xp-per-block: 1
+    durability-cost: 1
+    upgrade:
+      max-tier: 5
+      # Prix du passage au palier suivant : index 0 = 1→2, 1 = 2→3, etc.
+      prices: [5000, 15000, 40000, 100000]
+    abilities:
+      - {type: VEIN, label: "Arrachage de filon", from-tier: 1, max-blocks: [8, 12, 18, 24, 32], similar-blocks-only: true}
+      - {type: FORTUNE, label: "Chance minérale", from-tier: 2, chance: [0.0, 0.15, 0.25, 0.35, 0.5], extra-min: 1, extra-max: 2}
+      - {type: AUTO_SMELT, label: "Fusion instantanée", from-tier: 3}
+      - {type: DOUBLE_DROP, label: "Drops doublés", from-tier: 4, chance: [0.0, 0.0, 0.0, 0.2, 0.3]}
+      - {type: SELL_ON_BREAK, label: "Vente à la casse", from-tier: 5}
+    sell:
+      multiplier: 1.0
+      min-value: 0.05
+      # Le barème de vente propre à cette âme. Mets-y les prix de ton wiki (un par matériau,
+      # nom sans namespace) : c'est ce que la capacité SELL_ON_BREAK et `/tools sell` paient.
+      prices:
+        COBBLESTONE: 1.0
+        DEEPSLATE: 1.2
+        DIAMOND: 60.0
+        EMERALD: 45.0
+        GOLD_INGOT: 20.0
+        IRON_INGOT: 12.0
+        COPPER_INGOT: 3.0
+        REDSTONE: 4.0
+        LAPIS_LAZULI: 5.0
+        COAL: 3.5
+        NETHERITE_SCRAP: 400.0
+
+  # ─────────────────────────────────────────────── HACHE ───────────────────────────────────────────
+  axe:
+    material: DIAMOND_AXE
+    matches:
+      tags:
+        - "#minecraft:logs"
+        - "#minecraft:mineable/axe"
+      blocks: []
+      namespaces: []
+    xp-per-block: 0
+    durability-cost: 1
+    upgrade:
+      max-tier: 5
+      prices: [4000, 12000, 30000, 80000]
+    abilities:
+      - {type: TREE_FELL, label: "Arbre abattu d'un coup", from-tier: 1, max-blocks: [24, 40, 64, 96, 128], max-height: [8, 10, 14, 18, 24]}
+      - {type: DOUBLE_DROP, label: "Bûches doublées", from-tier: 3, chance: [0.0, 0.0, 0.15, 0.25, 0.35]}
+      - {type: SELL_ON_BREAK, label: "Vente à la casse", from-tier: 4}
+    sell:
+      multiplier: 1.0
+      min-value: 0.05
+      prices:
+        OAK_LOG: 4.0
+        SPRUCE_LOG: 4.0
+        BIRCH_LOG: 4.0
+        JUNGLE_LOG: 5.0
+        ACACIA_LOG: 5.0
+        DARK_OAK_LOG: 5.0
+        MANGROVE_LOG: 5.0
+        CHERRY_LOG: 6.0
+
+  # ─────────────────────────────────────────────── CANNE À PÊCHE ───────────────────────────────────
+  rod:
+    material: FISHING_ROD
+    matches:
+      # La canne ne reconnaît aucun bloc : son âme s'active au lancer, pas au contact d'un bloc.
+      tags: []
+      blocks: []
+      namespaces: []
+    xp-per-block: 0
+    durability-cost: 1
+    upgrade:
+      max-tier: 4
+      prices: [6000, 18000, 50000]
+    abilities:
+      - {type: AUTO_REEL, label: "Moulinet automatique", from-tier: 1}
+      - {type: LUCK, label: "Pêche chanceuse", from-tier: 2, treasure-chance: [0.0, 0.05, 0.1, 0.2], lure-bonus: [0, 1, 2, 3]}
+      - {type: SELL_ON_BREAK, label: "Vente de la pêche", from-tier: 3}
+    sell:
+      multiplier: 1.0
+      min-value: 0.05
+      prices:
+        COD: 6.0
+        SALMON: 8.0
+        TROPICAL_FISH: 25.0
+        PUFFERFISH: 20.0
+        LEATHER: 5.0
+        SADDLE: 250.0
+        BOW: 30.0
+        NAME_TAG: 120.0
+
+  # ─────────────────────────────────────────────── ÉPÉE ────────────────────────────────────────────
+  sword:
+    material: DIAMOND_SWORD
+    matches:
+      # L'épee ne cible pas de bloc : elle s'active sur les entités vivantes.
+      tags: []
+      blocks: []
+      namespaces: []
+    xp-per-block: 0
+    durability-cost: 1
+    upgrade:
+      max-tier: 4
+      prices: [7000, 20000, 60000]
+    abilities:
+      - {type: CRIT, label: "Coup critique", from-tier: 1, chance: [0.15, 0.25, 0.35, 0.5], multiplier: [1.5, 1.8, 2.2, 2.5]}
+      - {type: KNOCKBACK, label: "Souffle de recul", from-tier: 2, strength: [0.4, 0.6, 0.9, 1.2]}
+      - {type: LIFE_STEAL, label: "Vol de vie", from-tier: 3, chance: [0.0, 0.2, 0.3, 0.45], heal-hearts: [0, 1, 1.5, 2]}
+    sell:
+      multiplier: 1.0
+      min-value: 0.05
+      # Vendable aussi via `/tools sell` : les butins de combat suivent la même grille.
+      prices:
+        ROTTEN_FLESH: 1.0
+        BONE: 2.0
+        STRING: 2.5
+        SPIDER_EYE: 3.0
+        GUNPOWDER: 6.0
+        ENDER_PEARL: 40.0
+        BLAZE_ROD: 25.0
+        SLIME_BALL: 8.0
+
+# ─────────────────────────────────────────────────────────────────────────────────────────────────
+# Capacites comprises par le moteur (toute autre clé est refusee au chargement, pas ignoree) :
+#
+#   VEIN              arrache les blocs voisins du meme type, plafonne par max-blocks
+#   TREE_FELL         abat tronc + canopee (max-blocks, max-height)
+#   AUTO_SMELT        remplace les drops par leur cuisson (recettes du serveur, pas une table a nous)
+#   FORTUNE          chance d'ajouter des drops (chance, extra-min, extra-max)
+#   DOUBLE_DROP       equivalent a FORTUNE, pour les âmes sans minerais
+#   INFINITE_DURABILITY  usure desactivee pour cette âme a ce palier (voir tool.unbreakable)
+#   SELL_ON_BREAK     vend ce qui est casse, aux prix de `sell.prices`
+#   AUTO_REEL         (canne) relance la peche sans attendre, apres une prise
+#   LUCK              (canne) ajoute un objet de `tool.treasure.items` a une probabilite donnee
+#   CRIT              (epee) multiplicateur de degats avec une probabilite
+#   KNOCKBACK         (epee) repousse la cible (strength)
+#   LIFE_STEAL        (epee) se soigne avec une probabilite (heal-hearts, en demi-cœurs)
+#
+# Le nom de capacite est insensible a la casse et aux tirets : `DOUBLE_DROP`, `double-drop` et
+# `Double Drop` designent la meme chose. Les capacites d'une âme qui n'ont aucun sens pour elle
+# (AUTO_SMELT sur l'epee) sont acceptees mais discrètement inutiles — le controle de config du
+# depot les signale quand meme (`python3 scripts/verify-tools-config.py`).
+# ─────────────────────────────────────────────────────────────────────────────────────────────────

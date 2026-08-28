@@ -34,6 +34,7 @@ Le dépôt contient **deux** plugins, construits par le même build Maven :
 | --- | --- | --- |
 | `ValoriaTycoon` | générateurs, marché `/ah`, tableau de bord `/sb`, interfaces | `target/ValoriaTycoon-v1.6.3.jar` |
 | `ValoriaEconomy` | soldes (`/bal`, `/pay`, `/baltop`, `/eco`) et fournisseur du service d'économie | `target/ValoriaEconomy-v1.6.3.jar` |
+| `ValoriaTools` | multi-outil à âmes commutantes (pioche/hache/canne/épée) et ses paliers | `target/ValoriaTools-v1.6.3.jar` |
 
 `ValoriaEconomy` est chargé en `STARTUP` pour que le service `Economy` existe avant l'`onEnable` de
 `ValoriaTycoon`, et pour que l'interface `xyz/arcadiadevs/valoriateconomy/Economy` (embarquée dans le jar
@@ -84,6 +85,7 @@ docs/
   TUTORIEL-PAPER-26.md       # Tutoriel pas à pas (Paper 26.2)
   ECONOMIE.md                # ValoriaEconomy : /bal, /pay, /eco, marché /ah
   HOLOGRAMMES.md             # Moteur d'hologrammes interne (sans HoloEasy ni ProtocolLib)
+  MULTI-OUTIL.md             # ValoriaTools : un item, quatre âmes, paliers par âme
   DEPLOY-2-JARS.md           # Livrer les DEUX jar par la pipeline
   AUTO-DEPLOIEMENT.md        # Brancher l'automatisme complet (release -> deux jar sur le serveur)
   technical-report.txt       # Rapport technique
