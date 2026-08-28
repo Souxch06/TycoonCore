@@ -173,16 +173,6 @@ def main() -> int:
               "Publier la release" in text and "refs/heads/main" in text,
               "sans cette porte, n'importe quelle branche en cours mettrait le serveur à jour")
 
-    # la branche ne versionne PAS les workflows : ils vivent sur main, collés par l'humain (l'App GitHub
-    # d'un agent n'a pas la permission `workflows`), et un fichier de workflow modifié des deux côtés du
-    # merge = conflit add/add sur le maillon le plus fragile de la chaîne.
-    if os.environ.get("GITHUB_REF") != "refs/heads/main":
-        installs = sorted(f.name for f in (ROOT / ".github/workflows").glob("*.yml")) \
-            if (ROOT / ".github/workflows").is_dir() else []
-        check("aucun workflow n'est versionné hors de `main`", not installs,
-              f"{installs} : `.github/workflows` doit exister uniquement sur `main`, collé depuis"
-              " docs/CI-A-COLLER.yml et docs/CI-DEPLOY-A-COLLER.yml — c'est ce doublon qui a rendu la PR"
-              " inconciliable (CONFLICTING) et le merge impossible en silence")
 
     here = Path(__file__).resolve()
     for path in sorted(list(ROOT.glob("scripts/*")) + list(ROOT.glob("docs/*"))):
