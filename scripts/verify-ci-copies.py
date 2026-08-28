@@ -224,6 +224,36 @@ def main() -> int:
               f"{touched} : ces fichiers se collent sur `main` depuis docs/. Les versionner ici a déjà"
               " rendu la PR inconciliable (CONFLICTING) et le merge impossible en silence")
 
+    # un bloc shell inline dans un YAML est un piege a apostrophes : le shell croit sa chaine fermee au
+    # premier `'` du texte — ici un `L'API` dans un COMMENTAIRE — et rend un code 2 sans nommer la faute.
+    # C'est exactement ce qui faisait rougir « Vérifier les trois JAR produits » (run 33200967570).
+    for path in (SOURCE, MIRROR, DEPLOY, NEUTRAL):
+        if not path.is_file():
+            continue
+        lines = body(path).splitlines()
+        inline = [i + 1 for i, line in enumerate(lines)
+                  if "bash -c" in line and not line.strip().startswith("#")]
+        check(f"{rel(path)} n'embarque aucun bloc shell inline", not inline,
+              f"ligne(s) {inline} : un controle de fichier doit vivre dans `scripts/`, pas dans le YAML")
+
+        unclosed = []
+        in_run, run_start, quote_total = False, 0, 0
+        for index, line in enumerate(lines):
+            if re.match(r"^\s*run:\s*[|>]", line):
+                in_run, run_start, quote_total = True, index + 1, 0
+                continue
+            if in_run and re.match(r"^\s*(-\s+)?[A-Za-z_][\w-]*:\s", line) and not line.startswith(" " * 10):
+                if quote_total % 2:
+                    unclosed.append(run_start)
+                in_run = False
+            if in_run and not line.strip().lstrip("#").startswith("#"):
+                quote_total += line.count("'")
+        if in_run and quote_total % 2:
+            unclosed.append(run_start)
+        check(f"{rel(path)} n'a aucune apostrophe non fermée dans un `run:`", not unclosed,
+              f"ligne(s) {unclosed} : un `'` impair ferme la chaine du shell plus tot que prevu — le bloc"
+              " devient une erreur de syntaxe, code 2, sans un mot sur la cause")
+
     # 6. un script supprime ne doit plus etre cite
     here = Path(__file__).resolve()
     for path in sorted(list(ROOT.glob("scripts/*")) + list(ROOT.glob("docs/*")) + list(ROOT.glob("*.md"))):
@@ -263,6 +293,11 @@ def _self_tests() -> None:
         if not ignores_main(dead) or ignores_main(alive):
             raise SystemExit("ERREUR: ignores_main ne voit plus `branches-ignore: [main]` (ou le voit la"
                              " ou il n'est pas) — la regle qui a sauve la chaine de depot est decorative")
+        # l'echantillon qui a casse la CI : une apostrophe dans un commentaire d'un bloc `run: |`
+        broken = "      - name: x\n        run: |\n          # L'API est vue\n          bash s.sh\n"
+        clean = "      - name: x\n        run: |\n          bash s.sh\n"
+        if broken.count("'") % 2 == 0 or clean.count("'") % 2:
+            raise SystemExit("ERREUR: les echantillons de la regle d'apostrophe ne sont plus significatifs")
         print("  [--] auto-tests des regles : OK")
 
 
