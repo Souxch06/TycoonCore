@@ -1,0 +1,134 @@
+name: Release et déploiement automatique (trois jar)
+
+# Voie « tout automatique » : à chaque RELEASE GitHub (tag `build-latest` publié par le workflow de
+# validation), ce workflow retélécharge les TROIS jar de la release, vérifie leur contenu, puis les
+# dépose sur le serveur — sauvegarde préalable dans `plugins/_sauvegarde-<UTC>/` et contrôle de taille
+# octet pour octet après envoi.
+#
+# Pourquoi un workflow séparé : `deploy.yml` se déclenche sur `push: main` et pousse un seul jar ; ce
+# fichier-ci se déclenche sur un événement explicite (la release) et pousse les TROIS — condition pour
+# que le serveur ne se retrouve jamais avec le plugin sans son économie, ni l'un et l'autre sans leur
+# multi-outil.
+#
+# Il ne contient AUCUNE commande de build : il fait confiance au run déjà vert (artefact + 14 contrôles).
+# Un `workflow_dispatch` manuel permet un déploiement à la demande, avec `dry_run` pour vérifier
+# exactement ce qui serait fait sans rien envoyer.
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Nom de la release à déployer (asset du même nom que le tag)'
+        type: string
+        default: build-latest
+      dry_run:
+        description: 'Simuler (affiche la session SFTP, ne televerse rien)'
+        type: boolean
+        default: true
+
+jobs:
+  deploy:
+    name: Déposer les trois jar sur le serveur
+    runs-on: ubuntu-latest
+    # Sur un événement `release`, on ne déploie que la release marquée « dernière version vérifiée » :
+    # publier une release de test ne doit pas écraser le serveur.
+    if: ${{ github.event_name != 'release' || github.event.release.tag_name == 'build-latest' }}
+    environment: production   # règle la porte manuelle : Settings → Environments → production
+
+    steps:
+      - name: Récupérer le script de dépôt
+        uses: actions/checkout@v4
+        with:
+          # On ne prend que le script : ce workflow ne construit rien, il deplace des fichiers deja
+          # verifies. (Pas de `submodules`/`lfs` : inutiles, et c'est ce qui rend le checkout rapide.)
+          sparse-checkout: |
+            scripts/ci-release-and-deploy.sh
+          sparse-checkout-mode: no-filter
+
+      - name: Télécharger les jar depuis la release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Passe par `env:`, JAMAIS par interpolation directe dans `run:` : une valeur d'entree
+          # utilisateur injectee dans un shell est la faille classique des workflows.
+          RELEASE_TAG: ${{ github.event.release.tag_name || inputs.tag }}
+        run: |
+          set -euo pipefail
+          TAG="$RELEASE_TAG"
+          mkdir -p target
+          gh release download "$TAG" --pattern '*.jar' --dir target --clobber
+          ls -l target
+          # Le nom attend est pose par le pom (<finalName> de maven-jar-plugin et de l'assembleur).
+          test -f target/ValoriaTycoon-v1.6.3.jar
+          test -f target/ValoriaEconomy-v1.6.3.jar
+          # Le troisieme jar est exige ici, pas « optionnel » : le serveur ne doit jamais recevoir le
+          # plugin et son economie sans le multi-outil qui va avec.
+          test -f target/ValoriaTools-v1.6.3.jar
+
+      - name: Vérifier l'intégrité avant envoi
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import zipfile, sys
+          ok = True
+          for path, need in (("target/ValoriaTycoon-v1.6.3.jar",
+                              ("xyz/arcadiadevs/valoriatycoon/ValoriaTycoon.class",
+                               "plugin.yml",
+                               "xyz/arcadiadevs/valoriatycoon/hologram/HologramPool.class",
+                               "xyz/arcadiadevs/valoriateconomy/Economy.class",
+                               "module-info.class")),
+                             ("target/ValoriaEconomy-v1.6.3.jar",
+                              ("xyz/arcadiadevs/valoriaeconomy/ValoriaEconomy.class",
+                               "plugin.yml")),
+                             ("target/ValoriaTools-v1.6.3.jar",
+                              ("xyz/arcadiadevs/valariatools/ToolListener.class",
+                               "xyz/arcadiadevs/valariatools/ToolStats.class",
+                               "plugin.yml",
+                               "config.yml"))):
+              try:
+                  names = set(zipfile.ZipFile(path).namelist())
+              except Exception as error:
+                  print("ERREUR: %s illisible (%s)" % (path, error)); ok = False; continue
+              missing = [n for n in need if n not in names]
+              if missing:
+                  print("ERREUR: %s ampute de %s" % (path, missing)); ok = False
+              if any(n.startswith(("net/milkbowl/", "org/holoeasy/")) for n in names):
+                  print("ERREUR: %s embarque une API tierce" % path); ok = False
+              if "plugin.yml" in names:
+                  desc = zipfile.ZipFile(path).read("plugin.yml").decode("utf-8", "replace")
+                  name = [l.split(":", 1)[1].strip() for l in desc.splitlines() if l.startswith("name:")][0]
+                  api = [l.split(":", 1)[1].strip() for l in desc.splitlines() if l.startswith("api-version:")]
+                  print("%s : %d entrees, plugin %s, api-version %s" % (path, len(names), name, api or "absente"))
+                  if not api:
+                      print("ERREUR: %s sans api-version (legacy material support, avertissement a chaque demarrage)" % path)
+                      ok = False
+              else:
+                  print("ERREUR: %s sans plugin.yml" % path); ok = False
+          sys.exit(0 if ok else 1)
+          PY
+
+      - name: Déploiement (simulation)
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DEPLOY: '1'
+          DRY_RUN: '1'
+          RELEASE: '0'
+          SFTP_HOST: ${{ secrets.SFTP_HOST }}
+          SFTP_PORT: ${{ secrets.SFTP_PORT }}
+          SFTP_USERNAME: ${{ secrets.SFTP_USERNAME }}
+          SFTP_PASSWORD: ${{ secrets.SFTP_PASSWORD }}
+        run: bash scripts/ci-release-and-deploy.sh
+
+      - name: Déploiement sur MCServerHost
+        if: ${{ github.event_name == 'release' || !inputs.dry_run }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DEPLOY: '1'
+          RELEASE: '0'
+          SFTP_HOST: ${{ secrets.SFTP_HOST }}
+          SFTP_PORT: ${{ secrets.SFTP_PORT }}
+          SFTP_USERNAME: ${{ secrets.SFTP_USERNAME }}
+          SFTP_PASSWORD: ${{ secrets.SFTP_PASSWORD }}
+        run: bash scripts/ci-release-and-deploy.sh
