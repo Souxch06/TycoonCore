@@ -180,9 +180,19 @@ def main() -> int:
         if not jar_path.is_absolute():
             jar_path = ROOT / args.jar
         if not jar_path.is_file():
-            print(f"ERREUR: JAR introuvable: {args.jar}", file=sys.stderr)
+            message = f"JAR introuvable: {args.jar}"
+            print(f"ERREUR: {message}", file=sys.stderr)
+            ci_publish.fail("Contrôle NBT : paquet absent", [message,
+                              "le build n'a pas produit target/ValoriaTycoon-v1.6.3.jar"])
             return 1
         check_jar(jar_path, problems)
+        # Diagnostic obligatoire : « pont absent » ne veut rien dire sans savoir ce que le paquet
+        # contient. On liste le paquet controlé (extrait pertinent) dans l'annotation.
+        if problems:
+            with zipfile.ZipFile(jar_path) as jar:
+                listing = [n for n in jar.namelist() if "/nbteditor/" in n]
+            problems.append(f"contenu reel du paquet dans le jar ({len(listing)} entree(s)) : "
+                            f"{sorted(x.rsplit('/', 1)[-1] for x in listing)[:8]}")
 
     if renamed:
         print(f"Classes legacy renommées : {renamed}")

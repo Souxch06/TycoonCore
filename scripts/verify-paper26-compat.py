@@ -477,6 +477,16 @@ def verify_jar(jar_path: Path):
     for relative, old, new in PATCHES:
         verify_constant_pool(f"JAR : classe patchée {relative}", patched[relative], [new], [old])
 
+    # Le paquet est reconstruit par `mvn` : si une classe attendue manque, la liste reelle du paquet
+    # est la seule info qui permet de distinguer « le build ne compile pas » de « le controle cherche
+    # au mauvais endroit ». On la publie dans le resume/annotation.
+    missing = [e for e in NBT_ENTRIES if e not in names]
+    if missing:
+        listing = sorted(n.rsplit("/", 1)[-1] for n in names if "/nbteditor/" in n)
+        ci_publish.fail("Classes NBT attendues absentes du JAR",
+                        [f"attendu : {m}" for m in missing]
+                        + [f"present dans le paquet : {', '.join(listing[:12]) or 'RIEN'}"])
+
     for banned_tree in ("org/holoeasy", "net/milkbowl"):
         check(f"JAR : {banned_tree}/ absent (bibliothèque tierce retirée)",
               not any(n.startswith(banned_tree + "/") for n in names))
