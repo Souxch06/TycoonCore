@@ -1,0 +1,9 @@
+# CE FICHIER N'EST PAS LA SOURCE. Il ne se colle pas.
+#
+# (Il est garde vide de contenu de workflow exprès : supprime, il faisait croire a Git que le fichier
+# ajoute sur main appartenait a ce dossier-la, et la PR devenait inconciliable — « CONFLICT (file
+# location) ». Le garder, vide, coute moins cher qu'un merge bloque.)
+#
+# Le contenu a coller dans `.github/workflows/deploy-serveur.yml` est UNIQUEMENT ici :
+#   docs/CI-DEPLOY-A-COLLER.yml
+# (URL brute : https://github.com/Souxch06/ValoriaTycoon/raw/arena/01a043a8-valoriatycoon/docs/CI-DEPLOY-A-COLLER.yml)

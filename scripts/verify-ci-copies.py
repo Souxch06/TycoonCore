@@ -132,6 +132,47 @@ def main() -> int:
               "Publier la release" in text and "refs/heads/main" in text,
               "sans cette porte, n'importe quelle branche en cours mettrait le serveur à jour")
 
+    # ce que la branche a le droit de toucher dans .github/workflows : rien qui cree un deuxieme
+    # endroit ou coller, et surtout pas le fichier dont l'ancien workflow se servait pour envoyer
+    # le mono-jar sur le serveur.
+    gh = ROOT / ".github/workflows"
+    if gh.is_dir():
+        extra = sorted(f.name for f in gh.glob("*.yml") if f.name not in ("deploy.yml",))
+        check("aucun `deploy-serveur.yml` versionné sur cette branche", not extra,
+              f"{extra} : le dépôt des jar se colle sur `main` depuis docs/CI-DEPLOY-A-COLLER.yml. Le"
+              " versionner ici crée un ajout des deux côtés = PR inconciliable, et deux copies qui"
+              " divergent = un serveur mis à jour par la mauvaise")
+        neutral = gh / "deploy.yml"
+        if neutral.is_file():
+            check("`.github/workflows/deploy.yml` n'est pas modifié par cette branche",
+                  "workflow_dispatch" in neutral.read_text(encoding="utf-8")
+                  or not re.search(r"^\s+push:\s*$\n\s+branches:", neutral.read_text(encoding="utf-8"), re.M),
+                  "la neutralisation du declencheur `push: main` se fait SUR main (docs/paste/deploy-neutralise.yml) :"
+                  " la porter ici aussi = conflit, et un merge qui n'envoie plus qu'un seul jar")
+    for name in ("docs/paste/build.yml", "docs/paste/deploy-serveur.yml"):
+        path = ROOT / name
+        if path.is_file() and looks_like_workflow(path.read_text(encoding="utf-8")):
+            check(f"{name} n'est pas une copie de workflow", False,
+                  "ce fichier doit rester un pointeur : une copie complete ici se collee par erreur et"
+                  " diverge de docs/CI-A-COLLER.yml (c'est deja arrive)")
+
+    # un script supprime ne doit plus etre cite nulle part (sinon le prochain admin le recree)
+    # chaine de declenchement : un build qui s'interdit `main` ne publie jamais, et le silence est total
+    import os
+    for path in (SOURCE, MIRROR):
+        text = path.read_text(encoding="utf-8")
+        trig = re.search(r"^on:\n(?:.*\n)*?jobs:", text, re.M)
+        block = trig.group(0) if trig else ""
+        ignores_main = bool(re.search(r"branches-ignore:[^\n]*\n[ \t]*-[ \t]+main", block)) \
+            or bool(re.search(r"branches-ignore:\s*\[[^\]]*main", block))
+        check(f"{rel(path)} se déclenche sur les pushes de `main`", not ignores_main,
+              "`push: branches-ignore: [main]` casse toute la chaîne : le merge ne construit rien, la"
+              " release n'est pas publiée, deploy-serveur.yml ne part pas, et `plugins/` ne reçoit aucun"
+              " fichier — sans une seule erreur affichée nulle part. C'est le défaut corrigé ici.")
+        check(f"{rel(path)} ne publie la release que depuis `main`",
+              "Publier la release" in text and "refs/heads/main" in text,
+              "sans cette porte, n'importe quelle branche en cours mettrait le serveur à jour")
+
     # la branche ne versionne PAS les workflows : ils vivent sur main, collés par l'humain (l'App GitHub
     # d'un agent n'a pas la permission `workflows`), et un fichier de workflow modifié des deux côtés du
     # merge = conflit add/add sur le maillon le plus fragile de la chaîne.
