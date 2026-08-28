@@ -26,6 +26,7 @@ import xml.etree.ElementTree as ET
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
+import ci_publish  # noqa: E402
 import classfile  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -53,6 +54,25 @@ XREFLECTION_PATTERN_OLD = r'"^(?<major>\\d+)\\.(?<minor>\\d+)(?:\\.(?<patch>\\d+
 
 
 results = []
+
+
+def publish_ci_summary(results, failures):
+    """Ecrit le detail des controles en echec dans le resume du job GitHub Actions (si on y est)."""
+    summary = os.environ.get("GITHUB_STEP_SUMMARY")
+    if not summary:
+        return
+    lines = [f"**{label}**{(f' — {why}' if why else '')}" for label, ok, why in results if not ok]
+    if failures:
+        body = (f"### Contrôles Paper 26.x en échec ({failures}/{len(results)})\n"
+                + "\n".join(f"- {line}" for line in lines[:40]) + "\n")
+    else:
+        body = f"### Contrôles Paper 26.x : {len(results)}/{len(results)} OK\n"
+    print(body)
+    try:
+        with open(summary, "a", encoding="utf-8") as handle:
+            handle.write(body)
+    except OSError:
+        pass
 
 
 def check(label, ok, detail=""):
@@ -530,7 +550,10 @@ def main() -> int:
         if not jar_path.is_absolute():
             jar_path = ROOT / args[0]
         if not jar_path.is_file():
-            print(f"ERREUR: JAR introuvable: {args[0]}", file=sys.stderr)
+            message = f"JAR introuvable: {args[0]} — le build n'a pas produit ce paquet"
+            print(f"ERREUR: {message}", file=sys.stderr)
+            ci_publish.fail("Verification du JAR impossible", [message,
+                              f"attendu dans {jar_path.parent} apres `mvn package`"])
             return 1
         verify_jar(jar_path)
 
@@ -544,21 +567,12 @@ def main() -> int:
         failures += 0 if ok else 1
     print(f"\nContrôles: {len(results)}, en échec: {failures}")
 
-    # En CI, les lignes `KO` sont invisibles (journal replie, et le journal brut n'est pas toujours
-    # accessible). Les echecs sont donc re-emis en ANNOTATIONS via $GITHUB_STEP_SUMMARY, qui atterrit
-    # dans le resume du job ET dans l'API des annotations — c'est le seul canal de preuve utilisable a
-    # distance. Le code de sortie reste 1 : l'etape est rouge, le deploiement ne part pas.
-    if failures and "-report-annotations" in sys.argv:
-        summary = os.environ.get("GITHUB_STEP_SUMMARY")
-        detail = [f"**{label}**{(f' — {why}' if why else '')}" for label, ok, why in results if not ok]
-        body = "### Contrôles en échec\n" + "\n".join(f"- {line}" for line in detail[:40]) + "\n"
-        print(body)
-        if summary:
-            try:
-                with open(summary, "a", encoding="utf-8") as handle:
-                    handle.write(body)
-            except OSError:
-                pass
+    # Auto-publication, SANS drapeau a passer depuis le workflow : dans GitHub Actions, les lignes
+    # `KO` du journal sont invisibles (journal replie, et le journal brut n'est pas toujours
+    # accessible — c'est le cas de cet agent). Le detail des controles en echec est donc recopie dans
+    # $GITHUB_STEP_SUMMARY : il apparait en haut du job ET dans l'API des annotations, ce qui rend
+    # l'etape lisible sans qu'aucun humain n'ait a copier quoi que ce soit. Le code de sortie reste 1.
+    publish_ci_summary(results, failures)
 
     if failures:
         print("ÉCHEC: le plugin n'est pas prêt pour Paper 26.x.", file=sys.stderr)

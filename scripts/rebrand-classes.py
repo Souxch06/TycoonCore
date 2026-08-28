@@ -32,6 +32,7 @@ import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
+import ci_publish  # noqa: E402
 import classfile  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -113,6 +114,7 @@ def main() -> int:
     print(f"Classes contrôlées : {scanned}" + (f", corrigées : {modified}" if modified else ""))
     if problems:
         print(f"\n{len(problems)} problème(s) de renommage :", file=sys.stderr)
+        ci_publish.fail("Renommage de marque dans le JAR", problems[:40])
         for problem in problems[:25]:
             print(f"  - {problem}", file=sys.stderr)
         if len(problems) > 25:

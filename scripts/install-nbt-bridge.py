@@ -35,6 +35,7 @@ import zipfile
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
+import ci_publish  # noqa: E402
 import classfile  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -167,4 +168,8 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    code = main()
+    if code:
+        ci_publish.fail("Pont NBT installe dans le JAR",
+                       ["voir la sortie de scripts/install-nbt-bridge.py --check --jar"])
+    sys.exit(code)
