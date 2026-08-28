@@ -1,6 +1,8 @@
 package xyz.arcadiadevs.valoriaeconomy;
 
 import java.util.ArrayList;
+import java.util.List;
+import org.bukkit.OfflinePlayer;
 import xyz.arcadiadevs.valoriateconomy.Economy;
 import xyz.arcadiadevs.valoriateconomy.EconomyResponse;
 

@@ -169,7 +169,8 @@ PY
 
 # Les controles du depot, meme quand la compilation echoue : un seul rapport, toute la verite.
 EXTRA=""
-for check in "python3 scripts/verify-paper26-compat.py" \
+for check in "python3 scripts/verify-source-imports.py" \
+             "python3 scripts/verify-paper26-compat.py" \
              "python3 scripts/verify-economy-api.py" \
              "python3 scripts/selfmade-api-patch.py --check" \
              "python3 scripts/generate-economy-api.py --check" \

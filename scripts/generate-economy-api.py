@@ -190,10 +190,17 @@ def body_for(name: str, params: str):
 
 
 def render_provider(methods) -> str:
+    # Les imports du fournisseur sont deduits des types cites par les signatures : les enumerer a la
+    # main est exactement le bug qui a fait echouer le build (OfflinePlayer absent, ~110 erreurs
+    # « cannot find symbol » en cascade). imports_for() est le seul endroit decideur.
+    imports = ["java.util.ArrayList"] + imports_for(methods)
     out = [
         "package xyz.arcadiadevs.valoriaeconomy;",
         "",
-        "import java.util.ArrayList;",
+    ]
+    for imp in imports:
+        out.append(f"import {imp};")
+    out += [
         "import xyz.arcadiadevs.valoriateconomy.Economy;",
         "import xyz.arcadiadevs.valoriateconomy.EconomyResponse;",
         "",

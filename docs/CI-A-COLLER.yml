@@ -54,6 +54,11 @@ jobs:
       - name: Vérifier que le plugin ne dépend d'aucune API tierce (Vault, HoloEasy retirés)
         run: python3 scripts/selfmade-api-patch.py --check
 
+      - name: Vérifier les imports des fichiers compilés (sans JDK)
+        # Le build #33154419764 a echoue pour UN import absent (`OfflinePlayer`) dans une classe generee,
+        # multiplie en ~110 erreurs javac. Ce controle le voit avant Maven.
+        run: python3 scripts/verify-source-imports.py
+
       - name: Vérifier la cohérence de l'extraction
         run: python3 scripts/verify-extraction.py
 
