@@ -135,9 +135,19 @@ def check_jar(jar_path: Path, problems: list):
             for member in ("contains", "getInt", "getString", "set", "CUSTOM_DATA"):
                 if member not in values:
                     problems.append(f"{jar_path.name}: pont sans membre {member!r}")
-            for token in (b"PersistentDataContainer", b"NamespacedKey", b"LegacyNbtBridge"):
-                if token not in blob:
-                    problems.append(f"{jar_path.name}: pont sans référence {token.decode()}")
+            # Le pont resout TOUT par reflexion (Class.forName + Method_handles) : ces noms n'existent
+            # donc pas en tant que CONSTANT_Class, mais bien en chaines UTF8 du constant-pool. Les
+            # tester sur les octets bruts du .class marchait avec l'ancienne version (qui importait
+            # NamespacedKey en dur) et echouait sur la notre — le controle #33158841547 condamnait un
+            # paquet valide. On compare desormais aux valeurs du constant-pool, comme le reste du depot.
+            # chaque nom ci-dessous est verifie comme presente DANS LA SOURCE du pont : un controle
+            # qui demande plus que ce que le code promet est un faux positif garanti (c'est ce qui
+            # s'est passe avec `getBukkitVersion`, absent du pont et donc du paquet).
+            for token in ("PersistentDataContainer", "PersistentDataType", "NamespacedKey",
+                          "LegacyNbtBridge"):
+                if not any(token in value for value in values):
+                    problems.append(f"{jar_path.name}: pont sans reference {token!r} dans son "
+                                    "constant-pool (le pont doit resoudre ces noms par reflexion)")
 
 
 def main() -> int:
