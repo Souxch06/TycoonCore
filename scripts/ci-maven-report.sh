@@ -137,6 +137,39 @@ print("\n".join(out)[:15000])
 PY
 }
 
+# TAMPON DE PREUVE : ce que le build a reellement produit dans target/classes. Sans lui, un controle
+# qui dit « la classe du jar n'est pas la bonne » ne permet pas de distinguer « javac n'a pas compile
+# notre source » de « la copie de ressources a ecrase le resultat » — deux pannes opposées.
+build_probe() {
+  python3 - <<'PROBE'
+import pathlib
+root = pathlib.Path(".")
+out = []
+for rel in ("io/github/bananapuncher714/nbteditor", "xyz/arcadiadevs/valoriateconomy",
+            "xyz/arcadiadevs/valoriatycoon/hologram", "xyz/arcadiadevs/valoriatycoon/guis",
+            "xyz/arcadiadevs/valoriaeconomy"):
+    d = root / "target/classes" / rel
+    if d.is_dir():
+        files = sorted(x.name for x in d.glob("*.class"))
+        out.append(f"{rel}/ -> {len(files)} classe(s): {', '.join(files[:6])}")
+    else:
+        out.append(f"{rel}/ -> ABSENT (le build n'a rien ecrit la)")
+total = len(list((root / "target/classes").rglob("*.class"))) if (root / "target/classes").is_dir() else 0
+out.insert(0, f"target/classes: {total} .class au total")
+print("\n".join(out))
+PROBE
+}
+PROBE="$(build_probe)"
+echo "$PROBE"
+if [ "$MVN_STATUS" = "0" ]; then
+  REPORT="${PROBE}"
+  if [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then
+    printf '\n### Ce que le build a produit (target/classes)\n```\n%s\n```\n' "$PROBE" >> "$GITHUB_STEP_SUMMARY"
+  fi
+  printf '::notice title=Sortie brute du build (target/classes)::%s\n' \
+    "$(printf '%s' "$PROBE" | sed 's/%/%25/g; s/$/%0A/' | tr -d '\n' | cut -c1-1800)"
+fi
+
 REPORT="$(build_report)"
 echo
 echo "$REPORT"
