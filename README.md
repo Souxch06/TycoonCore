@@ -85,6 +85,7 @@ docs/
   ECONOMIE.md                # ValoriaEconomy : /bal, /pay, /eco, marché /ah
   HOLOGRAMMES.md             # Moteur d'hologrammes interne (sans HoloEasy ni ProtocolLib)
   DEPLOY-2-JARS.md           # Livrer les DEUX jar par la pipeline
+  AUTO-DEPLOIEMENT.md        # Brancher l'automatisme complet (release -> deux jar sur le serveur)
   technical-report.txt       # Rapport technique
 
 scripts/
