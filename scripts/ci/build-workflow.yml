@@ -118,6 +118,16 @@ jobs:
             echo "OK : contenu des deux jars conforme"
           '
 
+      - name: Publier les JAR sur la release `build-latest`
+        # Une release est une URL stable et telechargeable par n'importe qui ; un artefact d'execution
+        # expire et n'est pas accessible depuis un agent (stockage externe bloque). L'etape reste
+        # facultative : si les droits de release manquent, le build est quand meme vert.
+        if: ${{ success() }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PROJECT_VERSION: '1.6.3'
+        run: bash scripts/ci-publish-release.sh
+
       - name: Publier les JAR construits
         uses: actions/upload-artifact@v4
         with:
