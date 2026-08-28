@@ -1,9 +1,10 @@
 name: Build and Deploy ValoriaTycoon
 
 on:
-  push:
-    branches:
-      - main
+  # Neutralise le declencheur automatique : le depot des TROIS jars est assure par
+  # deploy-serveur.yml (declenche par la release `build-latest`, qui porte les trois jar :
+  # ValoriaTycoon, ValoriaEconomy, ValoriaTools). Ce fichier ne sert plus
+  # qu'a un declenchement manuel, et a l'historique.
   workflow_dispatch:
 
 jobs:
