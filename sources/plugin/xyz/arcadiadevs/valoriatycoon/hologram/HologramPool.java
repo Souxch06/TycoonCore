@@ -240,7 +240,8 @@ public final class HologramPool {
             }
             ArmorStand stand = (ArmorStand) spawned;
             configure(stand, hologram);
-            if (hold(stand, material)) {
+            HoloEasy.disableSlots(stand);
+            if (HoloEasy.hold(stand, material)) {
                 hologram.addEntity(stand.getUniqueId());
                 return true;
             }
@@ -254,49 +255,35 @@ public final class HologramPool {
         }
     }
 
-    private static boolean hold(ArmorStand stand, Material material) {
-        try {
-            stand.setCanPickupItems(false);
-        } catch (RuntimeException | NoSuchMethodError | NoClassDefFoundError legacy) {
-            // Livres antérieurs a 1.14 : rien a desactiver
-        }
-        try {
-            stand.setArms(true);
-            stand.getEquipment().setItemInMainHand(new org.bukkit.inventory.ItemStack(material));
-            return true;
-        } catch (RuntimeException | NoSuchMethodError | NoClassDefFoundError unsupported) {
-            return false;
-        }
-    }
-
-    /** Réglages communs : invisible, immobile, invincible, muet. */
+    /**
+     * Réglages communs : invisible, sans gravité, sans plaque, non cliquable. Ceux qui sont apparus
+     * tardivement sont passes par {@link HoloEasy#optional} (voir son javadoc : c'est ce qui evite
+     * qu'une methode absente du serveur cible casse la compilation).
+     */
     private void configure(ArmorStand stand, Hologram hologram) {
         stand.setInvisible(true);
         stand.setGravity(false);
         stand.setBasePlate(false);
         stand.setArms(false);
         stand.setCustomNameVisible(false);
-        optional(stand, "setSilent", true);
-        optional(stand, "setInvulnerable", true);
-        optional(stand, "setPersistent", true);
-        optional(stand, "setRemoveWhenFarAway", false);
-        optional(stand, "setCanTick", false);
+        HoloEasy.optional(stand, "setSilent", true);
+        HoloEasy.optional(stand, "setInvulnerable", true);
+        HoloEasy.optional(stand, "setPersistent", true);
+        HoloEasy.optional(stand, "setRemoveWhenFarAway", false);
+        HoloEasy.optional(stand, "setCanTick", false);
         HoloEasy.freeze(stand);
         HoloEasy.tag(stand, HoloEasy.KEY_ENTITY, hologram.getId().toString());
     }
 
-    /**
-     * Applique un réglage apparu à une version donnée du serveur. Un {@code NoSuchMethodError} est
-     * attendu sur les anciens serveurs (le plugin vise 1.7 en référence) : il se traduit par
-     * l'absence du réglage, pas par un échec d'affichage.
-     */
-    private static void optional(ArmorStand stand, String setter, boolean value) {
-        try {
-            java.lang.reflect.Method method = stand.getClass().getMethod(setter, boolean.class);
-            method.invoke(stand, Boolean.valueOf(value));
-        } catch (ReflectiveOperationException | RuntimeException | LinkageError absent) {
-            // non supporte : ignore volontairement
+    /** Rend une entite ordinaire : plus de marque, plus de persistance, elle peut etre nettoye. */
+    private static void release(Entity entity) {
+        if (entity == null) {
+            return;
         }
+        HoloEasy.optional(entity, "setPersistent", false);
+        HoloEasy.optional(entity, "setRemoveWhenFarAway", true);
+        HoloEasy.untag(entity, HoloEasy.KEY_ENTITY);
+        HoloEasy.untag(entity, HoloEasy.KEY_HOLOGRAM);
     }
 
     /** Relie les armures encore vivantes du monde aux hologrammes de la sauvegarde. */
@@ -351,22 +338,10 @@ public final class HologramPool {
         }
     }
 
-    /** Rend une entité ordinaire : plus de marque, plus de persistance, elle peut être nettoyée. */
-    private static void release(Entity entity) {
-        optional(entity, "setPersistent", false);
-        try {
-            entity.setRemoveWhenFarAway(true);
-        } catch (RuntimeException ignored) {
-            // deja marque
-        }
-        HoloEasy.untag(entity, HoloEasy.KEY_ENTITY);
-        HoloEasy.untag(entity, HoloEasy.KEY_HOLOGRAM);
-    }
-
     private static UUID parse(String text) {
         try {
             return UUID.fromString(text);
-        } catch (IllegalArgumentException | RuntimeException malformed) {
+        } catch (RuntimeException malformed) {
             return null;
         }
     }

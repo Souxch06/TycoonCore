@@ -276,7 +276,7 @@ const CONTRACTS = [
       { name: 'get', returns: 'Hologram', arity: 1, static: false },
       { name: 'remove', returns: 'Hologram', arity: 1, static: false },
     ],
-    mustContain: ['group.run()', 'spawnEntity(location, EntityType.ARMOR_STAND)', 'holograms.txt', 'adopt()', 'sweepOrphans()', 'setInvisible(true)', 'optional(stand, "setPersistent", true)'],
+    mustContain: ['group.run()', 'spawnEntity(location, EntityType.ARMOR_STAND)', 'holograms.txt', 'adopt()', 'sweepOrphans()', 'setInvisible(true)', 'HoloEasy.optional(stand, "setPersistent", true)', 'HoloEasy.optional(entity, "setRemoveWhenFarAway", true)'],
     mustNotContain: ['net.minecraft', 'comphenix', 'HologramBuilder.hologram(', 'printStackTrace'],
   },
   {
@@ -328,7 +328,8 @@ const CONTRACTS = [
       { name: 'activePool', returns: 'HologramPool', arity: 0, static: true },
       { name: 'color', returns: 'String', arity: 1, static: true },
     ],
-    mustContain: ['new NamespacedKey("valoriatycoon", "hologram-entity")', 'legacyHex', 'instanceof ArmorStand'],
+    mustContain: ['new NamespacedKey("valoriatycoon", "hologram-entity")', 'legacyHex', 'instanceof ArmorStand',
+                  'getMethod(setter, boolean.class)', 'setDisabledSlots', 'setItemInHand'],
     mustNotContain: ['net.minecraft', 'comphenix', 'printStackTrace', 'md_5'],
   },
   {

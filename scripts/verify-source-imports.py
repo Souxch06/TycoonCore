@@ -233,6 +233,36 @@ def check_file(path: Path, known: set) -> list:
     return sorted(set(problems)), sorted(set(soft))
 
 
+# API Bukkit a ne jamais citer en dur dans les fichiers recompiles : soit elles n'existent pas
+# (isRegistered), soit elles sont apparues trop tard pour la plage 1.7->26.x que le plugin vise
+# (setTicksFrozen, setCanTick, setCanPickupItems) - le build #33154898463 en a livre la preuve sous
+# forme de « cannot find symbol ». Ces reglages passent desormais par la reflexion tolerante.
+# Note : `setItemInMainHand` n'est PAS liste — sur un joueur (AuctionHouse) c'est l'API correcte et
+# stable ; l'interdire produisait un faux positif. La regle propre aux armures est ecrite dans le
+# javadoc de HoloEasy.hold().
+BANNED_CALLS = {
+    "isRegistered(": "ServicesManager n'a pas de methode isRegistered : utiliser isProvidedFor",
+    "setRemoveWhenFarAway(": "apparu cote LivingEntity seulement, et absent des vieux serveurs",
+    "setCanPickupItems(": "n'existe pas dans l'API Entity",
+    "setTicksFrozen(": "1.19+ : passer par HoloEasy.optional (reflexion)",
+    "setCanTick(": "extension Paper : passer par HoloEasy.optional",
+    "setScore(": "signature changee en 1.21 : passer par la reflexion (voir ScoreboardService)",
+}
+
+
+def check_banned_calls(files) -> list:
+    problems = []
+    for path in files:
+        code = strip_noise(path.read_text(encoding="utf-8"))
+        code = re.sub(r"//[^\n]*", "", code)      # les commentaires documentent justement ces interdictions
+        for needle, why in BANNED_CALLS.items():
+            for m in re.finditer(re.escape(needle), code):
+                line = code[:m.start()].count("\n") + 1
+                # les appels par reflexion (chaine « "setFoo" ») ne sont pas concernes
+                problems.append(f"{path.relative_to(ROOT)}:{line}: `{needle[:-1]}` interdit — {why}")
+    return problems
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--all", action="store_true", help="controler aussi tout sources/plugin (informatif)")
@@ -246,6 +276,7 @@ def main() -> int:
     if args.all:
         files = sorted(set(files) | set((SOURCES / "plugin").rglob("*.java")))
 
+    banned = check_banned_calls(files)
     all_problems, all_soft = [], []
     for path in files:
         hard, warnings = check_file(path, known)
@@ -253,6 +284,12 @@ def main() -> int:
         all_soft += warnings
 
     print(f"Fichiers controls : {len(files)} ; types resolus via le classpath : {len(known)}")
+    if banned:
+        for b in banned[:20]:
+            print(f"ERREUR: {b}", file=sys.stderr)
+        print(f"{len(banned)} appel(s) d'API a ne pas citer en dur.", file=sys.stderr)
+        return 1
+    print(f"API fragiles : aucun des {len(BANNED_CALLS)} appels interdits en dur.")
     if all_soft:
         print(f"(style) {len(all_soft)} type(s) de java.util/jdk cites sans import explicite : "
               "resolus par le classpath, non bloquants")

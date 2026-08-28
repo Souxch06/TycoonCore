@@ -76,6 +76,22 @@ Deux règles à retenir si tu modifies ce paquet :
    réglages apparus à des versions précises du serveur (`setSilent`, `setPersistent`,
    `setTicksFrozen`, `setCanTick`) sont appliqués par réflexion tolérante.
 
+## Pourquoi les réglages d'entités passent par la réflexion
+
+`setSilent` (1.9), `setInvulnerable` (1.9), `setPersistent` (1.11), `setTicksFrozen` (1.19),
+`setCanTick` (extension Paper), `setRemoveWhenFarAway` (côté `LivingEntity` uniquement) : citer l'une
+de ces méthodes **en dur** dans une source transforme son absence en **erreur de compilation**, pas en
+absence de réglage. C'est exactement ce qu'a révélé le build `#33154898463` (`cannot find symbol` sur
+`setRemoveWhenFarAway`). Le dépôt applique donc la règle :
+
+- appels directs réservés aux méthodes stables sur toute la plage visée : `setInvisible`, `setGravity`,
+  `setBasePlate`, `setArms`, `setCustomName`, `setCustomNameVisible`, `setDisabledSlots`, `setItemInHand`,
+  `spawnEntity`, `getEntitiesByClass` ;
+- tout le reste passe par `HoloEasy.optional(entity, "setXxx", true)` (réflexion, `false` si la méthode
+  n'existe pas) ;
+- `scripts/verify-source-imports.py` **interdit** les six appels fragiles en dur et lève un échec si un
+  futur commit les reintroduit.
+
 ## Limites assumées (et pourquoi)
 
 - **Tout le monde voit le hologramme** : le rendu par entités est global. Le ciblage par joueur

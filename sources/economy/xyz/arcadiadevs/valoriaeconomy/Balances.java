@@ -16,6 +16,7 @@ import java.util.UUID;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.entity.Player;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -127,6 +128,27 @@ public final class Balances {
         names.put(uuid, player.getName() == null ? abbreviate(uuid) : player.getName());
         save();
         return true;
+    }
+
+    /**
+     * Cre le compte d'un joueur designe par son pseudo. Deuxieme forme appelee par l'API
+     * d'economie (les fournisseurs Vaultadressent les joueurs par nom comme par UUID) : sans cette
+     * surcharge, le fournisseur genere ne compilait pas — `String` ne se convertit pas en
+     * `OfflinePlayer`.
+     *
+     * @return {@code true} si un compte a ete cree, {@code false} si le compte existe deja ou si le
+     *         pseudo n'est connu d'aucun joueur (on ne cree pas de compte sur un simple soupcon)
+     */
+    public boolean ensureAccount(String name) {
+        UUID uuid = lookup(name);
+        if (uuid != null) {
+            return ensureAccount(Bukkit.getOfflinePlayer(uuid));
+        }
+        Player online = name == null ? null : Bukkit.getPlayerExact(name);
+        if (online == null) {
+            return false;
+        }
+        return ensureAccount(online);
     }
 
     public double balance(OfflinePlayer player) {

@@ -2,6 +2,7 @@ package xyz.arcadiadevs.valoriaeconomy;
 
 import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.ServicePriority;
+import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.ServicesManager;
 import org.bukkit.plugin.java.JavaPlugin;
 import xyz.arcadiadevs.valoriateconomy.Economy;
@@ -43,8 +44,12 @@ public final class ValoriaEconomy extends JavaPlugin {
         this.provider = new ValoriaEconomyProvider(this.balances);
 
         ServicesManager services = getServer().getServicesManager();
-        if (services.isRegistered(Economy.class)) {
-            Economy other = services.getRegistration(Economy.class).getProvider();
+        // `isRegistered` n'existe pas dans l'API Bukkit : la methode s'appelle `isProvidedFor`
+        // (erreur javac relevee par le build #33154898463). getRegistration peut renvoyer null,
+        // donc on le stocke avant d'en tirer le fournisseur.
+        RegisteredServiceProvider<Economy> existing = services.getRegistration(Economy.class);
+        if (existing != null) {
+            Economy other = existing.getProvider();
             getLogger().warning("un fournisseur d'économie est déjà enregistré ("
                     + (other == null ? "?" : other.getName())
                     + ") : le mien n'est pas enregistré. Retirez l'autre plugin pour basculer sur ValoriaEconomy.");

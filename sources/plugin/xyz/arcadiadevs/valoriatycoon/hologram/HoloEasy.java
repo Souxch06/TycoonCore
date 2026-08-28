@@ -254,17 +254,57 @@ public final class HoloEasy {
         }
     }
 
-    /** Congèle une armure (pas de collision, pas d'interaction) quand le serveur sait le faire. */
-    static void freeze(Entity entity) {
-        if (!(entity instanceof ArmorStand)) {
-            return;
+    /**
+     * Applique un reglage d'apparition tardive, par reflexion : {@code setTicksFrozen} (1.19),
+     * {@code setSilent}/{@code setInvulnerable}/{@code setPersistent} (1.9-1.11),
+     * {@code setCanTick} (Paper). Le plugin vise des serveurs anciens en compatilte : citer ces
+     * methodes en dur transforme une absence en erreur de COMPILATION (vue sur le build
+     * #33154898463 pour {@code setRemoveWhenFarAway}), alors qu'ici elle ne coute que le reglage.
+     *
+     * @return vrai si la methode existe et a ete appliquee
+     */
+    static boolean optional(Entity entity, String setter, boolean value) {
+        if (entity == null) {
+            return false;
         }
-        ArmorStand stand = (ArmorStand) entity;
         try {
-            stand.setTicksFrozen(true);
+            java.lang.reflect.Method method = entity.getClass().getMethod(setter, boolean.class);
+            method.invoke(entity, Boolean.valueOf(value));
+            return true;
+        } catch (ReflectiveOperationException | RuntimeException | LinkageError absent) {
+            return false;
+        }
+    }
+
+    /** Congele une armure (pas de collision, pas d'interaction) quand le serveur sait le faire. */
+    static void freeze(Entity entity) {
+        optional(entity, "setTicksFrozen", true);
+    }
+
+    /** Empeche le vol de l'item porte par l'armure (EquippmentSlot des 1.9, ignore sinon). */
+    static boolean disableSlots(Entity entity) {
+        if (!(entity instanceof ArmorStand)) {
+            return false;
+        }
+        try {
+            ((ArmorStand) entity).setDisabledSlots(org.bukkit.inventory.EquipmentSlot.values());
+            return true;
         } catch (RuntimeException | NoSuchMethodError | NoClassDefFoundError legacy) {
-            // méthode apparue en 1.19 : sur un serveur plus ancien, l'hologramme reste simplement
-            // visible mais non interactif grâce a setInvulnerable + setSilent
+            return false;
+        }
+    }
+
+    /** Pose l'item au sommet de la pile. {@code setItemInHand} est obsolete mais presente depuis 1.4. */
+    static boolean hold(ArmorStand stand, Material material) {
+        if (stand == null || material == null) {
+            return false;
+        }
+        try {
+            stand.setArms(true);
+            stand.setItemInHand(new org.bukkit.inventory.ItemStack(material));
+            return true;
+        } catch (RuntimeException | NoSuchMethodError | NoClassDefFoundError unsupported) {
+            return false;
         }
     }
 

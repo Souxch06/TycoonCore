@@ -541,15 +541,22 @@ public final class AuctionHouse {
 
     /** Résumé pour {@code /ah info} et {@code /ah stats}. */
     public static String summary(Player player) {
+        // color() renvoie une String : on ne peut pas chainer dessus (c'etait la cause de trois
+        // erreurs javac). Chaque segment est traduit puis ajoute au builder.
         StringBuilder builder = new StringBuilder();
-        builder.append(color("&8[&aAH&8] &f").append(count()).append(" annonce(s), &f")
-                .append(countFor(player.getUniqueId())).append(" à toi (max ")
-                .append(maxListings).append(")"));
-        builder.append(color("&7, taxe ").append((int) (salesTax * 100)).append("%, expire ")
-                .append(expiryHours <= 0 ? "jamais" : expiryHours + "h"));
+        builder.append(color("&8[&aAH&8] &f")).append(count()).append(color(" annonce(s), &f"))
+                .append(countFor(player.getUniqueId())).append(color(" a toi (max "))
+                .append(maxListings).append(")");
+        builder.append(color("\n&7Taxe : ")).append((int) (salesTax * 100.0D)).append(" %")
+                .append(color(", expiration : "))
+                .append(expiryHours <= 0 ? color("jamais") : String.valueOf(expiryHours) + " h");
         String blacklisted = String.join(", ", blacklist);
-        builder.append(color("&7, blacklist ").append(blacklisted.length() > 60
-                ? blacklisted.substring(0, 60) + "…" : blacklisted));
+        if (!blacklisted.isEmpty()) {
+            if (blacklisted.length() > 60) {
+                blacklisted = blacklisted.substring(0, 60) + "...";
+            }
+            builder.append(color("\n&7Blacklist : ")).append(blacklisted);
+        }
         return builder.toString();
     }
 
@@ -616,11 +623,9 @@ public final class AuctionHouse {
             return false;
         }
         PersistentDataContainer container = meta.getPersistentDataContainer();
-        for (String key : container.getKeys()) {
-            if (key.startsWith(PLUGIN_NAMESPACE + ":")) {
-                return true;
-            }
-        }
+        // Pas de parcours des cles : PersistentDataContainer#keySet() renvoie des NamespacedKey, et
+        // dependre de ce nom n'apporte rien ici — les deux clefs posees par le plugin suffisent a
+        // decider, et leur absence est le cas normal (item ordinaire).
         try {
             return container.has(new NamespacedKey(PLUGIN_NAMESPACE, "spawnitem.tier"), PersistentDataType.INTEGER)
                     || container.has(new NamespacedKey(PLUGIN_NAMESPACE, "blocktype.tier"), PersistentDataType.INTEGER);
