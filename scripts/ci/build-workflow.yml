@@ -21,8 +21,9 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
-  # uniquement pour publier le rapport d'erreurs de compilation en commentaire de la PR
+  # les deux ne servent QU'A publier le rapport d'echec de compilation : commentaire de PR, et repli
+  # en commit du fichier docs/DERNIER-LOG-CI.md. Aucune etape ne deploie ni ne pousse de code source.
+  contents: write
   pull-requests: write
 
 jobs:

@@ -1,21 +1,24 @@
 #!/usr/bin/env bash
-# Build Maven + rapport automatique des echecs de compilation sur la Pull Request.
+# Build Maven + rapport d'echec auto-publie (PR, sinon commit sur la branche) + controles du depot.
 #
-# Pourquoi ce script existe : ce depot est compile classe par classe (le paquet livre des classes
-# precompilees, l'arbre decompiles complet ne compile pas). Un echec `javac` est donc l'evenement le
-# plus frequent et le plus dur a lire dans GitHub Actions — le journal est replie, les lignes utiles
-# sont noyees dans 4000 lignes de telechargements Maven. Ce script :
+# Pourquoi ce script existe : ce depot ne se compile pas en bloc (le paquet livre des classes
+# precompilees, l'arbre decompiles complet n'est pas recompilable) — le build compile une liste
+# explicite de fichiers contre le binaire livre. Un echec `javac` est donc leve frequent et le plus
+# dur a lire : le journal de GitHub Actions est replie, les lignes utiles sont noyees, et il est
+# materiallement inaccessibles depuis certains environnements (redirect Azure desactive).
 #
-#   1. lance `mvn clean package` et capte TOUTE la sortie dans un fichier ;
-#   2. extrait les lignes [ERROR] « parlantes » (fichier + ligne + colonne) et remonte, pour
-#      chacune, l'extrait du fichier source concerne ;
-#   3. publie ce resume en commentaire de la PR (via GITHUB_TOKEN, sans secret a creer) ;
-#   4. rejoue les controles du depot (surface des sources, cohérence de l'API d'economie) pour que
-#      le rapport soit complet meme quand la compilation echoue tot ;
-#   5. quitte avec le code de maven : une etape rouge = le deploiement SFTP n'est pas lance.
+# Ce script :
+#   1. lance `mvn clean package` en capturant TOUTE la sortie dans un fichier ;
+#   2. extrait les erreurs javac localisees (fichier, ligne) avec le detail et l'extrait du source ;
+#   3. rejoue les controles du depot pour que le rapport soit complet meme si la compilation casse tot ;
+#   4. publie le rapport en commentaire de la Pull Request (GITHUB_TOKEN) ; a defaut, le commit sur la
+#      branche sous `docs/DERNIER-LOG-CI.md` — comme ca, le rapport est lisible par un agent sans
+#      acces aux journaux d'Actions ;
+#   5. quitte avec le code de Maven : une etape rouge = le deploiement SFTP n'est pas lance.
 #
-# Utilisation locale :   bash scripts/ci-maven-report.sh              (sans GITHUB_ENV, pas de post)
-# Dans un workflow :     - run: bash scripts/ci-maven-report.sh
+# Localisation :   bash scripts/ci-maven-report.sh
+# Dans un workflow : - run: bash scripts/ci-maven-report.sh
+#                      env: { GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} }
 #
 set -uo pipefail
 
@@ -23,6 +26,7 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
 LOG="${RUNNER_TEMP:-/tmp}/maven-build.log"
+REPORT_FILE="${RUNNER_TEMP:-/tmp}/ci-report.md"
 MVN_ARGS=(-B -ntp clean package -DskipTests)
 
 echo "::group::mvn ${MVN_ARGS[*]}"
@@ -30,60 +34,60 @@ if command -v mvn >/dev/null 2>&1; then
   mvn "${MVN_ARGS[@]}" 2>&1 | tee "$LOG"
   MVN_STATUS=${PIPESTATUS[0]}
 else
-  echo "[ERROR] Maven (mvn) introuvable dans le PATH" | tee "$LOG" >/dev/null
-  echo "mvn: commande introuvable — le build ne peut pas demarrer" >> "$LOG"
+  {
+    echo "[ERROR] Maven (mvn) introuvable dans le PATH"
+    echo "[INFO] BUILD FAILURE"
+  } | tee "$LOG"
   MVN_STATUS=127
 fi
 echo "::endgroup::"
 
-report() {
-  python3 - "$LOG" "$MVN_STATUS" <<'PY'
+build_report() {
+  LOG_PATH="$LOG" MVN_STATUS="$MVN_STATUS" python3 - <<'PY'
+import os
 import re
-import sys
 from pathlib import Path
 
 ROOT = Path.cwd()
-log_path, status = Path(sys.argv[1]), Path(sys.argv[2])
-status = str(status)
+log_path = Path(os.environ["LOG_PATH"])
+status = os.environ["MVN_STATUS"]
 lines = log_path.read_text(encoding="utf-8", errors="replace").splitlines() if log_path.is_file() else []
 
 ERR = re.compile(r"^\[(ERROR|WARNING)\]\s*(.*)$")
-# javac ecrit `Chemin/Fichier.java:[ligne,colonne] message`, puis les lignes de detail commencent par
-# deux espaces : on les rattache a l'erreur precedente au lieu d'en faire des points de liste.
-LOCATED = re.compile(r"^(?P<file>[\w./\\-]+\.(?P<ext>java|xml))(?::\[|:\[|:\[)?(?::)?(?P<line>\d+)[,\]](?P<col>\d+)\]?\s*(?P<msg>.*)$")
-PLAIN = re.compile(r"^(?P<file>[\w./\\-]+\.(?P<ext>java|xml)):(?P<line>\d+)\s*(?P<msg>.*)$")
+# javac : `Chemin/Fichier.java:[ligne,colonne] message`, puis des lignes de detail decalessees.
+LOCATED = re.compile(r"^(?P<file>[\w./\\-]+\.(?:java|xml|yml)):\[(?P<line>\d+),(?P<col>\d+)\]\s*(?P<msg>.*)$")
+PLAIN = re.compile(r"^(?P<file>[\w./\\-]+\.(?:java|xml|yml)):(?P<line>\d+)\s+(?P<msg>.*)$")
 
 errors, warnings, fatal = [], [], []
 for raw in lines:
-    m = ERR.match(raw.strip())
-    if not m:
-        if "BUILD FAILURE" in raw or "Could not resolve dependencies" in raw or "No such file or directory" in raw:
-            fatal.append(raw.strip())
+    stripped = raw.strip()
+    if not ERR.match(stripped):
+        if "BUILD FAILURE" in raw or "Could not resolve dependencies" in raw \
+                or "Non-resolvable" in raw or "OutOfMemoryError" in raw:
+            fatal.append(stripped)
         continue
-    level, body = m.groups()
+    level, body = ERR.match(stripped).groups()
     if not body or body.startswith("-> [Help") or "To see the full stack trace" in body \
             or "Re-run Maven with" in body or "For more information about" in body:
         continue
-    if re.match(r"^\s{2,}\S", raw) and errors:          # detail de l'erreur precedente
-        errors[-1]["detail"].append(body.strip())
+    if errors and re.match(r"^(?:symbol|location|required|found:|reason:|and|\^)", body):
+        errors[-1]["detail"].append(body)
         continue
     entry = {"file": None, "line": 0, "msg": body, "detail": []}
     for pattern in (LOCATED, PLAIN):
         loc = pattern.match(body)
         if loc:
-            entry.update(file=loc.group("file").replace("\\", "/"), line=int(loc.group("line") or 0),
+            entry.update(file=loc.group("file").replace("\\", "/"), line=int(loc.group("line")),
                          msg=(loc.group("msg") or body).strip())
             break
     (errors if level == "ERROR" else warnings).append(entry)
 
-def read_source(rel_path, around, before=3, after=3):
-    """Extrait du fichier cite, autour de la ligne fautive : l'erreur se lit sans le journal."""
+
+def source_snippet(rel_path, around, before=4, after=4):
     if not rel_path:
         return ""
     candidates = [ROOT / rel_path]
-    candidates += list(ROOT.glob("*/" + rel_path.split("/", 1)[-1])) if "/" not in rel_path else []
-    if "/" in rel_path:
-        candidates += list(ROOT.glob("**/" + Path(rel_path).name))
+    candidates += list(ROOT.glob("**/" + Path(rel_path).name))
     for path in candidates:
         if not path.is_file():
             continue
@@ -91,53 +95,54 @@ def read_source(rel_path, around, before=3, after=3):
             src = path.read_text(encoding="utf-8", errors="replace").splitlines()
         except OSError:
             return ""
-        start = max(0, around - before - 1) if around else 0
-        stop = min(len(src), (around + after) if around else 24)
-        block = "\n".join(f"{i+1:5d}| {src[i]}" for i in range(start, stop))
-        return f"`{path.relative_to(ROOT)}`\n  ```java\n{block}\n  ```"
+        start = max(0, around - before - 1)
+        stop = min(len(src), around + after)
+        block = "\n".join("%5d| %s" % (i + 1, src[i]) for i in range(start, stop))
+        try:
+            label = path.relative_to(ROOT)
+        except ValueError:
+            label = path
+        return "`%s`\n  ```java\n%s\n  ```" % (label, block)
     return ""
+
 
 out = []
 if errors:
     out.append("### Erreurs de compilation (`javac`)")
-    shown = 0
-    for entry in errors:
-        if shown >= 12:
-            out.append(f"- … {len(errors) - shown} autres lignes `[ERROR]` dans le journal complet.")
-            break
-        head = f"- **`{entry['file']}`:{entry['line']}** — {entry['msg']}" if entry["file"] else f"- {entry['msg']}"
-        out.append(head)
-        for d in entry["detail"][:4]:
-            out.append(f"  - {d}")
-        snippet = read_source(entry["file"], entry["line"])
+    for i, entry in enumerate(errors[:12]):
+        if entry["file"]:
+            out.append("- **%s:%d** — %s" % (entry["file"], entry["line"], entry["msg"]))
+        else:
+            out.append("- %s" % entry["msg"])
+        for detail in entry["detail"][:5]:
+            out.append("  - %s" % detail)
+        snippet = source_snippet(entry["file"], entry["line"])
         if snippet:
             out.append("  " + snippet)
-        shown += 1
+    if len(errors) > 12:
+        out.append("- … %d autres lignes `[ERROR]` dans le journal complet." % (len(errors) - 12))
 else:
-    out.append("### Compilation : aucune ligne `[ERROR]` extraite"
-               + (" (maven a echoue tres tot — voir le journal)." if status != "0" else "."))
+    out.append("### Aucune ligne `[ERROR]` extraite"
+               + (" (maven a echoue avant la compilation — voir « causes bloquantes »)."
+                  if status != "0" else " (build reussi)."))
 
 if fatal:
     out.append("\n### Causes bloquantes")
-    for f in fatal[:8]:
-        out.append(f"- `{f}`")
+    for line in fatal[:6]:
+        out.append("- `%s`" % line)
 
-if warnings and len(out) < 6:
-    out.append("\n### Avertissements utiles")
-    for w in warnings[:10]:
-        out.append(f"- {w}")
-
-out.append(f"\n<sub>statut maven : exit {status} · {len(lines)} lignes de journal · "
-           "regenere par `scripts/ci-maven-report.sh`</sub>")
+out.append("\n<sub>exit maven %s · %d lignes de journal · genere par `scripts/ci-maven-report.sh`"
+           " (le rapport est reecrit a chaque run)</sub>" % (status, len(lines)))
 print("\n".join(out)[:15000])
 PY
 }
 
-REPORT="$(report)"
+REPORT="$(build_report)"
 echo
 echo "$REPORT"
+printf '%s\n' "$REPORT" > "$REPORT_FILE"
 
-# Les controles du depot, meme en cas d'echec de compilation : le rapport doit tout dire d'un coup.
+# Les controles du depot, meme quand la compilation echoue : un seul rapport, toute la verite.
 EXTRA=""
 for check in "python3 scripts/verify-paper26-compat.py" \
              "python3 scripts/verify-economy-api.py" \
@@ -150,13 +155,15 @@ for check in "python3 scripts/verify-paper26-compat.py" \
     EXTRA+=$'\n'"KO   $check"$'\n'"$(printf '%s\n' "$out" | tail -6 | sed 's/^/     /')"
   fi
 done
-[ -n "$EXTRA" ] && REPORT+=$'\n\n### Controles hors compilation (exécutés localement dans le runner)\n```'"$EXTRA"$'\n```'
+if [ -n "$EXTRA" ]; then
+  REPORT+=$'\n\n### Controles hors compilation\n```'"$EXTRA"$'\n```'
+  printf '%s\n' "$REPORT" > "$REPORT_FILE"
+fi
 
-post_to_pr() {
-  # hors CI (test local) : rien a publier
+publish_report() {
+  # hors CI : rien a publier
   [ -n "${GITHUB_SHA:-}" ] || return 0
-  # `GITHUB_TOKEN` n'est injecte que dans les etapes `uses:` : un `env:` d'etape doit le declarer.
-  # On accepte donc aussi GH_TOKEN, et labsence de token ne doit jamais faire echouer le build.
+  [ -s "$REPORT_FILE" ] || return 0
   if [ -z "${GITHUB_TOKEN:-}" ]; then
     if [ -n "${GH_TOKEN:-}" ]; then
       export GITHUB_TOKEN="$GH_TOKEN"
@@ -165,47 +172,77 @@ post_to_pr() {
       return 0
     fi
   fi
-  local api repo pr body_file
-  api="${GITHUB_API_URL:-https://api.github.com}"
-  repo="${GITHUB_REPOSITORY:-}"
-  [ -n "$repo" ] || return 0
-  pr="$(curl -s --max-time 20 -H "Authorization: Bearer $GITHUB_TOKEN" \
-        "$api/repos/$repo/commits/${GITHUB_SHA:-HEAD}/pulls" \
-        | python3 -c 'import json,sys
-try:
-    print(json.load(sys.stdin)[0]["number"])
-except Exception:
-    pass')"
-  [ -n "$pr" ] || return 0
-  body_file="$(mktemp)"
-  printf '%s' "$REPORT" > "$body_file"
-  python3 - "$api" "$repo" "$pr" "$body_file" <<'PY'
+  REPORT_FILE="$REPORT_FILE" python3 - <<'PY'
+import base64
 import json
 import os
-import sys
 import urllib.request
+from pathlib import Path
 
-api, repo, pr, body_file = sys.argv[1:5]
-body = open(body_file, encoding="utf-8").read()
-marker = "<!-- ci-maven-report -->"
-payload = json.dumps({"body": marker + "\n" + body}).encode()
-url = f"{api}/repos/{repo}/issues/{pr}/comments"
-request = urllib.request.Request(url, data=payload, method="POST", headers={
-    "Accept": "application/vnd.github+json",
-    "Authorization": "Bearer " + os.environ["GITHUB_TOKEN"],
-    "X-GitHub-Api-Version": "2022-11-28",
-})
+api = os.environ.get("GITHUB_API_URL", "https://api.github.com")
+repo = os.environ.get("GITHUB_REPOSITORY", "")
+sha = os.environ.get("GITHUB_SHA", "HEAD")
+branch = os.environ.get("GITHUB_REF_NAME", "")
+body = Path(os.environ["REPORT_FILE"]).read_text(encoding="utf-8")
+if not repo:
+    raise SystemExit("(pas de GITHUB_REPOSITORY : rien a publier)")
+
+headers = {"Accept": "application/vnd.github+json", "Authorization": "Bearer " + os.environ["GITHUB_TOKEN"],
+           "X-GitHub-Api-Version": "2022-11-28", "Content-Type": "application/json"}
+
+
+def call(path, payload=None, method=None):
+    data = json.dumps(payload).encode() if payload is not None else None
+    request = urllib.request.Request(api + path, data=data, headers=headers,
+                                     method=method or ("PATCH" if payload else "GET"))
+    with urllib.request.urlopen(request, timeout=40) as answer:
+        raw = answer.read()
+        return answer.status, (json.loads(raw) if raw else {})
+
+
+pr = ""
 try:
-    with urllib.request.urlopen(request, timeout=30) as answer:
-        print(f"commentaire publie sur PR #{pr} (HTTP {answer.status})")
-except Exception as error:  # jamais faire echouer le build a cause d'un commentaire
-    print(f"commentaire non publie ({error}) — le rapport reste dans le journal ci-dessus")
+    status, pulls = call("/repos/%s/commits/%s/pulls" % (repo, sha))
+    if pulls:
+        pr = str(pulls[0]["number"])
+except Exception as error:
+    print("(PR introuvable : %s)" % error)
+
+published = False
+if pr:
+    try:
+        status, _ = call("/repos/%s/issues/%s/comments" % (repo, pr),
+                         {"body": "<!-- ci-maven-report -->\n" + body}, method="POST")
+        published = status in (200, 201)
+        print("commentaire publie sur la PR #%s (HTTP %s)" % (pr, status))
+    except Exception as error:
+        print("(commentaire refuse : %s)" % error)
+
+if not published and branch:
+    # Repli : commit du rapport sur la branche. Sans lui, l'erreur reste enfermee dans un journal
+    # d'Actions inaccessible hors du navigateur, et le correcteur à distance tourne a l'aveugle.
+    path = "/repos/%s/contents/docs/DERNIER-LOG-CI.md" % repo
+    sha_existing = None
+    try:
+        status, existing = call(path + "?ref=" + branch)
+        sha_existing = existing.get("sha") if status == 200 else None
+    except Exception:
+        sha_existing = None
+    payload = {"message": "Rapport de compilation CI (genere par le build)",
+               "content": base64.b64encode(body.encode()).decode(), "branch": branch}
+    if sha_existing:
+        payload["sha"] = sha_existing
+    try:
+        status, _ = call(path, payload, method="PATCH" if sha_existing else "PUT")
+        print("rapport commit sur %s : docs/DERNIER-LOG-CI.md (HTTP %s)" % (branch, status))
+    except Exception as error:
+        print("(repli par commit refuse : %s)" % error)
+        print("(le rapport reste dans le journal ci-dessus)")
 PY
-  rm -f "$body_file"
 }
 
 if [ "$MVN_STATUS" != "0" ]; then
-  post_to_pr
+  publish_report
 fi
 
 exit "$MVN_STATUS"
