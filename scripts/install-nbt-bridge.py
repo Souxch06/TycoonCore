@@ -141,11 +141,17 @@ def check_jar(jar_path: Path, problems: list):
             #   present dans target/classes + absent du jar  -> la copie de ressources a gagne (conflit
             #                                                    de doublons dans le paquet)
             #   absent des deux                              -> le pom ne compile pas notre source
+            # Sous-chaine des constantes reunies, PAS equality sur un nom : le pont resout ces types par
+            # `Class.forName("org.bukkit.persistence.PersistentDataType")` (donc en nom QUALIFIE, jamais
+            # en simple nom de symbole) et `LegacyNbtBridge` n'apparait que dans une phrase de diagnostic.
+            # Les chercher comme noms exacts condamnait un paquet valide (runs #33158841547 ->
+            # #33159581656 : quatre runs rouges pour un controle faux, le plugin etait bon).
+            pool = "\n".join(sorted(values))
             for token in ("PersistentDataContainer", "PersistentDataType", "NamespacedKey",
-                          "LegacyNbtBridge"):
-                if not any(token in value for value in values):
-                    problems.append(f"{jar_path.name}: pont sans reference {token!r} dans le constant-pool "
-                                    "du paquet")
+                          "LegacyNbtBridge", "valueOf", "keyOf"):
+                if token not in pool:
+                    problems.append(f"{jar_path.name}: pont sans reference {token!r} (en sous-chaine du "
+                                    "constant-pool) — le contrat du pont n'est pas satisfait")
             # Recherche par nom (pas de reconstruction de chemin : la precedente version comptait
             # mal les `parent` et concluvait a un fichier absent alors qu'il existait).
             matches = sorted(ROOT.glob("target/classes/io/github/**/NBTEditor.class"))
@@ -154,8 +160,9 @@ def check_jar(jar_path: Path, problems: list):
             if matches:
                 for target_file in matches[:3]:
                     tv = set(classfile.utf8_values(target_file.read_bytes()))
+                    tpool = "\n".join(sorted(tv))
                     missing = [t for t in ("PersistentDataType", "NamespacedKey", "LegacyNbtBridge")
-                               if not any(t in v for v in tv)]
+                               if t not in tpool]
                     problems.append(
                         f"cible: {target_file.relative_to(ROOT)} = {target_file.stat().st_size} o "
                         f"(meme nom dans le paquet : {'OUI' if target_file.stat().st_size == len(blob) else 'NON'})"
