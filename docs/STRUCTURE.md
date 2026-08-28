@@ -172,6 +172,21 @@ une liste explicite de fichiers et résout le reste contre le binaire livré :
   Cette liste est celle des `<includes>` du `pom.xml` ; `scripts/check-sources-java.mjs` en vérifie
   la surface publique.
 
+## `.github/workflows/` : ne jamais supprimer, jamais re-créer depuis le dépôt
+
+`build.yml` (le workflow de **validation**, sans déploiement) et `deploy.yml` (le workflow qui pousse
+sur le serveur) vivent dans `.github/workflows/`. Ce dossier est **inatteignable pour l'agent** : la
+GitHub App de la session n'a pas la permission `workflows`, donc tout commit touchant ce chemin est
+rejeté (`refusing to allow a GitHub App to create or update workflow … without workflows permission`),
+y compris une suppression. Conséquence pratique, vécue : un `git add -A` pendant une consolidation
+d'arbre a « restauré » `.github/workflows/build.yml` depuis l'ancien FETCH_HEAD, et le commit suivant a
+donc **supprimé** le fichier sur la branche — le workflow a disparu d'Actions.
+
+Les deux règles :
+1. **ne jamais lister `.github/` dans un `git add -A`** (faire `git add docs scripts sources artifacts resources pom.xml src .gitignore` en clair) ;
+2. si le fichier manque, le restaurer **à la main** depuis `docs/CI-A-COLLER.yml` (contenu exact), puis
+   vérifier dans *Actions* que **« Build and Validate ValoriaTycoon »** est bien listé dans la colonne de gauche.
+
 ## CI de validation
 
 `scripts/ci/build-workflow.yml` contient le workflow de validation des Pull Requests (compilation,

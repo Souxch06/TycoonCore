@@ -25,6 +25,14 @@
 https://github.com/Souxch06/ValoriaTycoon/new/arena/01a043a8-valoriatycoon?filename=.github%2Fworkflows%2Fbuild.yml
 ```
 
+**1.1 bis — vérifie d'abord que le fichier existe** : ouvre
+```
+https://github.com/Souxch06/ValoriaTycoon/tree/arena/01a043a8-valoriatycoon/.github/workflows
+```
+Tu dois y voir **deux** fichiers : `build.yml` **et** `deploy.yml`. Si `build.yml` n'y est pas (il a pu
+être supprimé lors d'une consolidation d'arbre), l'étape 1.1 ci-dessus le recrée — c'est exactement le
+même geste.
+
 **1.2** Va chercher le contenu à coller : ouvre la PR **#7** → onglet **Files changed** (à droite en haut)
 → dans la colonne de gauche, cherche `docs/CI-A-COLLER.yml` → clique sur l'icône **copy** (les deux
 petits carrés) en haut à droite du fichier. Ça copie les ~96 lignes d'un coup.
