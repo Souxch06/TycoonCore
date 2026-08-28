@@ -1,9 +1,15 @@
 name: Release et déploiement automatique (trois jar)
 
-# Voie « tout automatique » : à chaque RELEASE GitHub (tag `build-latest` publié par le workflow de
-# validation), ce workflow retélécharge les TROIS jar de la release, vérifie leur contenu, puis les
-# dépose sur le serveur — sauvegarde préalable dans `plugins/_sauvegarde-<UTC>/` et contrôle de taille
-# octet pour octet après envoi.
+# Voie « tout automatique » : le workflow de build APPELLE ce fichier par `workflow_dispatch` juste
+# après avoir publié la release `build-latest` (étape « Déclencher le dépôt sur le serveur »). Ce
+# workflow retélécharge alors les TROIS jar de la release, vérifie leur contenu, puis les dépose sur le
+# serveur — sauvegarde préalable dans `plugins/_sauvegarde-<UTC>/` et contrôle de taille octet pour
+# octet après envoi.
+#
+# Le déclencheur `release:` ci-dessous ne se produit PAS en automatique : une release créée avec le
+# `GITHUB_TOKEN` du dépôt ne crée aucun run (GitHub coupe les enchaînements ; `release:` n'est pas dans
+# ses exceptions). Il reste utile pour une release publiée à la main depuis l'interface. Panne réelle :
+# run 33207244834 du 2026-08-28, trois jar publiés, aucun dépôt démarré, aucune erreur nulle part.
 #
 # Pourquoi un workflow séparé : `deploy.yml` se déclenche sur `push: main` et pousse un seul jar ; ce
 # fichier-ci se déclenche sur un événement explicite (la release) et pousse les TROIS — condition pour

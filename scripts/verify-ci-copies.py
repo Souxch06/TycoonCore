@@ -205,12 +205,37 @@ def main() -> int:
               "ci-check-jars.sh" in text,
               "un `bash -c` de quarante lignes dans le YAML rend un code de sortie muet : on ne sait"
               " pas quelle assertion est tombée (run 33200967570)")
+        check(f"{rel(path)} appelle lui-même le workflow de dépôt",
+              "ci-trigger-deploy.sh" in text,
+              "une release publiée avec le GITHUB_TOKEN du dépôt ne crée AUCUN run (GitHub coupe les"
+              " enchaînements ; `release:` n'est pas dans ses exceptions, `workflow_dispatch` si). Sans"
+              " cet appel explicite la release se remplit de trois jar et `plugins/` ne bouge jamais —"
+              " panne muette du run 33207244834")
+        check(f"{rel(path)} donne au build le droit d'appeler un workflow",
+              "actions: write" in text,
+              "sans `permissions: actions: write`, l'appel du workflow de dépôt rend un 403 « Resource"
+              " not accessible » : la release est publiée, le serveur jamais mis à jour")
 
     jar_check = ROOT / "scripts/ci-check-jars.sh"
     check("scripts/ci-check-jars.sh existe, nomme et publie chaque contrôle",
           jar_check.is_file() and "::error" in body(jar_check),
           "sans annotation, le contrôle est inexploitable à distance : le journal brut passe par un"
           " stockage externe indisponible")
+
+    trigger = ROOT / "scripts/ci-trigger-deploy.sh"
+    trigger_text = body(trigger) if trigger.is_file() else ""
+    check("scripts/ci-trigger-deploy.sh existe et publie une annotation en cas d'échec",
+          trigger.is_file() and "::error" in trigger_text,
+          "un dispatch refusé doit se lire dans les annotations : le journal brut du run passe par un"
+          " domaine inaccessible depuis la sandbox")
+    check("scripts/ci-trigger-deploy.sh refuse une release sans ses trois jar",
+          all(j in trigger_text for j in ("ValoriaTycoon", "ValoriaEconomy", "ValoriaTools")),
+          "déclencher un dépôt sur une release incomplète poserait le plugin sans son économie ni son"
+          " outil — exactement ce que la chaîne doit rendre impossible")
+    check("scripts/ci-trigger-deploy.sh vérifie qu'un run de dépôt a vraiment été créé",
+          "workflow_dispatch" in trigger_text and "html_url" in trigger_text,
+          "`gh workflow run` rend la main dès que la demande est acceptée : sans ce contrôle, un"
+          " dispatch jamais matérialisé en run passerait pour un succès")
 
     # 3. le depot : trois jar, une sauvegarde, un refus explicite
     deploy = body(DEPLOY) if DEPLOY.is_file() else ""
