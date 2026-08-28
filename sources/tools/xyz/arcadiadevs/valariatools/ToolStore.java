@@ -266,19 +266,6 @@ public final class ToolStore {
         save();
     }
 
-    /** Les ids connus d'une âme, pour `/tools ability …` (l'admin ne doit pas taper un id de mémoire). */
-    public List<String> knownIds(ToolsConfig config, ToolKind kind) {
-        List<String> out = new java.util.ArrayList<String>();
-        ToolsConfig.KindConfig kindConfig = config == null ? null : config.kind(kind);
-        if (kindConfig == null) {
-            return out;
-        }
-        for (ToolsConfig.Ability ability : kindConfig.abilities) {
-            out.add(ability.id());
-        }
-        return out;
-    }
-
     private State state(UUID owner, ToolKind kind) {
         return state(owner, kind, false);
     }

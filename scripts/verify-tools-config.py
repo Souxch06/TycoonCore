@@ -376,6 +376,57 @@ def check_syntax(path: Path):
     return "; ".join(lines[:3]) if lines else "parseur en échec"
 
 
+PRIVATE_KIND_FIELDS = (
+    "abilities", "prices", "maxTier", "sellPrices", "jobPrices", "jobXp", "material", "displayName",
+    "lore", "tags", "blockNames", "namespaces", "xpPerBlock", "durabilityCost", "sellMultiplier",
+    "sellMinValue", "abilityPriceBase", "abilityPriceStep", "abilityPriceCap", "tierPriceBase",
+    "tierPriceRatio", "tierPriceCap", "replant",
+)
+
+# Le paquet nomme systematiquement `kindConfig` les valeurs de ToolsConfig.KindConfig : c'est le seul
+# recepteur qu'on puisse reconnaitre sans typer les expressions, et c'est exactement la forme du bug
+# que la CI a attrape (ToolStore lisait `kindConfig.abilities`, champ prive).
+KIND_RECEIVER = r"\bkindConfig\.(" + "|".join(PRIVATE_KIND_FIELDS) + r")(?!\s*\()"
+
+
+def private_field_reads(root: Path, own: Path):
+    """Les lectures `kindConfig.<champ-privé>` écrites hors de ToolsConfig (erreur de compilation)."""
+    hits = []
+    for path in sorted(root.glob("*.java")):
+        if path == own:
+            continue
+        body = re.sub(r"/\*.*?\*/", "", path.read_text(encoding="utf-8"), flags=re.S)
+        body = re.sub(r"//[^\n]*", "", body)
+        body = re.sub(r"\"(?:[^\"\\]|\\.)*\"", '""', body)
+        for line_no, line in enumerate(body.splitlines(), 1):
+            found = re.search(KIND_RECEIVER, line)
+            if found:
+                hits.append(f"{path.name}:{line_no} -> {found.group(0).strip()}")
+    return hits
+
+
+def _private_field_self_test():
+    """La regle doit tirer sur l'echantillon fautif et dormir sur l'echantillon correct."""
+    import tempfile
+
+    with tempfile.TemporaryDirectory() as tmp:
+        folder = Path(tmp)
+        (folder / "Bad.java").write_text(
+            "class Bad { void x(KindConfig kindConfig) { for (Object a : kindConfig.abilities) { } } }\n",
+            encoding="utf-8")
+        if not private_field_reads(folder, folder / "Absent.java"):
+            raise SystemExit("ERREUR: la regle de visibilite ne voit pas le cas qu'elle doit voir —"
+                             " elle serait decorative")
+        (folder / "Bad.java").unlink()
+        (folder / "Good.java").write_text(
+            "class Good { private final java.util.List<Object> tags = new java.util.ArrayList<>();\n"
+            "  void x(ToolsConfig config, KindConfig kindConfig) {"
+            " this.tags.addAll(config.abilities(kindConfig)); } }\n",
+            encoding="utf-8")
+        if private_field_reads(folder, folder / "Absent.java"):
+            raise SystemExit("ERREUR: la regle de visibilite flagge un code correct (faux positif)")
+
+
 def check_all() -> None:
     supported = abilities_supported()
     check("Abilities.SUPPORTED est declaré dans le moteur", bool(supported),
@@ -402,6 +453,12 @@ def check_all() -> None:
         if "ValoriaTools.java" == name:
             check("plugin enregistre le listener du GUI", "ToolsGui.Handler" in code)
             check("plugin relit l'economie apres l'activation", "runTaskLater" in code and "lookup" in code)
+
+    private_hits = private_field_reads(PKG, PKG / "ToolsConfig.java")
+    check("aucun champ privé de KindConfig lu depuis une autre classe (erreur de compilation)",
+          not private_hits, f"{private_hits[:4]} : ces champs sont privés, seul ToolsConfig y a droit —"
+          " passe par l'accesseur public (abilities(), maxTier(), …)")
+    _private_field_self_test()
 
     if CONFIG.is_file():
         config_text = CONFIG.read_text(encoding="utf-8")
