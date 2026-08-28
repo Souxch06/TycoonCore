@@ -153,7 +153,10 @@ retiré plutôt que commenté.
 ## Contrôles automatiques
 
 ```
-python3 scripts/verify-tools-config.py     100 contrôles : config, noyaux, plugin.yml, pom, assemblage
+python3 scripts/verify-tools-config.py     config, noyaux, plugin.yml, pom, assemblage
+                                        # le script affiche son propre total : ne recopie
+                                        # pas un nombre ici, il serait faux des qu'une regle
+                                        # est ajoutee (ca l'etait : « 100 » pour 145 reels)
 python3 scripts/check-config-literals.py   les clés de config appelées en Java sont des littéraux
 node scripts/parse-java.mjs --from-pom     syntaxe + types des 32 fichiers compilés
 ```
@@ -164,8 +167,11 @@ Le contrôle de config ne se contente pas de compter les lignes :
   capacité existe dans la bonne âme, **avec le même `max-level`, le même verrou, le même noyau** ;
 - il refuse un **YAML malformé de forme** (liste et clés au même niveau) que ni `javac` ni Maven ne
   voient, et que SnakeYAML paie d'un plugin qui ne s'active pas ;
-- ses autof-tests coupent l'herbe sous le pied du contrôle décoratif : si le parseur voit 0 capacité sur
-  88 déclarées, ou 60 capacités au lieu des 72 du wiki, le script **échoue** au lieu de valider.
+- ses autof-tests coupent l'herbe sous le pied du contrôle décoratif : parseur qui ne voit pas les 88
+  capacités, règle de fidélité endormie, `_related` qui rate un multi-catch lié, contrôle de forme YAML qui
+  laisse passer un fichier invalide — dans chacun de ces cas le script **échoue** au lieu de dire « OK ».
+  Trois de ces pièges ont été payés par ce dépôt (deux règles qui tournaient à vide parce que `strip()`
+  efface les chaînes, et un `_related` qui cherchait la filiation de `IllegalArgumentException broken`).
 
 Un contrôle qui ne lit rien est pire qu'un contrôle absent : c'est exactement ce qui s'est produit au
 premier essai sur ce fichier (le marqueur `{type:` ne existait plus, le compteur voyait 0 = « tout bon »).
