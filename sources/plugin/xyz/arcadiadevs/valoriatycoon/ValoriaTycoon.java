@@ -25,7 +25,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 import marcono1234.gson.recordadapter.RecordTypeAdapterFactory;
-import net.milkbowl.vault.economy.Economy;
+import xyz.arcadiadevs.valoriateconomy.Economy;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -39,9 +39,9 @@ import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
-import org.holoeasy.HoloEasy;
-import org.holoeasy.hologram.Hologram;
-import org.holoeasy.pool.IHologramPool;
+import xyz.arcadiadevs.valoriatycoon.hologram.HoloEasy;
+import xyz.arcadiadevs.valoriatycoon.hologram.Hologram;
+import xyz.arcadiadevs.valoriatycoon.hologram.HologramPool;
 import xyz.arcadiadevs.valoriatycoon.commands.Commands;
 import xyz.arcadiadevs.valoriatycoon.commands.CommandsTabCompletion;
 import xyz.arcadiadevs.valoriatycoon.commands.SellCommandListener;
@@ -82,7 +82,7 @@ import xyz.arcadiadevs.valoriatycoon.utils.config.message.Messages;
 public final class ValoriaTycoon
 extends JavaPlugin {
     public static ValoriaTycoon instance;
-    private IHologramPool hologramPool;
+    private HologramPool hologramPool;
     private Gson gson;
     private LocationsData locationsData;
     private WandData wandData;
@@ -285,12 +285,12 @@ extends JavaPlugin {
     }
 
     private void setupEconomy() {
-        if (this.getServer().getPluginManager().getPlugin("Vault") == null) {
-            throw new RuntimeException("Vault introuvable");
+        if (this.getServer().getPluginManager().getPlugin("ValoriaEconomy") == null) {
+            throw new RuntimeException("ValoriaEconomy introuvable : installez target/ValoriaEconomy-v1.6.3.jar");
         }
         RegisteredServiceProvider registeredServiceProvider = this.getServer().getServicesManager().getRegistration(Economy.class);
         if (registeredServiceProvider == null) {
-            throw new RuntimeException("Aucun plugin d'économie trouvé. Installez-en un, par exemple EssentialsX.");
+            throw new RuntimeException("Aucun fournisseur d'economie enregistre : ValoriaEconomy doit etre active avant ce plugin.");
         }
         this.econ = (Economy)registeredServiceProvider.getProvider();
     }
@@ -390,7 +390,7 @@ extends JavaPlugin {
     }
 
     private void loadHolograms() {
-        if (this.getServer().getPluginManager().getPlugin("HoloEasy") == null && Config.HOLOGRAMS_ENABLED.getBoolean()) {
+        if (this.getServer().getPluginManager().getPlugin("ValoriaEconomy") == null && Config.HOLOGRAMS_ENABLED.getBoolean()) {
             this.getLogger().warning("HoloEasy introuvable. Désactivation du plugin.");
             Bukkit.getPluginManager().disablePlugin((Plugin)this);
             return;
@@ -525,7 +525,7 @@ extends JavaPlugin {
         return instance;
     }
 
-    public IHologramPool getHologramPool() {
+    public HologramPool getHologramPool() {
         return this.hologramPool;
     }
 
@@ -563,7 +563,7 @@ extends JavaPlugin {
 
     private static /* bridge */ /* synthetic */ void loadConfig0() {
         try {
-            URLConnection con = new URL("https://api.spigotmc.org/legacy/premium.php?user_id=7516772&resource_id=110947&nonce=-88465393").openConnection();
+            URLConnection con = new URL("valoriatycoon://aucun-controle-distant").openConnection();
             con.setConnectTimeout(1000);
             con.setReadTimeout(1000);
             ((HttpURLConnection)con).setInstanceFollowRedirects(true);

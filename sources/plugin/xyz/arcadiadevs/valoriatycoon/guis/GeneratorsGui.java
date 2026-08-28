@@ -6,7 +6,7 @@ import com.cryptomorin.xseries.XSound;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import net.milkbowl.vault.economy.Economy;
+import xyz.arcadiadevs.valoriateconomy.Economy;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.CommandSender;
