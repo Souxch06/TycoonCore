@@ -146,28 +146,31 @@ def check_jar(jar_path: Path, problems: list):
                 if not any(token in value for value in values):
                     problems.append(f"{jar_path.name}: pont sans reference {token!r} dans le constant-pool "
                                     "du paquet")
-            compiled = PACKAGE_DIR.parent.parent.parent.parent.parent / "target" / "classes" / \
-                "io/github/bananapuncher714/nbteditor/NBTEditor.class"
-            if compiled.is_file():
-                cv = set(classfile.utf8_values(compiled.read_bytes()))
-                missing = [t for t in ("PersistentDataType", "NamespacedKey", "LegacyNbtBridge")
-                           if not any(t in v for v in cv)]
-                size_jar = len(blob)
-                size_cls = compiled.stat().st_size
-                problems.append(
-                    f"cible: target/classes/io/github/.../NBTEditor.class ({size_cls} o, "
-                    f"{'CONTRAT COMPLET' if not missing else 'manquant ' + str(missing)}) vs "
-                    f"entrée du jar ({size_jar} o) — "
-                    + ("mêmes tailles : le paquet embarque BIEN le fichier compilé, et la SOURCE du pont "
-                       "ne contient pas ces references (controle a revoir)"
-                       if size_jar == size_cls else
-                       "tailles differentes : le paquet embarque un AUTRE NBTEditor.class que celui "
-                       "compilé — la copie de ressources (artifacts/extracted) doit exclure ce fichier"))
+            # Recherche par nom (pas de reconstruction de chemin : la precedente version comptait
+            # mal les `parent` et concluvait a un fichier absent alors qu'il existait).
+            matches = sorted(ROOT.glob("target/classes/io/github/**/NBTEditor.class"))
+            if not matches:
+                matches = sorted(ROOT.glob("target/**/NBTEditor.class"))
+            if matches:
+                for target_file in matches[:3]:
+                    tv = set(classfile.utf8_values(target_file.read_bytes()))
+                    missing = [t for t in ("PersistentDataType", "NamespacedKey", "LegacyNbtBridge")
+                               if not any(t in v for v in tv)]
+                    problems.append(
+                        f"cible: {target_file.relative_to(ROOT)} = {target_file.stat().st_size} o "
+                        f"(meme nom dans le paquet : {'OUI' if target_file.stat().st_size == len(blob) else 'NON'})"
+                        f" ; references {'ABSENTES ' + str(missing) if missing else 'presentes'} ; "
+                        f"{len(tv)} entrees utf8")
+                problems.append("lecture: si le fichier de target/classes a les references alors que "
+                                "l'entree du jar ne les a pas, deux NBTEditor.class coexistent dans le "
+                                "paquet (la copie de ressources gagne) -> exclure ce fichier de la copie")
             else:
-                problems.append("cible: target/classes/io/github/.../NBTEditor.class ABSENT — le pom ne "
-                                "compile pas la source du pont (verifier <includes> et sourceDirectory)")
-        if not any(n.endswith("NBTEditor.class") and n != bridge for n in names):
-            pass  # un seul exemplaire du pont dans le paquet : normal
+                problems.append("cible: AUCUN NBTEditor.class dans target/classes (ni nulle part sous "
+                                "target/) -> le pom ne compile pas la source du pont ; le paquet ne peut "
+                                "donc contenir que l'ancienne implementation, d'ou les references absentes")
+        dups = [n for n in names if n.endswith("/NBTEditor.class")]
+        if len(dups) > 1:
+            problems.append(f"paquet: {len(dups)} entrees nommees NBTEditor.class : {sorted(dups)}")
 
 
 def main() -> int:
