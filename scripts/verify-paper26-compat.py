@@ -21,6 +21,7 @@ import re
 import struct
 import sys
 import zipfile
+import xml.etree.ElementTree as ET
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
@@ -240,19 +241,38 @@ def verify_tree():
             check("src/assembly/economy.xml : <id> et <formats> presents",
                   "id" in kids and "formats" in kids and len(formats) == 1,
                   f"formats lus: {formats}")
-            check("pom.xml : le nom final du jar d'economie est pose par un rename (appendAssemblyId=VRAI)",
-                  "appendAssemblyId>true" in pom and "rename-economy-jar" in pom
-                  and "ValoriaEconomy-v${project.version}.jar" in pom,
-                  "sans le tag <finalName> dans le descripteur, c'est le pom qui doit renommer "
-                  "`ValoriaEconomy-<version>-economy.jar` en `ValoriaEconomy-v<version>.jar`")
-            check("pom.xml : l'execution de rename est declaree apres maven-assembly-plugin",
-                  pom.index("rename-economy-jar") > pom.index("maven-assembly-plugin"),
-                  "a la phase `package`, Maven execute les plugins dans l'ordre du pom : le jar doit "
-                  "exister quand le move s'execute")
-            check("pom.xml : le jar d'economie n'est PAS nominal dans le descripteur",
-                  "appendAssemblyId>false" not in pom,
-                  "appendAssemblyId=false produit `ValoriaEconomy-1.6.3.jar` (sans -v), alors que "
-                  "plugin.yml/docs/CI nomment `ValoriaEconomy-v1.6.3.jar`")
+            # Le nom du paquet d'assemblage se decide dans le POM : `appendAssemblyId=true` herite du
+            # finalName global (<build>) et produit `ValoriaTycoon-v1.6.3-economy.jar`; une etape de
+            # renommage externe (antrun) cherche alors un fichier qui n'existe pas — vu sur le build
+            # #33156892660. Un seul endroit decideur, pas de `mv` apres coup.
+            assembly_block = pom[pom.index("maven-assembly-plugin"):] if "maven-assembly-plugin" in pom else ""
+            check("pom.xml : le nom final du jar d'economie est pose par <finalName> de l'assembleur",
+                  "<finalName>ValoriaEconomy-v${project.version}</finalName>" in assembly_block
+                  and "<appendAssemblyId>false</appendAssemblyId>" in assembly_block,
+                  "l'assembleur doit ecrire exactement target/ValoriaEconomy-v<version>.jar (nom attendu "
+                  "par plugin.yml, la CI et docs/DEPLOY-2-JARS.md)")
+            check("pom.xml : aucune etape de renommage du jar d'economie (antrun/move) ne relance le piege",
+                  "maven-antrun-plugin" not in pom,
+                  "un <move> vers un nom construit la main casse des que le nom reel change : le nom doit "
+                  "venir de l'assembleur, pas d'une seconde etape")
+
+    for xml_file in ("pom.xml", "src/assembly/economy.xml"):
+        path = ROOT / xml_file
+        if not path.is_file():
+            continue
+        raw = path.read_text(encoding="utf-8")
+        try:
+            ok = ET.fromstring(raw) is not None
+            why = ""
+        except Exception as bad:
+            ok, why = False, str(bad)
+        check(f"{xml_file} : XML bien forme pour Maven", ok, why or "les commentaires XML n'ont pas le droit "
+              "de contenir `--` ni `<` : `--` clot le commentaire, et Maven casse avec un message d'octet")
+        illegal = [m.group(0)[:48] for m in re.finditer(r"<!--(.*?)-->", raw, re.S)
+                   if "--" in m.group(1) or "<" in m.group(1)]
+        check(f"{xml_file} : aucun commentaire illegal (`--` ou chevron)", not illegal,
+              f"{len(illegal)} commentaire(s) a revoir : {illegal[:2]} — `--` est interdit dans un "
+              "commentaire XML, c'est exactement ce qui a rendu le pom illisible")
 
     check("pom.xml : descripteurs JPMS hors de portée de javac pendant compile",
           "<exclude>module-info.class</exclude>" in pom and "restore-module-descriptors" in pom,

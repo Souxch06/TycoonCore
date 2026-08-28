@@ -52,7 +52,7 @@
     <build>
         <finalName>ValoriaTycoon-v1.6.3</finalName>
         <!-- Le dépôt conserve les sources décompilées du JAR comme référence relisible : elles ne
-             sont pas toutes compilables en l'état. La compilation est donc ciblée (voir <includes>
+             sont pas toutes compilables en l'état. La compilation est donc ciblée (voir includes
              du maven-compiler-plugin) sur les classes maintenues ici. La phase compile s'exécute
              après process-resources, la classe produite écrase donc son équivalent précompilé copié
              depuis artifacts/extracted et se retrouve dans le JAR final. -->
@@ -116,7 +116,7 @@
                         <include>plugin/xyz/arcadiadevs/valoriatycoon/hologram/HologramRegisterGroup.java</include>
                         <include>plugin/xyz/arcadiadevs/valoriatycoon/hologram/HologramStore.java</include>
                         <include>plugin/xyz/arcadiadevs/valoriatycoon/utils/HologramsUtil.java</include>
-                        <!-- Pont NBT -> PersistentDataContainer : remplace la bibliothèque embarquée,
+                        <!-- Pont NBT vers PersistentDataContainer : remplace la bibliothèque embarquée,
                              dont les cibles obfusquées ont disparu des serveurs Paper récents. Le repli
                              historique reste livré sous io.github...LegacyNbtBridge. -->
                         <include>shaded/io/github/bananapuncher714/nbteditor/NBTEditor.java</include>
@@ -185,30 +185,6 @@
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-antrun-plugin</artifactId>
-                <version>3.1.0</version>
-                <executions>
-                    <execution>
-                        <!-- Declarée APRES maven-assembly-plugin : a la meme phase `package`, Maven
-                             execute les plugins dans l'ordre du pom, donc le jar d'assemblage existe
-                             deja quand il est renomme. -->
-                        <id>rename-economy-jar</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>run</goal>
-                        </goals>
-                        <configuration>
-                            <target>
-                                <move file="${project.build.directory}/ValoriaEconomy-${project.version}-economy.jar"
-                                      tofile="${project.build.directory}/ValoriaEconomy-v${project.version}.jar"
-                                      failonerror="true"/>
-                            </target>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>
                 <version>3.7.1</version>
                 <executions>
@@ -222,12 +198,17 @@
                             <descriptors>
                                 <descriptor>src/assembly/economy.xml</descriptor>
                             </descriptors>
-                            <!-- Le nom voulu (`ValoriaEconomy-v<version>.jar`) ne peut pas venir du
-                                 descripteur (voir son commentaire) : on laisse l'assembleur produire
-                                 `ValoriaEconomy-<version>-economy.jar`, puis une execution antrun le
-                                 renomme. `appendAssemblyId=false` + un `<finalName>` dans le
-                                 descripteur etait la combinaison qui faisait echouer le build. -->
-                            <appendAssemblyId>true</appendAssemblyId>
+                            <!-- LE NOM FINAL SE DECIDE ICI, pas dans le descripteur : le schema
+                                 assembly-2.1.0 n'autorise pas le tag finalName a la racine d'un
+                                 descripteur (erreur `Unrecognised tag: 'finalName'`, build
+                                 #33155795647), et `appendAssemblyId=true` herite du finalName global
+                                 du build ... donc `ValoriaTycoon-v1.6.3-economy.jar`, le fichier que
+                                 l'etape antrun cherchait en vain (build #33156892660).
+                                 `finalName` + `appendAssemblyId=false` donne exactement
+                                 target/ValoriaEconomy-v1.6.3.jar, le nom attendu par plugin.yml, la CI
+                                 et docs/DEPLOY-2-JARS.md, sans seconde étape de renommage. -->
+                            <finalName>ValoriaEconomy-v${project.version}</finalName>
+                            <appendAssemblyId>false</appendAssemblyId>
                         </configuration>
                     </execution>
                 </executions>

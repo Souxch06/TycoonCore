@@ -1,12 +1,19 @@
 # Déployer les deux jars
 
-> **Le second jar s'appelle `ValoriaEconomy-v<version>.jar`** et c'est le `pom.xml` qui nomme :
-> le descripteur d'assemblage **ne peut pas** porter de `<finalName>` (l'XSD ne le définit que dans un
-> `<format>`, pour les assemblages multi‑formats) — `src/assembly/economy.xml` produit donc
-> `ValoriaEconomy-<version>-economy.jar`, que l'exécution `rename-economy-jar` (maven‑antrun‑plugin,
-> déclarée après maven‑assembly‑plugin) renomme. Les 6 contrôles de `scripts/verify-paper26-compat.py`
-> (« pas de `<finalName>` au niveau racine », « rename déclaré après l'assembleur », …) empêchent la
-> rechute constatée sur le build `#33155795647`.
+> **Le second jar s'appelle `ValoriaEconomy-v<version>.jar`, et un seul endroit le décide** :
+> `<finalName>` de l'exécution `economy-plugin-jar` du `maven-assembly-plugin`, avec
+> `appendAssemblyId=false`. Trois pièges vérifiés en build, tous bloqués par des contrôles de
+> `scripts/verify-paper26-compat.py` (101 points) :
+>
+> | piège | symptôme | règle |
+> | --- | --- | --- |
+> | `<finalName>` dans le **descripteur** | `Unrecognised tag: 'finalName'` (#33155795647) | le schéma `assembly-2.1.0` ne le définit que dans un `<format>` (multi‑formats) |
+> | `appendAssemblyId=true` sans finalName | le paquet sort sous le **`finalName` global** : `ValoriaTycoon-v1.6.3-economy.jar` (#33156892660) | nommer dans le pom, pas dans le descripteur |
+> | une 2ᵉ étape qui renomme (`antrun` + `<move>`) | `Could not find file …economy.jar` dès que le nom réel diffère | supprimer : l'assembleur écrit déjà le bon nom |
+>
+> Bonus : les commentaires XML n'ont **pas** le droit de contenir `--` (ni `<`) — un `--` ferme le
+> commentaire et Maven refuse le pom avec un simple « not well‑formed ». Le contrôle
+> « aucun commentaire illégal » protège `pom.xml` et `src/assembly/economy.xml`.
 
 `deploy.yml` ne copie qu'un seul fichier (`find target -maxdepth 1 -name "*.jar" | head -n 1`). Depuis
 l'ajout de `ValoriaEconomy`, il faut déposer **les deux** jars dans `plugins/`.
