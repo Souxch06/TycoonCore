@@ -56,6 +56,42 @@ def rel(path: Path) -> str:
         return str(path)
 
 
+def unclosed_quotes(lines) -> list:
+    """Ligne de depart de chaque bloc `run:` en scalaire bloc dont les apostrophes sont en nombre impair.
+
+    Distinction qui manquait a cette regle : dans un scalaire bloc (`run: |`), le texte est livre au
+    shell tel quel, donc un `'` dans un COMMENTAIRE y est inoffensif — le shell s'arrete au `#` et ne
+    voit aucune chaine. Le piege d'origine (run 33200967570, etape « Verifier les trois JAR produits »,
+    code 2 sans un mot) etait un `bash -c '...'` : la le `'` d'un `# L'API` FERMAIT la chaine ouverte.
+    Ce cas reste attrape, mais par la regle « n'embarque aucun bloc shell inline » ci-dessous, qui est
+    celle qui le dit correctement.
+
+    Compter les deux de la meme facon rendait ce controle faussement positif sur le moindre commentaire
+    francais (les apostrophes y sont partout) : la chaine de depot s'arretait avant la publication de la
+    release, donc `plugins/` ne bougeait plus. Un controle qui crie sur du code correct est ignore des
+    la deuxieme fois — donc pire que rien. D'ou l'auto-test reel dans `_self_tests()`.
+    """
+    out = []
+    in_run, run_start, total = False, 0, 0
+    for index, line in enumerate(lines):
+        if re.match(r"^\s*run:\s*[|>]", line):
+            in_run, run_start, total = True, index + 1, 0
+            continue
+        if in_run and re.match(r"^\s*(-\s+)?[A-Za-z_][\w-]*:\s", line) and not line.startswith(" " * 10):
+            if total % 2:
+                out.append(run_start)
+            in_run = False
+            continue
+        if not in_run:
+            continue
+        if line.strip().startswith("#"):
+            continue  # commentaire shell : aucune chaine ne s'y ouvre ni ne s'y ferme
+        total += line.count("'")
+    if in_run and total % 2:
+        out.append(run_start)
+    return out
+
+
 def check(label, ok, detail=""):
     (notes if ok else problems).append((label, detail))
     mark = "OK " if ok else "KO "
@@ -224,9 +260,11 @@ def main() -> int:
               f"{touched} : ces fichiers se collent sur `main` depuis docs/. Les versionner ici a déjà"
               " rendu la PR inconciliable (CONFLICTING) et le merge impossible en silence")
 
-    # un bloc shell inline dans un YAML est un piege a apostrophes : le shell croit sa chaine fermee au
-    # premier `'` du texte — ici un `L'API` dans un COMMENTAIRE — et rend un code 2 sans nommer la faute.
-    # C'est exactement ce qui faisait rougir « Vérifier les trois JAR produits » (run 33200967570).
+    # un bloc shell INLINE (`bash -c '...'`) est un piege a apostrophes : le shell croit sa chaine fermee
+    # au premier `'` du texte — ici un `L'API` dans un COMMENTAIRE — et rend un code 2 sans nommer la
+    # faute. C'est exactement ce qui faisait rougir « Vérifier les trois JAR produits » (run 33200967570),
+    # et c'est la premiere regle ci-dessous qui le dit. Dans un scalaire bloc `run: |`, le meme `'` est
+    # inoffensif : `unclosed_quotes()` ne compte donc que les lignes de commande (voir son docstring).
     for path in (SOURCE, MIRROR, DEPLOY, NEUTRAL):
         if not path.is_file():
             continue
@@ -236,20 +274,7 @@ def main() -> int:
         check(f"{rel(path)} n'embarque aucun bloc shell inline", not inline,
               f"ligne(s) {inline} : un controle de fichier doit vivre dans `scripts/`, pas dans le YAML")
 
-        unclosed = []
-        in_run, run_start, quote_total = False, 0, 0
-        for index, line in enumerate(lines):
-            if re.match(r"^\s*run:\s*[|>]", line):
-                in_run, run_start, quote_total = True, index + 1, 0
-                continue
-            if in_run and re.match(r"^\s*(-\s+)?[A-Za-z_][\w-]*:\s", line) and not line.startswith(" " * 10):
-                if quote_total % 2:
-                    unclosed.append(run_start)
-                in_run = False
-            if in_run and not line.strip().lstrip("#").startswith("#"):
-                quote_total += line.count("'")
-        if in_run and quote_total % 2:
-            unclosed.append(run_start)
+        unclosed = unclosed_quotes(lines)
         check(f"{rel(path)} n'a aucune apostrophe non fermée dans un `run:`", not unclosed,
               f"ligne(s) {unclosed} : un `'` impair ferme la chaine du shell plus tot que prevu — le bloc"
               " devient une erreur de syntaxe, code 2, sans un mot sur la cause")
@@ -293,11 +318,21 @@ def _self_tests() -> None:
         if not ignores_main(dead) or ignores_main(alive):
             raise SystemExit("ERREUR: ignores_main ne voit plus `branches-ignore: [main]` (ou le voit la"
                              " ou il n'est pas) — la regle qui a sauve la chaine de depot est decorative")
-        # l'echantillon qui a casse la CI : une apostrophe dans un commentaire d'un bloc `run: |`
-        broken = "      - name: x\n        run: |\n          # L'API est vue\n          bash s.sh\n"
-        clean = "      - name: x\n        run: |\n          bash s.sh\n"
-        if broken.count("'") % 2 == 0 or clean.count("'") % 2:
-            raise SystemExit("ERREUR: les echantillons de la regle d'apostrophe ne sont plus significatifs")
+        # la regle d'apostrophe doit tirer sur le VRAI cas fautif (un `'` impair dans une commande) et
+        # se taire sur un commentaire de scalaire bloc. L'ancien auto-test ne comptait que les
+        # apostrophes de deux chaines literals : il ne touchait pas la regle, donc il restait vert
+        # pendant que la regle bloquait la publication de la release (run 33203060909, etape 16).
+        commentaire = ("      - name: x\n        run: |\n          # L'API est vue, cote assembleur\n"
+                       "          bash s.sh\n      - name: y\n        uses: z\n").splitlines()
+        commande = ("      - name: x\n        run: |\n          gh release download '$TAG --dir target\n"
+                    "          bash s.sh\n      - name: y\n        uses: z\n").splitlines()
+        if unclosed_quotes(commentaire) != []:
+            raise SystemExit("ERREUR: la regle d'apostrophe crie sur un commentaire de bloc `run: |` — elle"
+                             " est faussement positive sur tout commentaire francais, et un controle qui"
+                             " crie sur du code correct est ignore des la deuxieme fois")
+        if unclosed_quotes(commande) != [2]:
+            raise SystemExit("ERREUR: la regle d'apostrophe ne voit plus un `'` impair dans une commande —"
+                             " le bloc partirait en code 2 muet et la chaine de depot serait cassee")
         print("  [--] auto-tests des regles : OK")
 
 
