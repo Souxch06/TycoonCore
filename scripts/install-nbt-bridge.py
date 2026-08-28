@@ -147,8 +147,10 @@ def check_jar(jar_path: Path, problems: list):
             # Les chercher comme noms exacts condamnait un paquet valide (runs #33158841547 ->
             # #33159581656 : quatre runs rouges pour un controle faux, le plugin etait bon).
             pool = "\n".join(sorted(values))
+            # chaque token ci-dessous est verifie present DANS LA SOURCE du pont (grep) : `keyOf` en
+            # faisait partie un instant, a tort — le pont n'utilise que valueOf/has/get/set.
             for token in ("PersistentDataContainer", "PersistentDataType", "NamespacedKey",
-                          "LegacyNbtBridge", "valueOf", "keyOf"):
+                          "LegacyNbtBridge", "valueOf"):
                 if token not in pool:
                     problems.append(f"{jar_path.name}: pont sans reference {token!r} (en sous-chaine du "
                                     "constant-pool) — le contrat du pont n'est pas satisfait")
