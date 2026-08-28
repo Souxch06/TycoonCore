@@ -147,39 +147,48 @@ def check_jar(jar_path: Path, problems: list):
             # Les chercher comme noms exacts condamnait un paquet valide (runs #33158841547 ->
             # #33159581656 : quatre runs rouges pour un controle faux, le plugin etait bon).
             pool = "\n".join(sorted(values))
-            # chaque token ci-dessous est verifie present DANS LA SOURCE du pont (grep) : `keyOf` en
-            # faisait partie un instant, a tort — le pont n'utilise que valueOf/has/get/set.
-            for token in ("PersistentDataContainer", "PersistentDataType", "NamespacedKey",
-                          "LegacyNbtBridge", "valueOf"):
-                if token not in pool:
-                    problems.append(f"{jar_path.name}: pont sans reference {token!r} (en sous-chaine du "
-                                    "constant-pool) — le contrat du pont n'est pas satisfait")
-            # Recherche par nom (pas de reconstruction de chemin : la precedente version comptait
-            # mal les `parent` et concluvait a un fichier absent alors qu'il existait).
-            matches = sorted(ROOT.glob("target/classes/io/github/**/NBTEditor.class"))
-            if not matches:
-                matches = sorted(ROOT.glob("target/**/NBTEditor.class"))
-            if matches:
-                for target_file in matches[:3]:
-                    tv = set(classfile.utf8_values(target_file.read_bytes()))
-                    tpool = "\n".join(sorted(tv))
-                    missing = [t for t in ("PersistentDataType", "NamespacedKey", "LegacyNbtBridge")
-                               if t not in tpool]
+            # Le pont resout TOUT par Class.forName : javac n'ecrit donc que le NOM QUALIFIE, jamais le
+            # nom simple. Tester « NamespacedKey » comme nom de symbole etait systematiquement faux
+            # (cinq runs rouges #33158576991 -> #33159866541, pour rien : le paquet est bon). Les
+            # sous-chaines ci-dessous sont celles que javac produit reellement pour notre source :
+            #   lookup("org.bukkit.NamespacedKey")
+            #   lookup("org.bukkit.persistence.PersistentDataType")
+            #   lookup("io.github.bananapuncher714.nbteditor.LegacyNbtBridge")
+            CONTRACT = {
+                "org.bukkit.NamespacedKey": "clef PDC resolvee par reflexion",
+                "org.bukkit.persistence.PersistentDataType": "type de donnees PDC resolu par reflexion",
+                "io.github.bananapuncher714.nbteditor.LegacyNbtBridge": "repli vers l'implementation historique",
+                "getPersistentDataContainer": "acces au conteneur PDC",
+                "valueOf": "desambiguisation des surcharges (le conteneur n'a pas de get a 1 argument)",
+            }
+            missing = [f"{name} ({why})" for name, why in CONTRACT.items() if name not in pool]
+            if missing:
+                problems.append(f"{jar_path.name}: pont sans references {missing}")
+            # Epreuve de taille : si l'entree du paquet a exactement la taille de l'ANCIENNE
+            # implementation (LegacyNbtBridge.class, livree), c'est qu'un fichier perime a gagne.
+            stale = PACKAGE_DIR / "LegacyNbtBridge.class"
+            if stale.is_file() and stale.stat().st_size == len(blob):
+                problems.append(f"{jar_path.name}: NBTEditor.class a la TAILLE de l'ancienne "
+                                f"implementation ({len(blob)} o) — paquet perime, pas notre pont")
+            if missing:
+                preview = ", ".join(sorted(v for v in values if "." in v and v[:1].islower())[:10])
+                problems.append(f"constant-pool du paquet (echantillon de 10 noms qualifies) : {preview}")
+            compiled = PACKAGE_DIR.parent.parent / "target/classes/io/github/bananapuncher714/nbteditor/NBTEditor.class"
+            matches = sorted(ROOT.glob("target/classes/**/NBTEditor.class")) or [compiled]
+            for target_file in matches[:1]:
+                if target_file.is_file():
+                    tv = "\n".join(sorted(set(classfile.utf8_values(target_file.read_bytes()))))
+                    ok_missing = [n for n in CONTRACT if n not in tv]
                     problems.append(
-                        f"cible: {target_file.relative_to(ROOT)} = {target_file.stat().st_size} o "
-                        f"(meme nom dans le paquet : {'OUI' if target_file.stat().st_size == len(blob) else 'NON'})"
-                        f" ; references {'ABSENTES ' + str(missing) if missing else 'presentes'} ; "
-                        f"{len(tv)} entrees utf8")
-                problems.append("lecture: si le fichier de target/classes a les references alors que "
-                                "l'entree du jar ne les a pas, deux NBTEditor.class coexistent dans le "
-                                "paquet (la copie de ressources gagne) -> exclure ce fichier de la copie")
+                        f"cible: {target_file.relative_to(ROOT)} = {target_file.stat().st_size} o, "
+                        f"taille du paquet = {len(blob)} o -> "
+                        + ("MEME FICHIER (le paquet embarque bien la sortie du build)"
+                           if target_file.stat().st_size == len(blob) else "FICHIERS DIFFERENTS")
+                        + (f" ; references manquantes aussi cote cible : {ok_missing}" if ok_missing
+                           else " ; contrat complet cote cible"))
             else:
-                problems.append("cible: AUCUN NBTEditor.class dans target/classes (ni nulle part sous "
-                                "target/) -> le pom ne compile pas la source du pont ; le paquet ne peut "
-                                "donc contenir que l'ancienne implementation, d'ou les references absentes")
-        dups = [n for n in names if n.endswith("/NBTEditor.class")]
-        if len(dups) > 1:
-            problems.append(f"paquet: {len(dups)} entrees nommees NBTEditor.class : {sorted(dups)}")
+                problems.append("cible: aucun target/classes/**/NBTEditor.class (le pom ne compile pas "
+                                "la source du pont)")
 
 
 def main() -> int:
