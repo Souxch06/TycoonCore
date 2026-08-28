@@ -1,5 +1,28 @@
 # Déployer les deux jars
 
+## Voie « tout automatique » : le dépôt sur le serveur par la CI
+
+Deux blocs, un seul collage chacun (les fichiers `.github/workflows/*` sont les seuls que l'agent ne
+peut pas écrire — permission `workflows` refusée par GitHub, vérifiée quatre fois) :
+
+| coller dans | contenu à coller | effet |
+| --- | --- | --- |
+| `.github/workflows/build.yml` | `docs/CI-A-COLLER.yml` | build + contrôles + **publication de la release `build-latest`** (qui déclenche le déploiement) |
+| `.github/workflows/deploy-serveur.yml` (nouveau fichier) | `docs/CI-DEPLOY-A-COLLER.yml` | **télécharge les deux jar de la release, vérifie leur contenu, les dépose sur le serveur** via les secrets SFTP déjà en place, avec sauvegarde préalable dans `plugins/_sauvegarde-<horodatage>/` |
+
+Circulation : `git push` → build vert → release `build-latest` réécrite → **workflow de déploiement
+déclenché par la release** → serveur à jour. Aucune étape manuelle, et le déploiement ne peut partir
+que d'une release, donc jamais d'un build rouge ou d'une branche en cours.
+
+Sécurité intégrée (dans `scripts/ci-release-and-deploy.sh`, testé ici hors CI) :
+- les DEUX jar sont exigés (jamais le plugin sans son économie) ;
+- sauvegarde des jar en place avant écrasement → rollback = `rename` inverse dans `plugins/` ;
+- contrôle de taille **côté serveur** après envoi : un SFTP qui tronque fait échouer l'étape ;
+- `dry_run` possible depuis *Run workflow* (affiche la session SFTP sans rien envoyer) ;
+- `environment: production` : si tu actives une règle de protection sur cet environnement, GitHub
+  demandera une validation humaine **explicite** avant l'envoi — c'est le bouton à cocher si tu veux
+  garder un feu vert manuel.
+
 ## Récupérer les jars (3 voies, de la plus simple à la plus automatique)
 
 | voie | comment |
