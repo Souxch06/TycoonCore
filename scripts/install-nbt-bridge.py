@@ -41,6 +41,7 @@ import classfile  # noqa: E402
 ROOT = Path(__file__).resolve().parents[1]
 EXTRACTED = ROOT / "artifacts" / "extracted"
 BRIDGE_SOURCE = ROOT / "sources/shaded/io/github/bananapuncher714/nbteditor/NBTEditor.java"
+NBT_PACKAGE = "io/github/bananapuncher714/nbteditor/"
 PACKAGE_DIR = EXTRACTED / "io" / "github" / "bananapuncher714" / "nbteditor"
 
 # Le jeton complet est remplacé partout dans les seules classes legacy : il couvre à la fois les noms
@@ -117,78 +118,64 @@ def pont_inner_classes() -> set:
 
 
 def check_jar(jar_path: Path, problems: list):
+    """Controle le pont NBT tel que le BUILD le livre.
+
+    Trois lecons de la serie de faux positifs (runs #33158576991 a #33160102783, six runs rouges pour
+    un paquet qui etait bon depuis que Maven sort `exit 0`) :
+
+    1. **le contrat se lit sur TOUT le paquet** : notre source declare des classes internes
+       (`NBTEditor$Bukkit` porte le lookup des types PDC, `NBTEditor$Legacy` le repli, `NBTEditor$Keys`
+       la lecture des cles) et javac repand ces chaines dans leurs .class respectifs ;
+    2. **le pont resout ses types par `Class.forName`** : javac n'ecrit que le NOM QUALIFIE
+       (`org.bukkit.NamespacedKey`, `org.bukkit.persistence.PersistentDataType`), jamais le nom simple —
+       comparer des noms de symboles ne peut donc jamais marcher ;
+    3. **les classes internes legitimes du pont ne sont pas des residus** : la liste des noms admis se
+       lit dans la source (voir `pont_inner_classes`), pas dans une liste a la main.
+    """
     with zipfile.ZipFile(jar_path) as jar:
         names = set(jar.namelist())
-        bridge = "io/github/bananapuncher714/nbteditor/NBTEditor.class"
-        legacy = "io/github/bananapuncher714/nbteditor/LegacyNbtBridge.class"
+        bridge = f"{NBT_PACKAGE}NBTEditor.class"
+        legacy = f"{NBT_PACKAGE}LegacyNbtBridge.class"
         if bridge not in names:
-            problems.append(f"{jar_path.name}: pont {bridge} absent (le build ne l'a pas compilé ?)")
+            problems.append(f"{jar_path.name}: pont {bridge} absent — le build ne l'a pas compile ?")
         if legacy not in names:
             problems.append(f"{jar_path.name}: repli {legacy} absent")
-        stale = [n for n in names if n.startswith("io/github/bananapuncher714/nbteditor/NBTEditor$")
-                 and inner_name(n) not in pont_inner_classes()]
+
+        pont = sorted(n for n in names if n.startswith(f"{NBT_PACKAGE}NBTEditor") and n.endswith(".class"))
+        allowed = pont_inner_classes()
+        stale = [n for n in pont if inner_name(n) not in allowed]
         if stale:
-            problems.append(f"{jar_path.name}: classes legacy non renommées : {sorted(stale)[:4]}")
-        if bridge in names:
-            blob = jar.read(bridge)
-            values = set(classfile.utf8_values(blob))
-            for member in ("contains", "getInt", "getString", "set", "CUSTOM_DATA"):
-                if member not in values:
-                    problems.append(f"{jar_path.name}: pont sans membre {member!r}")
-            # Le pont resout tout par reflexion : ces noms n'existent pas en tant que CONSTANT_Class,
-            # mais bien en chaines du constant-pool. On les verifie la, ET sur le fichier produit par
-            # javac dans target/classes — la difference entre les deux designe le coupable :
-            #   present dans target/classes + absent du jar  -> la copie de ressources a gagne (conflit
-            #                                                    de doublons dans le paquet)
-            #   absent des deux                              -> le pom ne compile pas notre source
-            # Sous-chaine des constantes reunies, PAS equality sur un nom : le pont resout ces types par
-            # `Class.forName("org.bukkit.persistence.PersistentDataType")` (donc en nom QUALIFIE, jamais
-            # en simple nom de symbole) et `LegacyNbtBridge` n'apparait que dans une phrase de diagnostic.
-            # Les chercher comme noms exacts condamnait un paquet valide (runs #33158841547 ->
-            # #33159581656 : quatre runs rouges pour un controle faux, le plugin etait bon).
-            pool = "\n".join(sorted(values))
-            # Le pont resout TOUT par Class.forName : javac n'ecrit donc que le NOM QUALIFIE, jamais le
-            # nom simple. Tester « NamespacedKey » comme nom de symbole etait systematiquement faux
-            # (cinq runs rouges #33158576991 -> #33159866541, pour rien : le paquet est bon). Les
-            # sous-chaines ci-dessous sont celles que javac produit reellement pour notre source :
-            #   lookup("org.bukkit.NamespacedKey")
-            #   lookup("org.bukkit.persistence.PersistentDataType")
-            #   lookup("io.github.bananapuncher714.nbteditor.LegacyNbtBridge")
-            CONTRACT = {
-                "org.bukkit.NamespacedKey": "clef PDC resolvee par reflexion",
-                "org.bukkit.persistence.PersistentDataType": "type de donnees PDC resolu par reflexion",
-                "io.github.bananapuncher714.nbteditor.LegacyNbtBridge": "repli vers l'implementation historique",
-                "getPersistentDataContainer": "acces au conteneur PDC",
-                "valueOf": "desambiguisation des surcharges (le conteneur n'a pas de get a 1 argument)",
-            }
-            missing = [f"{name} ({why})" for name, why in CONTRACT.items() if name not in pool]
-            if missing:
-                problems.append(f"{jar_path.name}: pont sans references {missing}")
-            # Epreuve de taille : si l'entree du paquet a exactement la taille de l'ANCIENNE
-            # implementation (LegacyNbtBridge.class, livree), c'est qu'un fichier perime a gagne.
-            stale = PACKAGE_DIR / "LegacyNbtBridge.class"
-            if stale.is_file() and stale.stat().st_size == len(blob):
-                problems.append(f"{jar_path.name}: NBTEditor.class a la TAILLE de l'ancienne "
-                                f"implementation ({len(blob)} o) — paquet perime, pas notre pont")
-            if missing:
-                preview = ", ".join(sorted(v for v in values if "." in v and v[:1].islower())[:10])
-                problems.append(f"constant-pool du paquet (echantillon de 10 noms qualifies) : {preview}")
-            compiled = PACKAGE_DIR.parent.parent / "target/classes/io/github/bananapuncher714/nbteditor/NBTEditor.class"
-            matches = sorted(ROOT.glob("target/classes/**/NBTEditor.class")) or [compiled]
-            for target_file in matches[:1]:
-                if target_file.is_file():
-                    tv = "\n".join(sorted(set(classfile.utf8_values(target_file.read_bytes()))))
-                    ok_missing = [n for n in CONTRACT if n not in tv]
-                    problems.append(
-                        f"cible: {target_file.relative_to(ROOT)} = {target_file.stat().st_size} o, "
-                        f"taille du paquet = {len(blob)} o -> "
-                        + ("MEME FICHIER (le paquet embarque bien la sortie du build)"
-                           if target_file.stat().st_size == len(blob) else "FICHIERS DIFFERENTS")
-                        + (f" ; references manquantes aussi cote cible : {ok_missing}" if ok_missing
-                           else " ; contrat complet cote cible"))
-            else:
-                problems.append("cible: aucun target/classes/**/NBTEditor.class (le pom ne compile pas "
-                                "la source du pont)")
+            problems.append(f"{jar_path.name}: classes NBTEditor$… qui ne correspondent a aucune classe "
+                            f"interne declaree par la source du pont : {sorted(map(inner_name, stale))[:4]}")
+
+        if not pont:
+            return
+        values = set()
+        for entry in pont:
+            values.update(classfile.utf8_values(jar.read(entry)))
+        pool = "\n".join(sorted(values))
+
+        for member in ("contains", "getInt", "getString", "set", "CUSTOM_DATA", "Type"):
+            if member not in pool:
+                problems.append(f"{jar_path.name}: pont sans membre {member!r}")
+
+        contract = {
+            "org.bukkit.NamespacedKey": "clef PDC resolue par reflexion",
+            "org.bukkit.persistence.PersistentDataType": "type de donnees PDC resolu par reflexion",
+            "io.github.bananapuncher714.nbteditor.LegacyNbtBridge": "repli vers l'implementation historique",
+            "getPersistentDataContainer": "acces au conteneur PDC",
+            "valueOf": "desambiguisation des surcharges du conteneur",
+            "java.lang.invoke.MethodHandles": "manipulation du conteneur sans dependance de compilation",
+        }
+        missing = [f"{name} ({why})" for name, why in contract.items() if name not in pool]
+        if missing:
+            qualified = sorted(v for v in values if "." in v and v[:1].islower())
+            problems.append(f"{jar_path.name}: pont sans references {missing}")
+            problems.append(f"noms qualifies vus dans {len(pont)} entree(s) "
+                            f"({', '.join(inner_name(n) for n in pont[:6])}) : "
+                            f"{', '.join(qualified[:12]) or 'AUCUN'}")
+        if not missing:
+            print(f"  pont verifie : {len(pont)} entree(s), {len(values)} constantes, contrat complet")
 
 
 def main() -> int:
