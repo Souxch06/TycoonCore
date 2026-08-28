@@ -41,7 +41,7 @@ laisse le serveur avec le plugin **sans son économie**.
 2. Select all → Delete → colle le **bloc B**
 3. **Commit changes**
 
-### 3.2 `deploy-serveur.yml` (celui qui dépose les deux jar)
+### 3.2 `deploy-serveur.yml` (celui qui dépose les trois jar)
 1. **https://github.com/Souxch06/ValoriaTycoon/new/main?filename=.github%2Fworkflows%2Fdeploy-serveur.yml**
    *(le nom du fichier est déjà rempli par ce lien)*
 2. Colle le **bloc C**
@@ -65,7 +65,7 @@ n'envoie rien). C'est voulu : on regarde d'abord.
    rename plugins/ValoriaEconomy-v1.6.3.jar plugins/_sauvegarde-…/ValoriaEconomy-v1.6.3.jar
    put target/ValoriaTycoon-v1.6.3.jar target/ValoriaEconomy-v1.6.3.jar plugins/
    ```
-4. Si ça te va : refais **Run workflow**, **décoche `dry_run`** → les deux jar partent vraiment sur le
+4. Si ça te va : refais **Run workflow**, **décoche `dry_run`** → les trois jar partent vraiment sur le
    serveur (les anciens sont d'abord sauvegardés), puis **redémarre le serveur**.
 
 **Filet recommandé** (au choix, 30 s) : **Settings → Security → Environments → production →
@@ -156,265 +156,25 @@ jobs:
           EOF
 ```
 
-### Bloc B → `.github/workflows/build.yml`
+### Blocs B et C → les deux workflows, sans recopie
 
-```yaml
-name: Build and Validate ValoriaTycoon
+Ils ne sont **pas collés dans ce document** : un contenu recopié diverge, et c'est arrivé ici
+(la copie du tuto décrivait un build « deux jar », sans l'étape de release). Les deux fichiers à
+coller sont donc lus **à la source**, par URL brute :
 
-# Workflow de validation : il compile et contrôle les deux jar, il ne deploie JAMAIS
-# (le SFTP reste uniquement dans .github/workflows/deploy.yml, reserve a main).
+| à coller dans | contenu à copier depuis |
+| --- | --- |
+| `.github/workflows/build.yml` | https://github.com/Souxch06/ValoriaTycoon/raw/arena/01a043a8-valoriatycoon/docs/CI-A-COLLER.yml |
+| `.github/workflows/deploy-serveur.yml` | https://github.com/Souxch06/ValoriaTycoon/raw/arena/01a043a8-valoriatycoon/docs/CI-DEPLOY-A-COLLER.yml |
 
-on:
-  # chaque push sur la branche relance le build tout seul : plus rien a cliquer
-  push:
-    branches-ignore:
-      - main
-  pull_request:
-  workflow_dispatch:
+Ouvre le lien, `Ctrl+A` puis `Ctrl+C`, va dans l'éditeur du fichier cible sur GitHub, `Ctrl+A`,
+`Suppr`, `Ctrl+V`, puis **Commit**. Si le fichier cible n'existe pas encore (`deploy-serveur.yml`),
+crée-le d'abord avec un contenu vide depuis `Add file → Create new file`.
 
-permissions:
-  # sert UNIQUEMENT a publier le rapport d'erreurs (commentaire de PR, puis repli en commit de
-  # docs/DERNIER-LOG-CI.md). Aucune etape ne deploie, aucun secret serveur n'est utilise.
-  contents: write
-  pull-requests: write
+`scripts/verify-ci-copies.py` (une étape du build) refuse désormais toute divergence entre ces
+fichiers : la copie de travail `scripts/ci/build-workflow.yml` doit rester identique octet pour
+octet à `docs/CI-A-COLLER.yml`.
 
-jobs:
-  build-and-validate:
-    name: Compilation et contrôles de compatibilité
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Récupérer le code
-        uses: actions/checkout@v4
-
-      - name: Installer Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '25'
-          cache: maven
-
-      - name: Vérifier le renommage de marque dans les classes livrées
-        run: python3 scripts/rebrand-classes.py --check
-
-      - name: Vérifier les correctifs des classes vendorisées
-        run: python3 scripts/patch-class-version-patterns.py --check
-
-      - name: Vérifier l'installation du pont NBT (PersistentDataContainer)
-        run: python3 scripts/install-nbt-bridge.py --check
-
-      - name: Vérifier que le plugin ne dépend d'aucune API tierce (Vault, HoloEasy retirés)
-        run: python3 scripts/selfmade-api-patch.py --check
-
-      - name: Vérifier les imports des fichiers compilés (sans JDK)
-        run: python3 scripts/verify-source-imports.py
-
-      - name: Vérifier la cohérence de l'extraction
-        run: python3 scripts/verify-extraction.py
-
-      - name: Compiler le plugin et le plugin d'économie
-        # capte la sortie maven, publie les erreurs javac en annotation + commentaire de PR,
-        # puis rejoue les controles du depot
-        run: bash scripts/ci-maven-report.sh
-
-      - name: Vérifier la surface publique des sources recompilées (sans JDK)
-        run: |
-          npm install --no-save java-parser@3
-          node scripts/check-sources-java.mjs
-
-      - name: Vérifier la couverture de l'API d'économie interne
-        run: |
-          python3 scripts/generate-economy-api.py --check
-          python3 scripts/verify-economy-api.py
-
-      - name: Vérifier la compatibilité Paper 26.x du JAR
-        # Les echecs d'un simple « exit code 1 » ne sont exploitables a distance : chaque controle est
-        # execute par scripts/ci-step.sh, qui recopie ses dernieres lignes dans le resume du job.
-        run: |
-          bash scripts/ci-step.sh "compatibilite du jar" \
-            python3 scripts/verify-paper26-compat.py target/ValoriaTycoon-v1.6.3.jar -report-annotations
-          bash scripts/ci-step.sh "renommage de marque dans le jar" \
-            python3 scripts/rebrand-classes.py --check --jar target/ValoriaTycoon-v1.6.3.jar
-          bash scripts/ci-step.sh "pont NBT dans le jar" \
-            python3 scripts/install-nbt-bridge.py --check --jar target/ValoriaTycoon-v1.6.3.jar
-          bash scripts/ci-step.sh "api tierces absentes du jar" \
-            python3 scripts/selfmade-api-patch.py --check --jar target/ValoriaTycoon-v1.6.3.jar
-
-      - name: Vérifier les deux JAR produits
-        run: |
-          bash scripts/ci-step.sh "contenu des deux jars" bash -c '
-            set -e
-            for jar in target/ValoriaTycoon-v1.6.3.jar target/ValoriaEconomy-v1.6.3.jar; do
-              echo "--- $jar"; test -f "$jar"; ls -l "$jar"; unzip -l "$jar" | tail -3
-            done
-            unzip -l target/ValoriaEconomy-v1.6.3.jar | grep -q "plugin.yml"
-            unzip -l target/ValoriaEconomy-v1.6.3.jar | grep -q "valoriaeconomy/ValoriaEconomyProvider.class"
-            unzip -l target/ValoriaEconomy-v1.6.3.jar | grep -q "valoriaeconomy/ValoriaEconomy.class"
-            unzip -l target/ValoriaTycoon-v1.6.3.jar | grep -q "valoriateconomy/Economy.class"
-            unzip -l target/ValoriaTycoon-v1.6.3.jar | grep -q "valoriatycoon/hologram/HologramPool.class"
-            unzip -l target/ValoriaTycoon-v1.6.3.jar | grep -q "module-info.class"
-            ! unzip -l target/ValoriaTycoon-v1.6.3.jar | grep -q "xyz/arcadiadevs/valoriaeconomy/"
-            ! unzip -l target/ValoriaTycoon-v1.6.3.jar | grep -qE "net/milkbowl|org/holoeasy"
-            ! unzip -l target/ValoriaEconomy-v1.6.3.jar | grep -qE "net/milkbowl|org/holoeasy"
-            echo "OK : contenu des deux jars conforme"
-          '
-
-
-      - name: Publier la release `build-latest` (déclencheur du déploiement)
-        # Le script fait TOUT ici (logique dans le depot, pas dans le YAML que l'agent ne peut pas
-        # ecrire) : il valide les deux jar, (re)ecrit le tag `build-latest`, televerse les assets,
-        # verifie leur taille cote GitHub. La publication de la release est ce qui declenche le
-        # workflow docs/CI-DEPLOY-A-COLLER.yml -> depot sur le serveur. Hors `main`, la release n'est
-        # pas publiee pour eviter qu'une branche en cours deploie en production.
-        # La release est le SEUL declencheur du depot : on ne la reecrit donc que depuis main, sinon
-        # chaque push d'une branche en cours remplacerait `build-latest` et mettrait le serveur a jour
-        # d'un etat non merge. Les runs de branche gardent leurs artefacts (telechargeables a la main).
-        if: ${{ success() && github.ref == 'refs/heads/main' }}
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PROJECT_VERSION: '1.6.3'
-          DEPLOY: '0'
-          RELEASE: '1'
-        run: bash scripts/ci-release-and-deploy.sh
-
-      - name: Publier les JAR construits
-        uses: actions/upload-artifact@v4
-        with:
-          name: ValoriaTycoon-jar
-          path: |
-            target/ValoriaTycoon-v1.6.3.jar
-            target/ValoriaEconomy-v1.6.3.jar
-          if-no-files-found: error
-```
-
-### Bloc C → `.github/workflows/deploy-serveur.yml`
-
-```yaml
-name: Release et déploiement automatique
-
-# Voie « tout automatique » : à chaque RELEASE GitHub (tag `build-latest` publié par le workflow de
-# validation), ce workflow retélécharge les deux jar depuis les artefacts du run vérifié, puis les
-# dépose sur le serveur — avec sauvegarde préalable et contrôle de taille octet par octet.
-#
-# Pourquoi un workflow séparé : `deploy.yml` se déclenche sur `push: main` et pousse un seul jar ; ce
-# fichier-ci se déclenche sur un événement explicite (la release) et pousse les DEUX, ce qui est la
-# condition pour que le serveur ne se retrouve jamais avec le plugin sans son économie.
-#
-# Il ne contient AUCUNE commande de build : il fait confiance au run déjà vert (artefact + 14 contrôles).
-# Un `workflow_dispatch` manuel permet un déploiement à la demande, avec `dry_run` pour vérifier
-# exactement ce qui serait fait sans rien envoyer.
-
-on:
-  release:
-    types: [published]
-  workflow_dispatch:
-    inputs:
-      tag:
-        description: 'Nom de la release à déployer (asset du même nom que le tag)'
-        type: string
-        default: build-latest
-      dry_run:
-        description: 'Simuler (affiche la session SFTP, ne televerse rien)'
-        type: boolean
-        default: true
-
-jobs:
-  deploy:
-    name: Déposer les deux jar sur le serveur
-    runs-on: ubuntu-latest
-    # Sur un événement `release`, on ne déploie que la release marquée « dernière version vérifiée » :
-    # publier une release de test ne doit pas écraser le serveur.
-    if: ${{ github.event_name != 'release' || github.event.release.tag_name == 'build-latest' }}
-    environment: production   # règle la porte manuelle : Settings → Environments → production
-
-    steps:
-      - name: Récupérer le script de dépôt
-        uses: actions/checkout@v4
-        with:
-          # On ne prend que le script : ce workflow ne construit rien, il deplace des fichiers deja
-          # verifies. (Pas de `submodules`/`lfs` : inutiles, et c'est ce qui rend le checkout rapide.)
-          sparse-checkout: |
-            scripts/ci-release-and-deploy.sh
-          sparse-checkout-mode: no-filter
-
-      - name: Télécharger les jar depuis la release
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # Passe par `env:`, JAMAIS par interpolation directe dans `run:` : une valeur d'entree
-          # utilisateur injectee dans un shell est la faille classique des workflows.
-          RELEASE_TAG: ${{ github.event.release.tag_name || inputs.tag }}
-        run: |
-          set -euo pipefail
-          TAG="$RELEASE_TAG"
-          mkdir -p target
-          gh release download "$TAG" --pattern '*.jar' --dir target --clobber
-          ls -l target
-          # Le nom attend est pose par le pom (<finalName> de maven-jar-plugin et de l'assembleur).
-          test -f target/ValoriaTycoon-v1.6.3.jar
-          test -f target/ValoriaEconomy-v1.6.3.jar
-
-      - name: Vérifier l'intégrité avant envoi
-        run: |
-          set -euo pipefail
-          python3 - <<'PY'
-          import zipfile, sys
-          ok = True
-          for path, need in (("target/ValoriaTycoon-v1.6.3.jar",
-                              ("xyz/arcadiadevs/valoriatycoon/ValoriaTycoon.class",
-                               "plugin.yml",
-                               "xyz/arcadiadevs/valoriatycoon/hologram/HologramPool.class",
-                               "xyz/arcadiadevs/valoriateconomy/Economy.class",
-                               "module-info.class")),
-                             ("target/ValoriaEconomy-v1.6.3.jar",
-                              ("xyz/arcadiadevs/valoriaeconomy/ValoriaEconomy.class",
-                               "plugin.yml"))):
-              try:
-                  names = set(zipfile.ZipFile(path).namelist())
-              except Exception as error:
-                  print("ERREUR: %s illisible (%s)" % (path, error)); ok = False; continue
-              missing = [n for n in need if n not in names]
-              if missing:
-                  print("ERREUR: %s ampute de %s" % (path, missing)); ok = False
-              if any(n.startswith(("net/milkbowl/", "org/holoeasy/")) for n in names):
-                  print("ERREUR: %s embarque une API tierce" % path); ok = False
-              if "plugin.yml" in names:
-                  desc = zipfile.ZipFile(path).read("plugin.yml").decode("utf-8", "replace")
-                  name = [l.split(":", 1)[1].strip() for l in desc.splitlines() if l.startswith("name:")][0]
-                  api = [l.split(":", 1)[1].strip() for l in desc.splitlines() if l.startswith("api-version:")]
-                  print("%s : %d entrees, plugin %s, api-version %s" % (path, len(names), name, api or "absente"))
-                  if not api:
-                      print("ERREUR: %s sans api-version (legacy material support, avertissement a chaque demarrage)" % path)
-                      ok = False
-              else:
-                  print("ERREUR: %s sans plugin.yml" % path); ok = False
-          sys.exit(0 if ok else 1)
-          PY
-
-      - name: Déploiement (simulation)
-        if: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run }}
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          DEPLOY: '1'
-          DRY_RUN: '1'
-          RELEASE: '0'
-          SFTP_HOST: ${{ secrets.SFTP_HOST }}
-          SFTP_PORT: ${{ secrets.SFTP_PORT }}
-          SFTP_USERNAME: ${{ secrets.SFTP_USERNAME }}
-          SFTP_PASSWORD: ${{ secrets.SFTP_PASSWORD }}
-        run: bash scripts/ci-release-and-deploy.sh
-
-      - name: Déploiement sur MCServerHost
-        if: ${{ github.event_name == 'release' || !inputs.dry_run }}
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          DEPLOY: '1'
-          RELEASE: '0'
-          SFTP_HOST: ${{ secrets.SFTP_HOST }}
-          SFTP_PORT: ${{ secrets.SFTP_PORT }}
-          SFTP_USERNAME: ${{ secrets.SFTP_USERNAME }}
-          SFTP_PASSWORD: ${{ secrets.SFTP_PASSWORD }}
-        run: bash scripts/ci-release-and-deploy.sh
-```
 
 
 

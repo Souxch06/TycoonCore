@@ -3,7 +3,7 @@
 Le moteur est **écrit et testé** : `scripts/ci-release-and-deploy.sh` (143 lignes, testé hors CI :
 refus si un jar manque, refus si un jar n'est pas un zip, `DRY_RUN`, sauvegarde `plugins/_sauvegarde-<date>/`,
 contrôle de taille **côté serveur**, refus si un secret manque). Le build publie déjà l'artefact des
-deux jar. Ce qui reste à faire est **uniquement de l'installation de fichiers de workflow**, et
+trois jar. Ce qui reste à faire est **uniquement de l'installation de fichiers de workflow**, et
 GitHub refuse que l'agent écrive dans `.github/workflows/` :
 
 ```
@@ -34,7 +34,7 @@ puis l'envoi réel quand tu dis go.
 ## Option B — tu colles 3 fois (5 minutes), dans cet ordre
 
 Le pipeline complet est : `push` → **build** → `merge` sur `main` → **release `build-latest`** →
-**dépôt automatique des deux jar** sur le serveur.
+**dépôt automatique des trois jar** (plugin, économie, multi-outil) sur le serveur.
 
 ### B.1 — DÉSACTIVER l'ancien déploiement (sinon il écrase le nouveau avec un seul jar)
 Édite **https://github.com/Souxch06/ValoriaTycoon/edit/main/.github/workflows/deploy.yml**
@@ -65,7 +65,7 @@ Pour chacun : **Ctrl+A** dans l'éditeur → **Suppr** → **Ctrl+V** (le conten
 un onglet puis copier) → **Commit changes** directement sur `main`.
 
 Le dépôt sur `main` de `build.yml` **déclenche** la chaîne : build → vert → publication de la release
-`build-latest` → `deploy-serveur.yml` se lance → **les deux jar partent sur le serveur**.
+`build-latest` → `deploy-serveur.yml` se lance → **les trois jar partent sur le serveur**.
 
 ---
 
@@ -86,6 +86,6 @@ SFTP qui **serait** jouée, sans rien envoyer. Décoche `dry_run` quand tu veux 
 - l'étape d'envoi échoue → les anciens jar sont intacts dans `plugins/_sauvegarde-<horodatage>/` :
   un `rename` inverse dans `plugins/` et un redémarrage reviennent en arrière ;
 - `gh release create` refusé (droits de release) → l'étape est un **avertissement**, le build reste vert
-  et l'artefact du run contient toujours les deux jar (téléchargement manuel) ;
+  et l'artefact du run contient les trois jar (téléchargement manuel) ;
 - plus rien ne se déploie → vérifie d'abord que `deploy.yml` n'a plus de `push:` (B.1) : c'est le seul
   endroit où les deux pipelines se marchent dessus.

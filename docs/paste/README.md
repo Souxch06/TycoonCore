@@ -1,18 +1,23 @@
-# Les 3 fichiers à coller (zéro frappe : copier/coller seulement)
+# `docs/paste/` : le seul fichier qui se colle
 
-Ordre important : **neutraliser d'abord**, sinon l'ancien pipeline (un seul jar) part à chaque merge.
+Il ne reste ici qu'**un** contenu, parce qu'un workflow recopié à deux endroits finit par diverger — et
+c'est exactement ce qui s'est passé dans ce dépôt : `build.yml` et `deploy-serveur.yml` y avaient leur
+propre copie, qui décrivait encore un build « deux jar » sans l'étape de release, donc un pipeline muet.
 
-| # | Sur GitHub | Contenu à coller (bouton « Copy raw content ») |
-| --- | --- | --- |
-| 1 | `main` → `.github/workflows/deploy.yml` → crayon → coller par‑dessus | https://github.com/Souxch06/ValoriaTycoon/raw/arena/01a043a8-valoriatycoon/docs/paste/deploy-neutralise.yml |
-| 2 | `main` → `.github/workflows/build.yml` → coller par‑dessus (ou créer s'il manque) | https://github.com/Souxch06/ValoriaTycoon/raw/arena/01a043a8-valoriatycoon/docs/paste/build.yml |
-| 3 | `main` → « Add file → Create new file » → nom `​.github/workflows/deploy-serveur.yml` → coller | https://github.com/Souxch06/ValoriaTycoon/raw/arena/01a043a8-valoriatycoon/docs/paste/deploy-serveur.yml |
+| fichier | rôle |
+| --- | --- |
+| `deploy-neutralise.yml` | à coller dans `.github/workflows/deploy.yml` **sur `main`** : il retire le
+  déclencheur `push: main`, qui enverait un seul jar sur le serveur à chaque merge |
 
-Sur mobile : ouvre le lien *raw*, appui long → *Select all* → *Copy*, puis colle dans l'éditeur GitHub
-(sélectionne tout avec un appui long dans la zone → *Replace*).
+Les deux autres contenus à coller se lisent à la source (jamais depuis ce dossier) :
 
-Après le collage n° 2, GitHub met à jour `main` → le build se lance → s'il est vert, la release
-`build-latest` est publiée → `deploy-serveur.yml` dépose **les deux jar** sur le serveur, avec sauvegarde
-préalable dans `plugins/_sauvegarde-<date>/`. Ensuite plus rien à faire : chaque `git push` que je pousse
-relance la chaîne, et je te préviens quand le serveur doit être redémarré (ça, c'est le seul geste qui
-reste humain).
+- `.github/workflows/build.yml` ← `docs/CI-A-COLLER.yml`
+- `.github/workflows/deploy-serveur.yml` ← `docs/CI-DEPLOY-A-COLLER.yml`
+
+`scripts/verify-ci-copies.py`, appelé par une étape du build, vérifie que ces fichiers ne se contredisent
+pas. Pour les récupérer en texte brut dans le navigateur :
+
+```
+https://github.com/Souxch06/ValoriaTycoon/raw/arena/01a043a8-valoriatycoon/docs/CI-A-COLLER.yml
+https://github.com/Souxch06/ValoriaTycoon/raw/arena/01a043a8-valoriatycoon/docs/CI-DEPLOY-A-COLLER.yml
+```

@@ -35,3 +35,7 @@ __pycache__/
 
 # lien temporaire de l'outillage local (un lien ne matche pas le motif node_modules/)
 node_modules
+
+# manifestes npm de l'outillage local (installe 'dans le depot par erreur', jamais un livrable)
+package.json
+package-lock.json

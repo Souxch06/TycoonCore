@@ -1,4 +1,4 @@
-# Déployer les deux jars
+# Déployer les jars (trois : plugin, économie, multi-outil)
 
 ## Voie « tout automatique » : le dépôt sur le serveur par la CI
 
@@ -7,7 +7,7 @@
 > avec ValoriaTycoon **sans** ValoriaEconomy. Il faut donc, en plus des deux collages ci‑dessous,
 > **neutraliser l'étape SFTP de `deploy.yml`** (supprimer l'étape « Envoyer le plugin sur MCServerHost via
 > SFTP », ou retirer `push:` de son `on:`) et laisser le duo *release → `deploy-serveur.yml`* faire le
-> travail, lui, avec les deux jar et une sauvegarde préalable.
+> travail, lui, avec les trois jar et une sauvegarde préalable.
 
 Le dépôt n'est déclenché que depuis `main` (`if: github.ref == 'refs/heads/main'` sur l'étape qui publie
 la release) : une branche en cours ne peut donc pas mettre le serveur à jour d'un état non mergé ; ses
@@ -20,7 +20,7 @@ peut pas écrire — permission `workflows` refusée par GitHub, vérifiée quat
 | coller dans | contenu à coller | effet |
 | --- | --- | --- |
 | `.github/workflows/build.yml` | `docs/CI-A-COLLER.yml` | build + contrôles + **publication de la release `build-latest`** (qui déclenche le déploiement) |
-| `.github/workflows/deploy-serveur.yml` (nouveau fichier) | `docs/CI-DEPLOY-A-COLLER.yml` | **télécharge les deux jar de la release, vérifie leur contenu, les dépose sur le serveur** via les secrets SFTP déjà en place, avec sauvegarde préalable dans `plugins/_sauvegarde-<horodatage>/` |
+| `.github/workflows/deploy-serveur.yml` (nouveau fichier) | `docs/CI-DEPLOY-A-COLLER.yml` | **télécharge les trois jar de la release, vérifie leur contenu, les dépose sur le serveur** via les secrets SFTP déjà en place, avec sauvegarde préalable dans `plugins/_sauvegarde-<horodatage>/` |
 
 Circulation : `git push` → build vert → release `build-latest` réécrite → **workflow de déploiement
 déclenché par la release** → serveur à jour. Aucune étape manuelle, et le déploiement ne peut partir
@@ -40,7 +40,7 @@ Sécurité intégrée (dans `scripts/ci-release-and-deploy.sh`, testé ici hors 
 | voie | comment |
 | --- | --- |
 | **Release permanente** | https://github.com/Souxch06/ValoriaTycoon/releases/tag/build-latest → les deux `.jar` en téléchargement direct, sans jamais expirer. Actif dès que le workflow collé contient l'étape « Publier les JAR sur la release `build-latest` » (elle est dans `docs/CI-A-COLLER.yml`) |
-| **Artefact du run** | https://github.com/Souxch06/ValoriaTycoon/actions/workflows/build.yml → dernière ligne verte → en bas, **Artifacts → ValoriaTycoon-jar** (zip des deux jars, expire au bout de 90 jours) |
+| **Artefact du run** | https://github.com/Souxch06/ValoriaTycoon/actions/workflows/build.yml → dernière ligne verte → en bas, **Artifacts → ValoriaTycoon-jar** (zip des trois jars, expire au bout de 90 jours) |
 | **Build local** | `mvn -B clean package` puis `target/ValoriaTycoon-v1.6.3.jar` + `target/ValoriaEconomy-v1.6.3.jar` |
 
 Ce que l'agent **ne peut pas** faire, mesuré : rapatrier les octets. Les trois domaines de fichiers de

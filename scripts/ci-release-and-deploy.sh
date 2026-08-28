@@ -25,8 +25,10 @@ VERSION="${PROJECT_VERSION:-1.6.3}"
 TAG="${RELEASE_TAG:-build-latest}"
 MAIN_JAR="target/ValoriaTycoon-v${VERSION}.jar"
 ECONOMY_JAR="target/ValoriaEconomy-v${VERSION}.jar"
-# Le multi-outil est OPTIONNEL a ce niveau : un serveur qui n'a pas encore le troisieme jar ne doit
-# pas voir son deploiement bloque. Present => publiere et envoye ; absent => ignore, et le log le dit.
+# Le multi-outil est optionnel a la PUBLICATION (une branche qui ne le construit pas ne doit pas etre
+# bloquee), mais OBLIGATOIRE au DEPOT : un serveur qui reçoit le plugin et son economie sans son outil se
+# retrouve avec un fichier `tools.yml` orphelin, et personne ne s'en apercoit avant le premier mineur qui
+# dit « mon multi-outil n'existe plus ». Le script refuse donc l'envoi, il ne complete pas en douce.
 TOOLS_JAR="target/ValoriaTools-v${VERSION}.jar"
 PLUGINS_DIR="${SFTP_PLUGINS_DIR:-plugins}"
 DEPLOY="${DEPLOY:-0}"
@@ -37,11 +39,20 @@ JAR_NAMES=()
 say() { printf '%s\n' "$*"; }
 die() { printf 'ERREUR: %s\n' "$*" >&2; exit 1; }
 
-# ------------------------------------------------------------------ 1. les deux jars, ou rien
+# ------------------------------------------------------------------ 1. les trois jars, ou rien
 JARS=("$MAIN_JAR" "$ECONOMY_JAR")
-[ -f "$TOOLS_JAR" ] && JARS+=("$TOOLS_JAR") || say "info: $(basename "$TOOLS_JAR") absent du build — non publie (ValoriaTools optionnel)"
+if [ -f "$TOOLS_JAR" ]; then
+  JARS+=("$TOOLS_JAR")
+elif [ "$DEPLOY" = "1" ]; then
+  die "$(basename "$TOOLS_JAR") absent : le depot refuse de n'envoyer que deux jar sur trois.
+Soit la release $TAG ne contient pas le multi-outil (la relancer depuis main), soit le build n'a pas
+execute l'assemblage `tools-plugin-jar` (verifier que .github/workflows/build.yml est bien la version
+17 etapes de docs/CI-A-COLLER.yml, pas une copie plus ancienne)."
+else
+  say "info: $(basename "$TOOLS_JAR") absent du build — non publie (mode publication)"
+fi
 for jar in "${JARS[@]}"; do
-  [ -f "$jar" ] || die "$jar absent — lancer d'abord « mvn -B clean package » (le build doit produire les DEUX jars)"
+  [ -f "$jar" ] || die "$jar absent — lancer d'abord « mvn -B clean package » (le build doit produire les TROIS jars)"
 done
 for jar in "${JARS[@]}"; do
   size=$(stat -c %s "$jar")
@@ -55,8 +66,8 @@ done
 mkdir -p target
 sha256sum "${JARS[@]}" > target/SHA256SUMS.txt
 
-# ------------------------------------------------------------------ 2. la release permanente
-NOTES="Construit par le workflow de validation (15 etapes : compilation des 21 fichiers maintenus, surface publique, contenu des deux jars, absence de toute API tierce).
+# ------------------------------------------------------------------ 2. la release permanente (declencheur du depot)
+NOTES="Construit par le workflow de validation (17 etapes : compilation des 33 fichiers maintenus, surface publique, contenu des trois jars, absence de toute API tierce).
 
 | fichier | octets | role |
 | --- | --- | --- |
@@ -128,7 +139,7 @@ if [ "$DRY_RUN" = "1" ]; then
   exit 0
 fi
 
-say "sauvegarde des jar en place dans $PLUGINS_DIR/_sauvegarde-$STAMP, puis envoi des deux jar…"
+say "sauvegarde des jar en place dans $PLUGINS_DIR/_sauvegarde-$STAMP, puis envoi des ${#JARS[@]} jar…"
 printf '%s\n' "${REMOTE_CMDS[@]}" "put ${JARS[*]} $PLUGINS_DIR/" "bye" \
   | "${SFTP[@]}" >/dev/null 2>&1 || die "session SFTP en echec (reseau, droits, ou serveur en cours de demarrage)"
 

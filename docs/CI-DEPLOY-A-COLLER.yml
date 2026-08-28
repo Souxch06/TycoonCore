@@ -1,12 +1,14 @@
-name: Release et déploiement automatique
+name: Release et déploiement automatique (trois jar)
 
 # Voie « tout automatique » : à chaque RELEASE GitHub (tag `build-latest` publié par le workflow de
-# validation), ce workflow retélécharge les deux jar depuis les artefacts du run vérifié, puis les
-# dépose sur le serveur — avec sauvegarde préalable et contrôle de taille octet par octet.
+# validation), ce workflow retélécharge les TROIS jar de la release, vérifie leur contenu, puis les
+# dépose sur le serveur — sauvegarde préalable dans `plugins/_sauvegarde-<UTC>/` et contrôle de taille
+# octet pour octet après envoi.
 #
 # Pourquoi un workflow séparé : `deploy.yml` se déclenche sur `push: main` et pousse un seul jar ; ce
-# fichier-ci se déclenche sur un événement explicite (la release) et pousse les DEUX, ce qui est la
-# condition pour que le serveur ne se retrouve jamais avec le plugin sans son économie.
+# fichier-ci se déclenche sur un événement explicite (la release) et pousse les TROIS — condition pour
+# que le serveur ne se retrouve jamais avec le plugin sans son économie, ni l'un et l'autre sans leur
+# multi-outil.
 #
 # Il ne contient AUCUNE commande de build : il fait confiance au run déjà vert (artefact + 14 contrôles).
 # Un `workflow_dispatch` manuel permet un déploiement à la demande, avec `dry_run` pour vérifier
@@ -28,7 +30,7 @@ on:
 
 jobs:
   deploy:
-    name: Déposer les deux jar sur le serveur
+    name: Déposer les trois jar sur le serveur
     runs-on: ubuntu-latest
     # Sur un événement `release`, on ne déploie que la release marquée « dernière version vérifiée » :
     # publier une release de test ne doit pas écraser le serveur.
@@ -60,6 +62,9 @@ jobs:
           # Le nom attend est pose par le pom (<finalName> de maven-jar-plugin et de l'assembleur).
           test -f target/ValoriaTycoon-v1.6.3.jar
           test -f target/ValoriaEconomy-v1.6.3.jar
+          # Le troisieme jar est exige ici, pas « optionnel » : le serveur ne doit jamais recevoir le
+          # plugin et son economie sans le multi-outil qui va avec.
+          test -f target/ValoriaTools-v1.6.3.jar
 
       - name: Vérifier l'intégrité avant envoi
         run: |
@@ -75,7 +80,12 @@ jobs:
                                "module-info.class")),
                              ("target/ValoriaEconomy-v1.6.3.jar",
                               ("xyz/arcadiadevs/valoriaeconomy/ValoriaEconomy.class",
-                               "plugin.yml"))):
+                               "plugin.yml")),
+                             ("target/ValoriaTools-v1.6.3.jar",
+                              ("xyz/arcadiadevs/valariatools/ToolListener.class",
+                               "xyz/arcadiadevs/valariatools/ToolStats.class",
+                               "plugin.yml",
+                               "config.yml"))):
               try:
                   names = set(zipfile.ZipFile(path).namelist())
               except Exception as error:
