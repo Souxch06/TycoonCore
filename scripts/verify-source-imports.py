@@ -263,6 +263,50 @@ def check_banned_calls(files) -> list:
     return problems
 
 
+# Hierarchie utilisee pour refuser un multi-catch de types lies (`catch (A | B)` est une ERREUR de
+# compilation quand B hérite de A) : c'est l'erreur qui a fait echouer le build #33155459331, deux fois
+# (`HologramPool`, puis `HologramStore`) parce que la regle n'etait pas controlee.
+EXCEPTION_PARENTS = {
+    "IllegalArgumentException": "RuntimeException", "IllegalStateException": "RuntimeException",
+    "NumberFormatException": "IllegalArgumentException", "IndexOutOfBoundsException": "RuntimeException",
+    "ArrayIndexOutOfBoundsException": "IndexOutOfBoundsException", "ClassCastException": "RuntimeException",
+    "ConcurrentModificationException": "RuntimeException", "NullPointerException": "RuntimeException",
+    "ArithmeticException": "RuntimeException", "UnsupportedOperationException": "RuntimeException",
+    "InterruptedException": "Exception", "ReflectiveOperationException": "Exception",
+    "InvocationTargetException": "ReflectiveOperationException", "NoSuchMethodException": "ReflectiveOperationException",
+    "IllegalAccessException": "ReflectiveOperationException", "ClassNotFoundException": "ReflectiveOperationException",
+    "IOException": "Exception", "FileNotFoundException": "IOException", "MalformedURLException": "IOException",
+    "NoSuchFileException": "IOException", "AtomicMoveNotSupportedException": "IOException",
+    "LinkageError": "Error", "NoClassDefFoundError": "LinkageError", "NoSuchMethodError": "LinkageError",
+    "RuntimeException": "Exception", "Exception": "Throwable",
+}
+
+
+def ancestors(name: str):
+    yield name
+    seen = {name}
+    while name in EXCEPTION_PARENTS and name not in seen:
+        name = EXCEPTION_PARENTS[name]
+        seen.add(name)
+        yield name
+
+
+def check_multi_catch(files) -> list:
+    problems = []
+    for path in files:
+        code = re.sub(r"//[^\n]*", "", strip_noise(path.read_text(encoding="utf-8")))
+        for m in re.finditer(r"catch\s*\(\s*([\w.]+(?:\s*\|\s*[\w.]+)+)\s+[\w]+\s*\)", code):
+            types = [t.strip().rsplit(".", 1)[-1] for t in m.group(1).split("|")]
+            for i in range(len(types)):
+                for j in range(i + 1, len(types)):
+                    if types[j] in set(ancestors(types[i])) or types[i] in set(ancestors(types[j])):
+                        line = code[:m.start()].count("\n") + 1
+                        problems.append(f"{path.relative_to(ROOT)}:{line}: catch ({' | '.join(types)}) — "
+                                        f"`{types[i]}` et `{types[j]}` sont lies par l'heritage, "
+                                        "interdit dans un multi-catch")
+    return problems
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--all", action="store_true", help="controler aussi tout sources/plugin (informatif)")
@@ -276,7 +320,7 @@ def main() -> int:
     if args.all:
         files = sorted(set(files) | set((SOURCES / "plugin").rglob("*.java")))
 
-    banned = check_banned_calls(files)
+    banned = check_banned_calls(files) + check_multi_catch(files)
     all_problems, all_soft = [], []
     for path in files:
         hard, warnings = check_file(path, known)
@@ -287,9 +331,11 @@ def main() -> int:
     if banned:
         for b in banned[:20]:
             print(f"ERREUR: {b}", file=sys.stderr)
-        print(f"{len(banned)} appel(s) d'API a ne pas citer en dur.", file=sys.stderr)
+        print(f"{len(banned)} motif(s) a corriger (appels d'API en dur, multi-catch illégaux).",
+              file=sys.stderr)
         return 1
-    print(f"API fragiles : aucun des {len(BANNED_CALLS)} appels interdits en dur.")
+    print(f"API fragiles et multi-catch : aucun des {len(BANNED_CALLS)} appels interdits, "
+          "aucun catch de types lies.")
     if all_soft:
         print(f"(style) {len(all_soft)} type(s) de java.util/jdk cites sans import explicite : "
               "resolus par le classpath, non bloquants")

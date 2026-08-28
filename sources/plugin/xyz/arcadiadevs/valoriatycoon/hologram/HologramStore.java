@@ -140,8 +140,8 @@ final class HologramStore {
         java.util.UUID id;
         try {
             id = java.util.UUID.fromString(unescape(parts[0]));
-        } catch (IllegalArgumentException | RuntimeException malformed) {
-            return null;
+        } catch (RuntimeException malformed) {   // UUID.fromString leve un IllegalArgumentException
+            return null;                          // (une RuntimeException) : un multi-catch serait illégal
         }
         String worldName = unescape(parts[1]);
         double x;
