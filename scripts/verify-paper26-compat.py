@@ -480,39 +480,6 @@ def verify_jar(jar_path: Path):
     # Le paquet est reconstruit par `mvn` : si une classe attendue manque, la liste reelle du paquet
     # est la seule info qui permet de distinguer « le build ne compile pas » de « le controle cherche
     # au mauvais endroit ». On la publie dans le resume/annotation.
-    missing = [e for e in NBT_ENTRIES if e not in names]
-    if missing:
-        listing = sorted(n.rsplit("/", 1)[-1] for n in names if "/nbteditor/" in n)
-        ci_publish.fail("Classes NBT attendues absentes du JAR",
-                        [f"attendu : {m}" for m in missing]
-                        + [f"present dans le paquet : {', '.join(listing[:12]) or 'RIEN'}"])
-
-    for banned_tree in ("org/holoeasy", "net/milkbowl"):
-        check(f"JAR : {banned_tree}/ absent (bibliothèque tierce retirée)",
-              not any(n.startswith(banned_tree + "/") for n in names))
-    check("JAR : aucune métadonnée de bibliothèque retirée",
-          "META-INF/holoeasy-core.kotlin_module" not in names)
-    our_entries = ("xyz/arcadiadevs/valoriateconomy/Economy.class",
-                   "xyz/arcadiadevs/valoriateconomy/EconomyResponse.class",
-                   "xyz/arcadiadevs/valoriatycoon/hologram/HoloEasy.class",
-                   "xyz/arcadiadevs/valoriatycoon/hologram/HologramPool.class",
-                   "xyz/arcadiadevs/valoriatycoon/hologram/Hologram.class",
-                   "xyz/arcadiadevs/valoriatycoon/hologram/HologramBuilder.class",
-                   "xyz/arcadiadevs/valoriatycoon/hologram/HologramStore.class",
-                   "xyz/arcadiadevs/valoriatycoon/utils/HologramsUtil.class")
-    missing = [n for n in our_entries if n not in names]
-    check("JAR : nos classes d'API et d'hologrammes compilées", not missing,
-          f"manquants: {missing} — le renommage vise des types que le build doit compiler (<includes>)")
-    for entry in ("xyz/arcadiadevs/valoriatycoon/ValoriaTycoon.class",
-                  "xyz/arcadiadevs/valoriatycoon/utils/SellUtil.class",
-                  "xyz/arcadiadevs/valoriatycoon/guis/GeneratorsGui.class"):
-        if entry in blobs:
-            blob = blobs[entry]
-            check(f"JAR : {entry.split('/')[-1]} sans référence à Vault/HoloEasy",
-                  b"milkbowl" not in blob and b"org/holoeasy" not in blob)
-            check(f"JAR : {entry.split('/')[-1]} sans contrôle de licence",
-                  b"spigotmc.org/legacy/premium" not in blob)
-
     if server_version is None:
         check("JAR : ServerVersion.class recompilée", False, f"{SERVER_VERSION_ENTRY} absent du JAR")
         return

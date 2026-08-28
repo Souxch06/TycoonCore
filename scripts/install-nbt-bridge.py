@@ -165,7 +165,9 @@ def check_jar(jar_path: Path, problems: list):
             "io.github.bananapuncher714.nbteditor.LegacyNbtBridge": "repli vers l'implementation historique",
             "getPersistentDataContainer": "acces au conteneur PDC",
             "valueOf": "desambiguisation des surcharges du conteneur",
-            "java.lang.invoke.MethodHandles": "manipulation du conteneur sans dependance de compilation",
+            # forme INTERNE (barres obliques) : c'est ainsi que javac ecrit un CONSTANT_Class, un
+            # `java.lang.invoke.MethodHandles` en points ne peut pas exister dans un constant-pool.
+            "java/lang/invoke/MethodHandles": "manipulation du conteneur sans dependance de compilation",
         }
         missing = [f"{name} ({why})" for name, why in contract.items() if name not in pool]
         if missing:
