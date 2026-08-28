@@ -218,6 +218,21 @@ def verify_tree():
             kids = {c.tag.split("}")[-1] for c in root_tag}
             formats = [f.text.strip() for f in root_tag.iter() if f.tag.endswith("}format") and f.text]
             check("src/assembly/economy.xml : XML valide et racine <assembly>", stripped == "assembly")
+            # Liste des elements autorises enfant de <assembly>, relevee dans le XSD officiel
+            # content/resources/xsd/assembly-2.1.0.xsd du depot apache/maven-site (verifiee en ligne :
+            # `finalName` n'y figure PAS, d'ou l'echec du build #33155795647).
+            ASSEMBLY_CHILDREN = {
+                "id", "formats", "format", "includeBaseDirectory", "includeSiteDirectory",
+                "baseDirectory", "file", "files", "fileSet", "fileSets", "dependencySet",
+                "dependencySets", "moduleSet", "moduleSets", "repository", "repositories",
+                "componentDescriptor", "componentDescriptors", "containerDescriptorHandler",
+                "containerDescriptorHandlers",
+            }
+            foreign = sorted({c.tag.split("}")[-1] for c in root_tag} - ASSEMBLY_CHILDREN)
+            check("src/assembly/economy.xml : uniquement des elements connus du schema 2.1.0",
+                  not foreign,
+                  f"element(s) hors XSD: {foreign} — maven-assembly-plugin echoue a la LECTURE du "
+                  "descripteur, sans detail, avant meme de compiler")
             check("src/assembly/economy.xml : pas de <finalName> au niveau racine",
                   "finalName" not in kids,
                   "l'XSD ne definit finalName QUE comme enfant de <format> (assemblage multi-formats) ; "

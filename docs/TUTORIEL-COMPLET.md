@@ -19,6 +19,9 @@
 
 ## Étape 1 — Coller le fichier de build (obligatoire, 2 minutes)
 
+> **Une seule fois, ensuite plus rien** : le fichier collé contient `push:` dans `on:`, donc chaque
+> push de l'agent relance le build automatiquement. Tu n'auras plus à cliquer « Run workflow ».
+
 **1.1** Ouvre ce lien, il ouvre GitHub sur « créer un fichier » avec tout déjà rempli :
 
 ```

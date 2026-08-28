@@ -17,6 +17,12 @@ name: Build and Validate ValoriaTycoon
 # verify-paper26-compat.py) s'exécutent aussi bien en local, sans JDK ni réseau.
 
 on:
+  # `push:` est la ligne qui compte pour l'humain : chaque push sur la branche relance le build sans
+  # clic. `pull_request` valide la PR ; `workflow_dispatch` permet un run a la demande. Aucun de ces
+  # declencheurs ne deploie : le SFTP reste dans deploy.yml, reserve a main.
+  push:
+    branches-ignore:
+      - main
   pull_request:
   workflow_dispatch:
 
