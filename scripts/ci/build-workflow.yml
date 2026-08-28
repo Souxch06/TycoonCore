@@ -55,6 +55,11 @@ jobs:
         # multiplie en ~110 erreurs javac. Ce controle le voit avant Maven.
         run: python3 scripts/verify-source-imports.py
 
+      - name: Vérifier que les clés de configuration sont des littéraux
+        # Le build #33174591321 a echoue pour une cle devenue un identifiant (`sell.min-value`) : les
+        # guillemets avaient ete manges par le shell lors d'un correctif. Ce controle le voit sans CI.
+        run: python3 scripts/check-config-literals.py --quiet
+
       - name: Vérifier la cohérence de l'extraction
         run: python3 scripts/verify-extraction.py
 

@@ -238,21 +238,21 @@ public final class ToolsConfig {
         config.namespaces.addAll(section.getStringList("matches.namespaces"));
         config.maxTier = Math.max(1, section.getInt("upgrade.max-tier", 5));
         config.sellMultiplier = section.getDouble("sell.multiplier", this.sellMultiplier);
-        config.sellMinValue = section.getDouble(sell.min-value, this.sellMinValue);
-        ConfigurationSection prices = section.getConfigurationSection(sell.prices);
+        config.sellMinValue = section.getDouble("sell.min-value", this.sellMinValue);
+        ConfigurationSection sellPrices = section.getConfigurationSection("sell.prices");
         config.sellPrices.clear();
-        if (prices != null) {
-            for (String key : prices.getKeys(false)) {
-                double value = number(prices.get(key), Double.NaN);
+        if (sellPrices != null) {
+            for (String key : sellPrices.getKeys(false)) {
+                double value = number(sellPrices.get(key), Double.NaN);
                 if (Double.isFinite(value) && value >= 0.0D) {
                     config.sellPrices.put(key.trim().toLowerCase(Locale.ROOT), Double.valueOf(value));
                 }
             }
         }
-        List<?> prices = section.getList("upgrade.prices");
+        List<?> tierPrices = section.getList("upgrade.prices");
         config.prices.clear();
-        if (prices != null) {
-            for (Object price : prices) {
+        if (tierPrices != null) {
+            for (Object price : tierPrices) {
                 double value = number(price, Double.NaN);
                 if (Double.isFinite(value) && value >= 0.0D) {
                     config.prices.add(Double.valueOf(value));

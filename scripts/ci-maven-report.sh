@@ -204,6 +204,7 @@ PY
 EXTRA=""
 for check in "python3 scripts/verify-source-imports.py" \
              "python3 scripts/verify-tools-config.py --quiet" \
+             "python3 scripts/check-config-literals.py --quiet" \
              "python3 scripts/verify-paper26-compat.py" \
              "python3 scripts/verify-economy-api.py" \
              "python3 scripts/selfmade-api-patch.py --check" \
