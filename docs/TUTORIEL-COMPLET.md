@@ -201,6 +201,26 @@ seule vraie ceinture.
 3. **Après une modif de `artifacts/extracted/`** : relancer `python3 scripts/build-reference-jar.py`
    (le build échoue si ce jar de classpath est obsolète — c'est voulu).
 
+## Annexe — lire une erreur de build sans rien copier (mode « annotations »)
+
+Le journal brut d'un job GitHub Actions est servi par un stockage externe (Azure) et n'est pas
+toujours accessible ; le **commentaire** d'une PR peut être refusé silencieusement par les réglages du
+dépôt. Le canal qui marche toujours, lui, est celui des **annotations** : les erreurs que publie
+`scripts/ci-maven-report.sh` apparaissent
+
+- sous l'étape rouge, dans l'onglet du job (bloc « Rapports d'erreurs »),
+- dans le **rÉsumÉ de l'exécution** (haut de la page du job),
+- et via l'API `GET /repos/{owner}/{repo}/check-runs/{job_id}/annotations`, sans permission spéciale.
+
+Prérequis une seule fois : dans `.github/workflows/build.yml`, la ligne `contents: read` doit devenir
+`contents: write` (elle ne sert qu'au repli « commit du rapport », et à rien d'autre — aucune étape ne
+déploie).
+
+Pour relancer le build sur le dernier commit de la branche, il faut **un nouvel événement** (un re-run
+rejoue l'ancien commit) : soit **Actions → Build and Validate → Run workflow**, soit un nouveau push sur
+la branche — et si le workflow est encore vierge de tout run, un **push ouvert une PR** suffit (l'événement
+`pull_request` le déclenche et enregistre le workflow).
+
 ## Où lire la suite, dans le dépôt
 
 - `docs/TUTORIEL-PAPER-26.md` — pourquoi Paper 26.2 cassait tout, et ce qui a été réparé.
