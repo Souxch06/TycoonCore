@@ -70,11 +70,12 @@ jobs:
 
       - name: Vérifier la surface publique et la grammaire des sources (sans JDK)
         # Le parseur Java signale ce que javac signalerait plus tard : methode renommee, type change,
-        # parenthesse orpheline. `parse-java.mjs` couvre en plus les sources ecrites ici (ValoriaTools).
+        # parenthèse orpheline. `parse-java.mjs` couvre en plus les sources ecrites ici (ValoriaTools).
         run: |
           npm install --no-save java-parser@3
           node scripts/check-sources-java.mjs
-          node scripts/parse-java.mjs sources/tools
+          node scripts/parse-java.mjs --from-pom
+          bash scripts/selftest-parse-java.sh
 
       - name: Vérifier la configuration du multi-outil (ValoriaTools)
         # Apres l'etape node: le controle des types de signatures s'appuie sur java-parser.

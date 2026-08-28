@@ -309,7 +309,7 @@ public final class ToolsCommand implements CommandExecutor, TabCompleter {
         return out;
     }
 
-    private static void add(List<String> out, String name, String help, boolean allowed) {
+    private static void add(List<String> out, String name, boolean allowed) {
         if (allowed) {
             out.add(name);
         }

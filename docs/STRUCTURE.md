@@ -210,6 +210,19 @@ Les deux règles :
 2. si le fichier manque, le restaurer **à la main** depuis `docs/CI-A-COLLER.yml` (contenu exact), puis
    vérifier dans *Actions* que **« Build and Validate ValoriaTycoon »** est bien listé dans la colonne de gauche.
 
+## Auto-test des contrôles (`tests/java-selftest/`)
+
+Deux fixtures et un lanceur (`scripts/selftest-parse-java.sh`) : `good/` ne doit lever **aucun**
+signal, `bad/` doit lever **exactement** ses deux fautes (accesseur lu comme un champ inexistant,
+doublon de variable dans le même bloc). C'est la parade au défaut rencontré deux fois ici : un contrôle
+qui ne voit plus rien affiche « tout vert » — pire qu'absence de contrôle, parce qu'il rassure. La
+règle 2 a d'ailleurs eu une faille réelle détectée par ce fixture (un champ absent était accepté dès
+qu'une *méthode* portait le même nom) — d'où la séparation `fieldNames` / `methodNames` selon la
+présence de `(`.
+
+`scripts/parse-java.mjs --from-pom` lit sa liste de fichiers dans le `<includes>` du pom : la liste
+contrôlée ne peut donc pas rester en retard quand un fichier est ajouté au build.
+
 ## CI de validation
 
 `scripts/ci/build-workflow.yml` contient le workflow de validation des Pull Requests (compilation,

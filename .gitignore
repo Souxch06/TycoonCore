@@ -29,3 +29,6 @@ node_modules/
 # Caches des scripts de verification
 __pycache__/
 *.pyc
+
+# Brouillon local de l'agent (jamais commiter)
+.cache/

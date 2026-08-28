@@ -166,6 +166,25 @@ public final class ToolsConfig {
             this.material = material;
             this.displayName = null;
         }
+
+        /** Le matériau qui sert d'icône à l'âme (pioche → son item de pioche, etc.). */
+        public Material material() {
+            return this.material;
+        }
+
+        public ToolKind kind() {
+            return this.kind;
+        }
+
+        /** Nombre de paliers payables : `max-tier - 1`, le palier 1 étant offert. */
+        public int payableTiers() {
+            return Math.max(0, this.maxTier - 1);
+        }
+
+        /** Vrai si cette âme déclare au moins un prix de revente. */
+        public boolean hasSellPrices() {
+            return !this.sellPrices.isEmpty();
+        }
     }
 
     private final JavaPlugin plugin;
@@ -440,20 +459,6 @@ public final class ToolsConfig {
     /** Le réservoir de trésors de la pêche, déclaré par le admin (jamais la table privée du serveur). */
     public List<String> treasureItems() {
         return Collections.unmodifiableList(this.plugin.getConfig().getStringList("tool.treasure.items"));
-    }
-
-    /** L'âme doit-elle une icône au matériau configuré (pioche → item de pioche, etc.). */
-    public Material material() {
-        return this.material;
-    }
-
-    public ToolKind kind() {
-        return this.kind;
-    }
-
-    /** Le nombre de paliers payables (max-tier - 1, le palier 1 étant gratuit). */
-    public int payableTiers() {
-        return Math.max(0, this.maxTier - 1);
     }
 
     /** Prix de revente d'un matériau pour cette âme, ou {@code < 0} si le admin ne l'a pas déclaré. */
