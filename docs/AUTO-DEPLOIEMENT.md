@@ -89,3 +89,16 @@ SFTP qui **serait** jouée, sans rien envoyer. Décoche `dry_run` quand tu veux 
   et l'artefact du run contient les trois jar (téléchargement manuel) ;
 - plus rien ne se déploie → vérifie d'abord que `deploy.yml` n'a plus de `push:` (B.1) : c'est le seul
   endroit où les deux pipelines se marchent dessus.
+
+## Pourquoi `.github/workflows` n'est pas modifie depuis une branche
+
+Un run de `pull_request` est joue sur le *merge ref* : la copie de `main` s'y trouve, avec ses propres
+fichiers de workflow. Une regle qui interdirait « un workflow dans le dépôt » se retourne donc en faux
+positif contre la branche la plus propre du monde — et un controle qui crie sur un code correct est
+ignore des la deuxieme fois, ce qui pis que rien. La seule chose que la branche tienne a garantir est
+dans `docs/` : **un contenu collable par workflow**, et les pointeurs vides dans `docs/paste/`.
+
+Le corollaire pratique : `.github/workflows/deploy.yml` reste intact sur la branche (identique a la base)
+et se neutralise **sur `main`**, en collant `docs/paste/deploy-neutralise.yml`. Modifier ce fichier des
+deux cotes cree un conflit `modify/delete`, et un conflit sur ce fichier-la veut dire « le serveur attend
+toujours ses jar ».
