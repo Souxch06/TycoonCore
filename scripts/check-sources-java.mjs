@@ -391,6 +391,20 @@ const CONTRACTS = [
     mustNotContain: ['net.minecraft', 'System.out', 'printStackTrace'],
   },
   {
+    file: 'sources/tools/xyz/arcadiadevs/valariatools/ToolStats.java',
+    why: "les compteurs sont ecrits au meme endroit que le paiement ; ecriture atomique ; aucun nul enregistre",
+    methods: [
+      { name: 'load', returns: 'void', arity: 0, static: false },
+      { name: 'save', returns: 'void', arity: 0, static: false },
+      { name: 'gesture', returns: 'void', arity: 4, static: false },
+      { name: 'money', returns: 'void', arity: 3, static: false },
+      { name: 'top', returns: 'List', arity: 3, static: false },
+      { name: 'total', returns: 'long', arity: 2, static: false },
+    ],
+    mustContain: ['ATOMIC_MOVE', 'stats.yml', 'this.dirty', 'static Metric parse', 'Collections.sort'],
+    mustNotContain: ['net.minecraft', 'System.out', 'printStackTrace'],
+  },
+  {
     file: 'sources/tools/xyz/arcadiadevs/valariatools/EconomyService.java',
     why: "la banque est atteinte par reflexion : aucun import d'API de banque, sinon le plugin meurt sans elle",
     methods: [

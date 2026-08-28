@@ -38,6 +38,7 @@ public final class ValoriaTools extends JavaPlugin {
 
     private ToolsConfig toolsConfig;
     private ToolStore store;
+    private ToolStats stats;
     private EconomyService economy;
     private BlockMatcher matcher;
     private Abilities abilities;
@@ -53,6 +54,9 @@ public final class ValoriaTools extends JavaPlugin {
         this.toolsConfig.load();
         this.store = new ToolStore(this);
         this.store.load();
+        this.stats = new ToolStats(this);
+        this.stats.enabled(getConfig().getBoolean("stats.enabled", true));
+        this.stats.load();
         this.economy = new EconomyService(this);
         this.matcher = new BlockMatcher(this, this.toolsConfig);
         this.abilities = new Abilities(this, this.matcher, this.toolsConfig);
@@ -100,6 +104,9 @@ public final class ValoriaTools extends JavaPlugin {
         if (this.store != null) {
             this.store.save();
         }
+        if (this.stats != null) {
+            this.stats.save();
+        }
         instance = null;
     }
 
@@ -108,9 +115,16 @@ public final class ValoriaTools extends JavaPlugin {
         if (this.store != null) {
             this.store.save();
         }
+        if (this.stats != null) {
+            this.stats.save();
+        }
         super.reloadConfig();
         this.toolsConfig.load();
         this.store.load();
+        if (this.stats != null) {
+            this.stats.enabled(getConfig().getBoolean("stats.enabled", true));
+            this.stats.load();
+        }
         this.matcher = new BlockMatcher(this, this.toolsConfig);
         this.abilities = new Abilities(this, this.matcher, this.toolsConfig);
         this.sellWarnings.clear();
@@ -160,6 +174,11 @@ public final class ValoriaTools extends JavaPlugin {
 
     public ToolStore store() {
         return this.store;
+    }
+
+    /** Les compteurs de ce que l'outil a rapporté (menu, /tools top, diagnostic d'équilibrage). */
+    public ToolStats stats() {
+        return this.stats;
     }
 
     public EconomyService economy() {
@@ -225,7 +244,7 @@ public final class ValoriaTools extends JavaPlugin {
         return description == null ? "ValoriaTools" : description.getFullName();
     }
 
-    /** Le fichier de paliers est écrit à chaud : on le sauvegarde aussi périodiquement. */
+    /** Les fichiers de paliers et de mesures sont écrits à chaud : on les sauvegarde périodiquement. */
     public void saveSoon() {
         if (this.store == null) {
             return;
@@ -235,6 +254,9 @@ public final class ValoriaTools extends JavaPlugin {
             @Override
             public void run() {
                 store.save();
+                if (stats != null) {
+                    stats.save();
+                }
             }
         }.runTaskLater(this, 40L);
     }

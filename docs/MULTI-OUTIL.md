@@ -45,9 +45,12 @@ niveau courant et au niveau suivant, le prix, et le palier requis si elle est ve
 ## Commandes
 
 ```
-/tools                                     ouvre le menu
-/tools give [joueur] [palier]              reçoit l'outil
+/tools [âme]                               ouvre le menu (eventuellement sur une âme)
+/tools buy                                 achète l'outil au prix de `tool.price`
+/tools give [joueur] [palier]              reçoit l'outil (administration)
 /tools sell [all]                          vend ce que l'outil reconnaît
+/tools top [mesure] [âme] [n]              classement : blocs, cultures, arbres, poissons, kills, argent, niveaux
+/tools aide <capacité>                     fiche d'une capacité (nom du wiki, id ou noyau)
 /tools set <joueur> <âme> [palier]         voir / forcer un palier          (admin)
 /tools ability <joueur> <âme> <capacité> [niveau]   régler une capacité      (admin)
 /tools reset <joueur> [âme]                remettre une âme à zéro           (admin)
@@ -115,6 +118,37 @@ Règles communes, appliquées par `ToolsConfig.Effect` et non par chaque noyau :
 
 Le contrôle de config refuse toute valeur de `jobs.*` absente des tableaux recopiés dans
 `docs/WIKI-GENTYCOON-OUTILS.md` : un prix inventé ne peut pas se faire passer pour « le barème du serveur ».
+
+## Ce que l'outil mesure (`stats.yml`)
+
+| mesure | quand elle compte | à quoi elle sert |
+| --- | --- | --- |
+| `blocks` | chaque bloc cassé par l'outil (filon, zone, arbre compris) | `/tools top blocs`, équilibrage |
+| `crops` | chaque culture récoltée (mûre, sinon rien n'est cassé) | classement Fermier |
+| `trees` | **un par abattage**, pas par bloc de tronc | classement Bûcheron |
+| `fish` | une par prise (le bonus de Tsunami est payé, pas compté comme prise de plus) | classement Pêcheur |
+| `kills` | une par mort causée avec l'âme épée | classement Chasseur |
+| `money` | l'argent réellement crédité (vente à la casse, pochettes, butins, métier) | ce qui intéresse le tycoon |
+| `levels` | les niveaux de capacité payés en jeu | « qui a tout maxé » |
+
+Les compteurs sont incrémentés **au même endroit que le paiement** (dans `ToolListener`, événement déjà
+annulé) : un drop compté ailleurs serait compté deux fois, ou pas du compte après un reload. Un joueur à
+zéro n'a pas de section dans le fichier, et `stats.enabled: false` désactive toute la mesure sans toucher
+au reste — le classement n'est qu'un affichage, jamais une condition de fonctionnement.
+
+## Acheter l'outil, et où il a le droit d'agir
+
+- `tool.price` (0 par défaut) : `/tools buy` retire ce montant et donne l'outil. À 0, la commande devient
+  un give — un serveur qui n'a pas encore calé son économie ne doit pas être bloqué par notre tarif, mais
+  il ne doit pas non plus être forcé à distribuer l'outil : c'est `buy` qui est ouvert aux joueurs,
+  `give` reste l'outil de l'administration.
+- `tools.allowed-worlds` (vide = tous) : hors liste, l'outil ne casse rien, ne pêche rien, ne tue rien,
+  ne paie rien. C'est la porte « zone protégée » du plugin, en API Bukkit seule.
+
+`plugin.yml` ne déclare plus que deux `softdepend` (ValoriaEconomy, ValoriaTycoon) : PlaceholderAPI,
+IridiumSkyblock, SuperiorSkyblock2 et BentoBox y figuraient **sans une seule ligne de code qui les
+utilise**. Une dépendance déclarée sans appel fait croire à l'admin à une intégration qui n'existe pas — c'est
+retiré plutôt que commenté.
 
 ## Contrôles automatiques
 

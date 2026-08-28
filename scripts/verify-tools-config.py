@@ -38,7 +38,7 @@ POM = ROOT / "pom.xml"
 ASSEMBLY = ROOT / "src/assembly/tools.xml"
 
 SOURCES = [
-    "ValoriaTools.java", "ToolKind.java", "ToolsConfig.java", "ToolStore.java",
+    "ValoriaTools.java", "ToolKind.java", "ToolsConfig.java", "ToolStore.java", "ToolStats.java",
     "EconomyService.java", "BlockMatcher.java", "Abilities.java", "ToolListener.java",
     "MultiTool.java", "ToolsGui.java", "ToolsCommand.java",
 ]

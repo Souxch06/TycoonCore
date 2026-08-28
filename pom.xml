@@ -139,6 +139,7 @@
                         <include>tools/xyz/arcadiadevs/valariatools/ToolKind.java</include>
                         <include>tools/xyz/arcadiadevs/valariatools/ToolsConfig.java</include>
                         <include>tools/xyz/arcadiadevs/valariatools/ToolStore.java</include>
+                        <include>tools/xyz/arcadiadevs/valariatools/ToolStats.java</include>
                         <include>tools/xyz/arcadiadevs/valariatools/EconomyService.java</include>
                         <include>tools/xyz/arcadiadevs/valariatools/BlockMatcher.java</include>
                         <include>tools/xyz/arcadiadevs/valariatools/Abilities.java</include>

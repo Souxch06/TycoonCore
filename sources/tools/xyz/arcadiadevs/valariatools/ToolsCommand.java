@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.command.Command;
@@ -56,8 +57,27 @@ public final class ToolsCommand implements CommandExecutor, TabCompleter {
                     sender.sendMessage(color("&cOuvre le jeu pour voir l'interface, la console ne peut pas."));
                     return true;
                 }
+                if (args.length > 1) {
+                    ToolKind asked = ToolKind.parse(args[1]);
+                    if (asked == null) {
+                        sender.sendMessage(color("&cÂme inconnue : &f" + args[1]
+                                + "&c. Choix : pioche, hache, canne, epee."));
+                        return true;
+                    }
+                    ToolsGui.open((Player) sender, asked);
+                    return true;
+                }
                 open((Player) sender);
                 return true;
+            case "buy":
+            case "acheter":
+                return buy(sender, args);
+            case "top":
+            case "classement":
+                return top(sender, args);
+            case "aide":
+            case "fiche":
+                return sheet(sender, args);
             case "give":
                 return give(sender, args);
             case "sell":
@@ -101,6 +121,167 @@ public final class ToolsCommand implements CommandExecutor, TabCompleter {
             return;
         }
         ToolsGui.open(player);
+    }
+
+    /**
+     * <code>/tools buy [joueur]</code> : l'outil s'achète. Le prix vient de <code>tool.price</code>, et un
+     * prix à zéro rend l'achat gratuit — un serveur qui n'a pas encore décidé son tarif ne doit pas être
+     * bloqué par notre propre économie. C'est cette commande qui est ouverte aux joueurs ;
+     * <code>/tools give</code> reste l'outil de l'administration (palier imposé, autres joueurs).
+     */
+    private boolean buy(CommandSender sender, String[] args) {
+        Player target;
+        if (sender instanceof Player) {
+            target = (Player) sender;
+        } else if (args.length > 1) {
+            target = Bukkit.getPlayerExact(args[1]);
+            if (target == null) {
+                sender.sendMessage(color("&cJoueur introuvable : &f" + args[1]));
+                return true;
+            }
+        } else {
+            sender.sendMessage(color("&cPrécise un joueur : /tools buy <joueur>."));
+            return true;
+        }
+        double price = this.plugin.toolsConfig().toolPrice();
+        if (price > 0.0D && this.plugin.economy().available()) {
+            if (!this.plugin.economy().canAfford(target, price)) {
+                target.sendMessage(color("&cLe multi-outil coûte &f" + this.plugin.economy().format(price)
+                        + "&c : il te manque &f"
+                        + this.plugin.economy().format(price - this.plugin.economy().balance(target)) + "&c."));
+                return true;
+            }
+            EconomyService.Outcome taken = this.plugin.economy().withdraw(target, price);
+            if (!taken.success()) {
+                target.sendMessage(color("&cPaiement refusé : &f" + taken.reason()));
+                return true;
+            }
+        }
+        ItemStack tool = MultiTool.create(this.plugin.toolsConfig(), this.plugin.store(), target.getUniqueId());
+        Map<Integer, ItemStack> overflow = target.getInventory().addItem(tool);
+        for (ItemStack left : overflow.values()) {
+            target.getWorld().dropItemNaturally(target.getLocation(), left);
+        }
+        target.sendMessage(color("&a" + (price > 0.0D
+                ? "Multi-outil acheté (-" + this.plugin.economy().format(price) + ")."
+                : "Multi-outil reçu (gratuit : tool.price = 0).")
+                + " &7Il change d'âme selon le bloc que tu regardes, &f/tools&7 ouvre le menu."));
+        if (!sender.equals(target)) {
+            sender.sendMessage(color("&a" + target.getName() + " a reçu son multi-outil."));
+        }
+        playLevelUp(target);
+        return true;
+    }
+
+    /** <code>/tools top [mesure] [âme] [nombre]</code> : le classement, mesuré par l'outil lui-même. */
+    private boolean top(CommandSender sender, String[] args) {
+        ToolStats.Metric metric = ToolStats.Metric.BLOCKS;
+        ToolKind kind = null;
+        int limit = 10;
+        for (int i = 1; i < args.length; i++) {
+            ToolStats.Metric asked = ToolStats.Metric.parse(args[i]);
+            if (asked != null) {
+                metric = asked;
+                continue;
+            }
+            ToolKind askedKind = ToolKind.parse(args[i]);
+            if (askedKind != null) {
+                kind = askedKind;
+                continue;
+            }
+            try {
+                limit = Math.max(1, Math.min(50, Integer.parseInt(args[i])));
+            } catch (NumberFormatException notANumber) {
+                sender.sendMessage(color("&7Ignoré : &f" + args[i] + "&7 (ni mesure, ni âme, ni nombre)."));
+            }
+        }
+        List<ToolStats.Entry> entries = this.plugin.stats().top(metric, kind, limit);
+        sender.sendMessage(color("&6Classement &7— " + metric.label()
+                + (kind == null ? " &7(toutes âmes)" : " &7(" + kind.label() + ")")));
+        if (entries.isEmpty()) {
+            sender.sendMessage(color("&7Rien de mesuré pour l'instant"
+                    + (this.plugin.stats().enabled() ? "" : " — les stats sont désactivées (stats.enabled: false)")
+                    + ". &8" + this.plugin.stats().measured() + " joueur(s) suivis."));
+            return true;
+        }
+        int rank = 1;
+        for (ToolStats.Entry entry : entries) {
+            sender.sendMessage(color("&e#" + rank++ + " &f" + entry.name() + " &7— &a" + format(entry.value(), metric)));
+        }
+        return true;
+    }
+
+    /** <code>/tools aide &lt;capacité&gt;</code> : la fiche d'une capacité, telle que le wiki la décrit. */
+    private boolean sheet(CommandSender sender, String[] args) {
+        if (args.length < 2) {
+            sender.sendMessage(color("&cUsage : /tools aide <capacité>  (ex. /tools aide fortune)"));
+            sender.sendMessage(color("&7Les noms du wiki, les ids de config et les noyaux fonctionnent."));
+            return true;
+        }
+        for (ToolKind kind : ToolKind.values()) {
+            ToolsConfig.KindConfig kindConfig = this.plugin.toolsConfig().kind(kind);
+            if (kindConfig == null) {
+                continue;
+            }
+            for (ToolsConfig.Ability ability : this.plugin.toolsConfig().abilities(kindConfig)) {
+                if (!matches(ability, args[1])) {
+                    continue;
+                }
+                sender.sendMessage(color("&6" + ability.name() + " &7— " + kind.label() + " &8(" + ability.type() + ")"));
+                if (!ability.description().isEmpty()) {
+                    sender.sendMessage(color("&7" + ability.description()));
+                }
+                sender.sendMessage(color("&7Verrou : palier d'âme &f" + ability.unlock() + " &7· niveau max &f"
+                        + ability.maxLevel() + (ability.free() ? " &7· niveau 1 offert" : "")));
+                for (String key : ability.keys()) {
+                    if (ability.numbers(key).isEmpty()) {
+                        continue;
+                    }
+                    double first = ability.levelDecimal(key, 1, 0.0D);
+                    double second = ability.levelDecimal(key, 2, 0.0D);
+                    sender.sendMessage(color("&8  " + key.replace('-', ' ') + " : &7base &f" + cut(first)
+                            + " &7· pas &f" + cut(second - first)
+                            + " &7· au max &f" + cut(ability.levelDecimal(key, ability.maxLevel(), 0.0D))));
+                }
+                sender.sendMessage(color("&7Prix du premier niveau : &f" + cut(ability.priceAt(1))));
+                return true;
+            }
+        }
+        sender.sendMessage(color("&cCapacité inconnue : &f" + args[1] + "&c. Essaie un nom du wiki (`fortune`)"
+                + " ou un noyau (`FORTUNE`)."));
+        return true;
+    }
+
+    private static boolean matches(ToolsConfig.Ability ability, String needle) {
+        String wanted = needle.trim().toLowerCase(Locale.ROOT).replace(' ', '_').replace('-', '_');
+        String label = ability.name().toLowerCase(Locale.ROOT).replace(' ', '_');
+        return ability.id().toLowerCase(Locale.ROOT).equals(wanted) || label.contains(wanted)
+                || ability.type().toLowerCase(Locale.ROOT).equals(wanted);
+    }
+
+    private static String format(double value, ToolStats.Metric metric) {
+        if (metric == ToolStats.Metric.MONEY && ValoriaTools.get() != null) {
+            return ValoriaTools.get().economy().format(value);
+        }
+        return String.valueOf((long) value);
+    }
+
+    private static String cut(double value) {
+        if (!Double.isFinite(value)) {
+            return "0";
+        }
+        if (Math.abs(value - Math.rint(value)) < 0.0005D) {
+            return String.valueOf((long) Math.rint(value));
+        }
+        return String.format(Locale.ROOT, "%.3f", Double.valueOf(value));
+    }
+
+    private void playLevelUp(Player player) {
+        try {
+            player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_PLAYER_LEVELUP, 0.8F, 1.4F);
+        } catch (RuntimeException | LinkageError legacy) {
+            // son decoratif
+        }
     }
 
     private boolean give(CommandSender sender, String[] args) {
@@ -410,7 +591,11 @@ public final class ToolsCommand implements CommandExecutor, TabCompleter {
     private void help(CommandSender sender) {
         sender.sendMessage(color("&6ValoriaTools &7— un seul outil, quatre âmes"));
         sender.sendMessage(color("&7  /tools &8— &louvre l'interface d'amélioration"));
-        sender.sendMessage(color("&7  /tools give [joueur] [palier] &8— &7reçois l'outil"));
+        sender.sendMessage(color("&7  /tools give [joueur] [palier] &8— &7reçois l'outil (admin ou gratuit)"));
+        sender.sendMessage(color("&7  /tools buy &8— &7achète l'outil au prix de `tool.price`"));
+        sender.sendMessage(color("&7  /tools top [mesure] [âme] [n] &8— &7classement (blocs, argent, niveaux…)"));
+        sender.sendMessage(color("&7  /tools aide <capacité> &8— &7fiche d'une capacité (nom, id ou noyau)"));
+        sender.sendMessage(color("&7  /tools gui [âme] &8— &7menu, éventuellement ouvert sur une âme"));
         sender.sendMessage(color("&7  /tools sell [all] &8— &7vend ce que l'outil reconnaît"));
         sender.sendMessage(color("&7  /tools set <joueur> <âme> [palier] &8— &7voir/fixer un palier &8(admin)"));
         sender.sendMessage(color("&7  /tools ability <joueur> <âme> <capacité> [niveau] &8— &7régler une capacité &8(admin)"));
@@ -426,6 +611,42 @@ public final class ToolsCommand implements CommandExecutor, TabCompleter {
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         List<String> out = new ArrayList<String>();
+        if (args.length == 0) {
+            return out;
+        }
+        if (args.length == 1) {
+            add(out, "buy", true);
+            add(out, "top", true);
+            add(out, "aide", true);
+            return filtered(out, args[0]);
+        }
+        if (args.length == 2 && args[0].equalsIgnoreCase("gui")) {
+            Collections.addAll(out, "pickaxe", "axe", "rod", "sword");
+            return filtered(out, args[1]);
+        }
+        if (args.length == 2 && (args[0].equalsIgnoreCase("top") || args[0].equalsIgnoreCase("classement"))) {
+            for (ToolStats.Metric metric : ToolStats.Metric.values()) {
+                out.add(metric.key());
+            }
+            Collections.addAll(out, "pickaxe", "axe", "rod", "sword");
+            return filtered(out, args[1]);
+        }
+        if (args.length == 3 && (args[0].equalsIgnoreCase("top") || args[0].equalsIgnoreCase("classement"))) {
+            Collections.addAll(out, "pickaxe", "axe", "rod", "sword");
+            return filtered(out, args[2]);
+        }
+        if (args.length == 2 && (args[0].equalsIgnoreCase("aide") || args[0].equalsIgnoreCase("fiche"))) {
+            for (ToolKind kind : ToolKind.values()) {
+                ToolsConfig.KindConfig kindConfig = this.plugin.toolsConfig().kind(kind);
+                if (kindConfig == null) {
+                    continue;
+                }
+                for (ToolsConfig.Ability ability : this.plugin.toolsConfig().abilities(kindConfig)) {
+                    out.add(ability.id());
+                }
+            }
+            return filtered(out, args[1]);
+        }
         if (args.length == 1) {
             add(out, "gui", true);
             add(out, "give", sender.hasPermission("valoria.tools.give"));

@@ -45,6 +45,11 @@ tool:
   haste-while-held: true
   # L'âme utilisée quand le joueur ne vise aucun bloc reconnu (clic dans le vide).
   fallback-tool: PICKAXE
+  # Ce que coûte l'outil lui-même, via /tools buy. 0 = gratuit (/tools buy devient alors un give).
+  # C'est la premiere depense d'un tycoon : laisse-le a 0 tant que ton economie n'est pas reglee,
+  # mais ne le remonte pas sans regarder `sell.prices` — le joueur rembourse l'outil en quelques
+  # milliers de blocs, c'est ce calcul qu'il faut faire, pas un chiffre au pif.
+  price: 0
   # Réservoir des capacités TREASURE (Trouvaille, Chercheur de spawner, Casino, bonbons…). Une
   # capacité peut déclarer SON PROPRE réservoir avec `items: [...]` : celui-ci sert de repli. On ne
   # touche pas à la table de trésors interne du serveur (reflection dans du privé, cassable à chaque
@@ -66,7 +71,19 @@ sell-on-break:
   # false = ils tombent au sol. Les deux évitent l'accumulation d'un inventaire qui ne vend rien.
   auto-sell-unmatched: true
 
+# Ce que l'outil mesure (stats.yml) et ou il a le droit d'agir : regles de serveur, pas de bareme.
+stats:
+  # false = aucun compteur tenu, /tools top reste vide et le menu n'affiche pas les lignes de mesure.
+  # Rien dans le jeu ne depend des compteurs (classement et diagnostic d'equilibrage seulement) : on
+  # peut les couper sans rendre l'outil fou.
+  enabled: true
+
 tools:
+  # Les mondes ou l'outil agit (les ames s'en absterrent ailleurs : rien n'est casse, rien n'est paye).
+  # Liste vide = tous les mondes. C'est la porte « zone protegeable » du plugin, et elle est 100 %
+  # Bukkit : exiger une claim d'ile demanderait l'API d'un plugin de skyblock, dont ce dépôt ne depend
+  # volontairement pas (le controle « zéro API tierce » du build refuserait meme de compiler l'appel).
+  allowed-worlds: []
 
   # ──────────────────────── PIOCHE — 24 capacités du wiki ────────────────────────
   pickaxe:

@@ -156,6 +156,9 @@ public final class ToolListener implements Listener {
             return;
         }
         Block block = event.getBlock();
+        if (!this.config.allowsWorld(block.getWorld() == null ? null : block.getWorld().getName())) {
+            return;   // monde hors liste (monde d'eventement, lobby, pvp) : l'outil se conduit comme un item normal
+        }
         ToolKind kind = ((ValoriaTools) this.plugin).matcher().kindOf(block);
         if (kind == null) {
             return;
@@ -253,6 +256,7 @@ public final class ToolListener implements Listener {
     private void applyGesture(Player player, Block origin, ToolKind kind, ToolsConfig.KindConfig kindConfig,
             int tier, Map<String, Integer> levels, List<Block> targets, Abilities abilities, boolean procs) {
         boolean harvest = kind == ToolKind.AXE;
+        int harvested = 0;
         Map<Material, Integer> brokenBlocks = new LinkedHashMap<Material, Integer>();
         List<ItemStack> drops = new ArrayList<ItemStack>();
         int count = 0;
@@ -264,6 +268,9 @@ public final class ToolListener implements Listener {
             drops.addAll(abilities.dropsOf(target, player));
             abilities.remove(target);
             count++;
+            if (Abilities.isPlant(target)) {
+                harvested++;
+            }
             Integer already = brokenBlocks.get(before);
             brokenBlocks.put(before, Integer.valueOf(already == null ? 1 : already.intValue() + 1));
             if (harvest && kindConfig.replant() && Abilities.isPlant(target)) {
@@ -272,6 +279,17 @@ public final class ToolListener implements Listener {
         }
         if (count == 0) {
             return;
+        }
+        ToolStats stats = ((ValoriaTools) this.plugin).stats();
+        // un geste = une mesure par grandeur : BLOCS pour tout ce qui est tombe, CULTURES pour les
+        // plantes, et UN arbre par abattage — compter les 24 blocs d'un tronc comme 24 arbres
+        // fausserait le classement en faveur du bucheron, qui est deja l'ame la plus rapide.
+        stats.gesture(player, kind, ToolStats.Metric.BLOCKS, count);
+        if (harvested > 0) {
+            stats.gesture(player, kind, ToolStats.Metric.CROPS, harvested);
+        }
+        if (kind == ToolKind.AXE && isLogBlock(origin.getType())) {
+            stats.gesture(player, kind, ToolStats.Metric.TREES, 1.0D);
         }
         if (drops.isEmpty()) {
             chargeDurability(player, kindConfig, tier, levels);
@@ -323,6 +341,7 @@ public final class ToolListener implements Listener {
             giveExperience(player, whole);
         }
         if (money > 0.0D) {
+            stats.money(player, kind, money);
             credit(player, money, "bloc" + (count > 1 ? "s" : "") + " vendu" + (count > 1 ? "s" : "") + " par l'outil");
         }
         if (procs) {
@@ -788,6 +807,9 @@ public final class ToolListener implements Listener {
         if (heldMultiTool(player) == null) {
             return;
         }
+        if (!this.config.allowsWorld(player.getWorld() == null ? null : player.getWorld().getName())) {
+            return;
+        }
         ToolsConfig.KindConfig kindConfig = this.config.kind(ToolKind.ROD);
         if (kindConfig == null) {
             return;
@@ -816,6 +838,8 @@ public final class ToolListener implements Listener {
         }
         org.bukkit.entity.Item item = (org.bukkit.entity.Item) caught;
         ItemStack stack = item.getItemStack();
+        // une prise = une mesure ; le bonus de Tsunami est paye mais ne compte pas comme prise de plus
+        ((ValoriaTools) this.plugin).stats().gesture(player, ToolKind.ROD, ToolStats.Metric.FISH, 1.0D);
         if (tsunami.active() && Abilities.proc(tsunami.chance("chance", 0.05D))) {
             stack.setAmount(stack.getAmount() + Math.max(1, tsunami.value("count", 2)));
         }
@@ -832,6 +856,7 @@ public final class ToolListener implements Listener {
             double amount = round(price * stack.getAmount());
             amount *= 1.0D + this.config.effect(kindConfig, "MONEY_MULT", tier, levels)
                     .amount("percent", 0.0D) / 100.0D;
+            ((ValoriaTools) this.plugin).stats().money(player, ToolKind.ROD, amount);
             EconomyService.Outcome credited = this.economy.deposit(player, round(amount));
             player.sendMessage(credited.success()
                     ? MultiTool.color("&a+" + this.economy.format(round(amount)) + "&7 (pêche vendue)")
@@ -1065,6 +1090,9 @@ public final class ToolListener implements Listener {
         if (player == null || heldMultiTool(player) == null) {
             return;
         }
+        if (!this.config.allowsWorld(victim.getWorld() == null ? null : victim.getWorld().getName())) {
+            return;   // un monde hors liste ne rapporte rien, meme en PVP ou en evenement
+        }
         ToolsConfig.KindConfig kindConfig = this.config.kind(ToolKind.SWORD);
         if (kindConfig == null) {
             return;
@@ -1083,6 +1111,7 @@ public final class ToolListener implements Listener {
             }
         }
         // le metier paie la MORT, une fois : c'est le seul moment ou le serveur a decide qui a tue
+        ((ValoriaTools) this.plugin).stats().gesture(player, ToolKind.SWORD, ToolStats.Metric.KILLS, 1.0D);
         double money = this.config.jobGain(kindConfig, victim.getType().name(), false);
         ToolsConfig.Effect pouch = this.config.effect(kindConfig, "MONEY_POUCH", tier, levels);
         if (pouch.active() && Abilities.proc(pouch.chance("chance", 0.05D))) {
@@ -1098,6 +1127,7 @@ public final class ToolListener implements Listener {
             money *= fury.multiplier();
         }
         if (money > 0.0D) {
+            ((ValoriaTools) this.plugin).stats().money(player, ToolKind.SWORD, money);
             credit(player, round(money), "monstre tué");
         }
         double xp = this.config.jobGain(kindConfig, victim.getType().name(), true)
@@ -1149,6 +1179,16 @@ public final class ToolListener implements Listener {
             player.sendMessage(MultiTool.color("&a+" + this.economy.format(round(total)) + "&7 (" + sold
                     + " drop(s) de monstre vendu(s))"));
         }
+    }
+
+    /**
+     * Bloc de bois (tronc ou feuillage) : le compteur « arbres » compte UN abattage, pas les 24 blocs
+     * qui composent l'arbre — sinon le classement récompenserait le bucheron deux cents fois par arbre.
+     */
+    private static boolean isLogBlock(Material material) {
+        String name = material == null ? "" : material.name().toLowerCase(Locale.ROOT);
+        return name.contains("log") || name.contains("stem") || name.contains("hyphae")
+                || name.contains("leaves") || name.contains("wood");
     }
 
     // ------------------------------------------------------------------ helpers

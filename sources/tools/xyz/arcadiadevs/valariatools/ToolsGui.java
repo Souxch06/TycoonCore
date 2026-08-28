@@ -255,6 +255,20 @@ public final class ToolsGui {
         return plugin.toolsConfig().fallbackKind();
     }
 
+    /** Ouvre le menu directement sur une âme (<code>/tools gui canne</code>). */
+    public static void open(Player player, ToolKind kind) {
+        ValoriaTools plugin = ValoriaTools.get();
+        if (plugin == null || kind == null) {
+            open(player);
+            return;
+        }
+        View existing = VIEWS.get(player.getUniqueId());
+        if (existing != null) {
+            existing.kind(kind);
+        }
+        open(player);
+    }
+
     /** Ouvre (ou redessine) la vue du joueur. */
     public static void open(Player player) {
         ValoriaTools plugin = ValoriaTools.get();
@@ -416,6 +430,22 @@ public final class ToolsGui {
                 }
             }
             lines.add(MultiTool.color("&7Niveaux de capacités achetés : &f" + bought));
+            ToolStats stats = plugin.stats();
+            if (stats.enabled()) {
+                lines.add(MultiTool.color("&7Ce que cette âme t'a rapporté :"));
+                boolean any = false;
+                for (ToolStats.Metric metric : ToolStats.Metric.values()) {
+                    long value = stats.total(player.getUniqueId(), kind, metric);
+                    if (value <= 0L) {
+                        continue;
+                    }
+                    any = true;
+                    lines.add(MultiTool.color("&8 " + metric.label() + " : &f" + shorten(value)));
+                }
+                if (!any) {
+                    lines.add(MultiTool.color("&8  (rien de mesuré pour l'instant)"));
+                }
+            }
             lines.add(MultiTool.color("&8Clic = +1 niveau · Maj+Clic = +10 niveaux"));
             lines.add(MultiTool.color("&8Le pourcentage affiché inclut déjà le Proc booster."));
             infoMeta.setLore(lines);
@@ -520,6 +550,21 @@ public final class ToolsGui {
         return String.format(java.util.Locale.ROOT, "%.2f", Double.valueOf(value));
     }
 
+    /** 12 480 → `12.5k` : une tooltip qui affiche un nombre de neuf chiffres ne se lit pas. */
+    private static String shorten(long value) {
+        if (value < 1000L) {
+            return String.valueOf(value);
+        }
+        if (value < 1000000L) {
+            return trim(value / 100.0D) + "k";
+        }
+        return trim(value / 100000.0D) + "M";
+    }
+
+    private static double trim(double value) {
+        return Math.round(value * 10.0D) / 10.0D;
+    }
+
     private static List<String> wrap(String text, int width) {
         List<String> out = new ArrayList<String>();
         if (text == null || text.trim().isEmpty()) {
@@ -610,6 +655,7 @@ public final class ToolsGui {
             return;
         }
         plugin.store().setLevel(player, kind, ability.id(), start + bought, ceiling);
+        plugin.stats().gesture(player, kind, ToolStats.Metric.LEVELS, bought);
         MultiTool.refresh(player.getInventory().getItemInMainHand(), config, plugin.store(), player.getUniqueId());
         try {
             player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_PLAYER_LEVELUP, 0.7F, 1.6F);

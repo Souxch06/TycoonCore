@@ -505,6 +505,8 @@ public final class ToolsConfig {
     private boolean unbreakable = true;
     private boolean hideFlags = true;
     private boolean requireClaimed;
+    private double toolPrice;
+    private final List<String> allowedWorlds = new ArrayList<String>();
     private double sellMultiplier = 1.0D;
     private double sellMinValue = 0.0D;
     private boolean sellOnlyWhenSneaking;
@@ -533,6 +535,13 @@ public final class ToolsConfig {
         this.hideFlags = root.getBoolean("tool.hide-flags", true);
         this.hastePassive = root.getBoolean("tool.haste-while-held", true);
         this.requireClaimed = root.getBoolean("tools.require-claimed", false);
+        this.toolPrice = Math.max(0.0D, root.getDouble("tool.price", 0.0D));
+        this.allowedWorlds.clear();
+        for (String world : root.getStringList("tools.allowed-worlds")) {
+            if (world != null && !world.trim().isEmpty()) {
+                this.allowedWorlds.add(world.trim().toLowerCase(Locale.ROOT));
+            }
+        }
         this.sellMultiplier = root.getDouble("sell-on-break.multiplier", 1.0D);
         this.sellMinValue = root.getDouble("sell-on-break.min-value", 0.0D);
         this.sellOnlyWhenSneaking = root.getBoolean("sell-on-break.only-when-sneaking", false);
@@ -839,6 +848,37 @@ public final class ToolsConfig {
 
     public boolean requireClaimed() {
         return this.requireClaimed;
+    }
+
+    /**
+     * Ce que coûte l'outil lui-même. {@code 0} = gratuit, et <code>/tools buy</code> devient un simple
+     * <code>/tools give</code> : un serveur qui n'a pas encore décidé de son prix ne doit pas être
+     * bloqué par notre propre économie.
+     */
+    public double toolPrice() {
+        return this.toolPrice;
+    }
+
+    /**
+     * Les mondes où l'outil fonctionne ; liste vide = tous. Une règle 100 % Bukkit : la claim d'île
+     * demanderait l'API d'un plugin de skyblock, et ce dépôt a fait le choix de n'en dépendre d'aucun
+     * (le contrôle « zéro API tierce » du build le refuse, et à juste titre).
+     */
+    public List<String> allowedWorlds() {
+        return Collections.unmodifiableList(this.allowedWorlds);
+    }
+
+    /** Vrai si le monde courant a le droit de voir l'outil agir. */
+    public boolean allowsWorld(String name) {
+        if (this.allowedWorlds.isEmpty() || name == null) {
+            return true;
+        }
+        return this.allowedWorlds.contains(name.toLowerCase(Locale.ROOT));
+    }
+
+    /** Les compteurs de <code>stats.yml</code> sont-ils activés ? (l'admin peut vouloir s'en passer) */
+    public boolean statsEnabled() {
+        return this.plugin.getConfig().getBoolean("stats.enabled", true);
     }
 
     public double sellMultiplier() {

@@ -32,3 +32,6 @@ __pycache__/
 
 # Brouillon local de l'agent (jamais commiter)
 .cache/
+
+# lien temporaire de l'outillage local (un lien ne matche pas le motif node_modules/)
+node_modules
