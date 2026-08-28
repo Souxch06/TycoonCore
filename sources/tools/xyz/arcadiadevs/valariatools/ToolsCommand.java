@@ -614,12 +614,6 @@ public final class ToolsCommand implements CommandExecutor, TabCompleter {
         if (args.length == 0) {
             return out;
         }
-        if (args.length == 1) {
-            add(out, "buy", true);
-            add(out, "top", true);
-            add(out, "aide", true);
-            return filtered(out, args[0]);
-        }
         if (args.length == 2 && args[0].equalsIgnoreCase("gui")) {
             Collections.addAll(out, "pickaxe", "axe", "rod", "sword");
             return filtered(out, args[1]);
@@ -649,12 +643,16 @@ public final class ToolsCommand implements CommandExecutor, TabCompleter {
         }
         if (args.length == 1) {
             add(out, "gui", true);
+            add(out, "buy", true);
+            add(out, "top", true);
+            add(out, "aide", true);
             add(out, "give", sender.hasPermission("valoria.tools.give"));
             add(out, "sell", true);
             add(out, "set", sender.hasPermission("valoria.tools.admin"));
             add(out, "ability", sender.hasPermission("valoria.tools.admin"));
             add(out, "reset", sender.hasPermission("valoria.tools.admin"));
             add(out, "stats", sender.hasPermission("valoria.tools.admin"));
+            add(out, "help", true);
             add(out, "reload", sender.hasPermission("valoria.tools.admin"));
             return filtered(out, args[0]);
         }

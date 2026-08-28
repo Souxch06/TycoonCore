@@ -401,7 +401,7 @@ public final class ToolListener implements Listener {
         ToolsConfig.Effect furyEffect = this.config.effect(kindConfig, "FURY", tier, levels);
         if (furyEffect.active() && (fury == null || !fury.live())
                 && Abilities.proc(furyEffect.chance("chance", 0.02D))) {
-            long ticks = Math.max(20L, furyEffect.value("duration", 200L) * 50L);
+            long ticks = Math.max(20L, furyEffect.value("duration", 200) * 50L);
             double multiplier = Math.max(1.1D, furyEffect.amount("multiplier", 1.5D));
             this.furies.put(player.getUniqueId(), new Fury(System.currentTimeMillis() + ticks, multiplier));
             player.sendMessage(MultiTool.color("&6⚡ Furie &7: gains x&f" + trim(multiplier) + "&7 pendant &f"
@@ -516,7 +516,7 @@ public final class ToolListener implements Listener {
             return;
         }
         final int waves = Math.max(1, Math.min(8, ghost.value("waves", 2)));
-        final long interval = Math.max(5L, ghost.value("interval", 10L));
+        final long interval = Math.max(5L, ghost.value("interval", 10));
         final UUID owner = player.getUniqueId();
         for (int wave = 1; wave <= waves; wave++) {
             final int index = wave;
@@ -1037,7 +1037,7 @@ public final class ToolListener implements Listener {
                         // entite protegee ou deja partie : le second coup est simplement perdu
                     }
                 }
-            }, Math.max(2L, auto.value("interval", 4L)));
+            }, Math.max(2L, auto.value("interval", 4)));
         }
     }
 

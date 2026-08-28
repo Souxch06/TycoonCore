@@ -427,6 +427,52 @@ def _private_field_self_test():
             raise SystemExit("ERREUR: la regle de visibilite flagge un code correct (faux positif)")
 
 
+INT_ACCESSORS = r"(?:value|levelValue|valueAt|maxTier|xpPerBlock|durabilityCost)"
+LONG_LITERAL = r"\b\d+L\b"
+
+
+def long_into_int_calls(root: Path):
+    """Les appels `.<accesseur-int>(…, <n>L)` du paquet (erreur de compilation garantie)."""
+    hits = []
+    pattern = re.compile(r"\." + INT_ACCESSORS + r"\(([^()]*" + LONG_LITERAL + r"[^()]*)\)")
+    for path in sorted(root.glob("*.java")):
+        body = re.sub(r"/\*.*?\*/", "", path.read_text(encoding="utf-8"), flags=re.S)
+        body = re.sub(r"//[^\n]*", "", body)
+        for line_no, line in enumerate(body.splitlines(), 1):
+            if re.search(LONG_LITERAL, line) and pattern.search(line):
+                hits.append(f"{path.name}:{line_no} -> {line.strip()[:90]}")
+    return hits
+
+
+def _long_literal_self_test():
+    """La regle doit voir le motif qui a couté un run, et pas son voisin legitime."""
+    import tempfile
+
+    with tempfile.TemporaryDirectory() as tmp:
+        folder = Path(tmp)
+        (folder / "Bad.java").write_text(
+            "class Bad { void x(Effect e) { long t = Math.max(20L, e.value(\"duration\", 200L)); } }\n",
+            encoding="utf-8")
+        if not long_into_int_calls(folder):
+            raise SystemExit("ERREUR: la regle du litteral long ne voit pas le motif qu'elle doit voir")
+        (folder / "Bad.java").unlink()
+        (folder / "Good.java").write_text(
+            "class Good { void x(Effect e) { long t = Math.max(20L, (long) e.value(\"duration\", 200) * 50L); } }\n",
+            encoding="utf-8")
+        if long_into_int_calls(folder):
+            raise SystemExit("ERREUR: la regle du litteral long flagge un code correct (faux positif)")
+
+
+def bare_code(path: Path) -> str:
+    """Le source sans commentaires, mais avec ses chaines : pour en EXTRAIRE des noms, pas des appels.
+
+    `strip()` neutralise les chaines (juste pour reperer un appel), ce qui rend toute recherche de
+    `case "x":` vide — et un controle vide passe, ce qui est le pire des resultats.
+    """
+    body = re.sub(r"/\*.*?\*/", "", path.read_text(encoding="utf-8"), flags=re.S)
+    return re.sub(r"//[^\n]*", "", body)
+
+
 def check_all() -> None:
     supported = abilities_supported()
     check("Abilities.SUPPORTED est declaré dans le moteur", bool(supported),
@@ -459,6 +505,11 @@ def check_all() -> None:
           not private_hits, f"{private_hits[:4]} : ces champs sont privés, seul ToolsConfig y a droit —"
           " passe par l'accesseur public (abilities(), maxTier(), …)")
     _private_field_self_test()
+    long_hits = long_into_int_calls(PKG)
+    check("aucun littéral long passé à un accesseur int (lossy conversion)", not long_hits,
+          f"{long_hits[:3]} : `value`, `levelValue`, `valueAt` renvoient int — un `200L` y est refusé"
+          " par javac")
+    _long_literal_self_test()
 
     if CONFIG.is_file():
         config_text = CONFIG.read_text(encoding="utf-8")
@@ -608,9 +659,31 @@ def check_all() -> None:
         check("plugin.yml : commande valariatools déclarée", "valariatools:" in yml)
         if (PKG / "ToolsCommand.java").is_file():
             command_code = strip((PKG / "ToolsCommand.java").read_text(encoding="utf-8"))
-            for sub in re.findall(r'case "([a-z]+)":', command_code):
-                check(f"plugin.yml : l'usage mentionne `{sub}`", sub in yml or sub in ("gui", "menu", "tier"),
-                      "une sous-commande non documentee dans `usage:` est invisible au joueur")
+            mined = bare_code(PKG / "ToolsCommand.java")
+            subs = sorted(set(re.findall(r'case "([a-z]+)":', mined)))
+            check("commande : les sous-commandes sont lisibles par le controleur", "give" in subs,
+                  f"{subs} : aucun `case` trouve — la section commande du plugin.yml ne serait pas verifiee")
+            proposed = sorted(set(re.findall(r'add\(out, "([a-z]+)"', mined)))
+            check("commande : la completion est lisible par le controleur", bool(proposed),
+                  "aucun `add(out, …)` trouve — la regle de Tab serait decorative")
+            # un alias n'est pas une fonctionnalite cachee : il est accepte par le switch, pas propose
+            alias_pairs = re.findall(r'case "([a-z]+)":\s*\n\s*case "([a-z]+)":', mined)
+            # un alias n'a rien a faire dans la liste de Tab, pourvu que son jumeau canonique y soit :
+            # c'est le couple qui compte, pas le sens dans lequel le switch l'a ecrit
+            covered = {main for main, alias in alias_pairs if alias in proposed}
+            covered |= {alias for main, alias in alias_pairs if main in proposed}
+            missing = [s for s in subs if s not in proposed and s not in covered and s != "default"]
+            check("commande : chaque sous-commande est proposée par le Tab", not missing,
+                  f"{missing} : routées par le switch mais absentes de onTabComplete — la complétion"
+                  " ment sur ce que sait faire le plugin, et une entrée cachée est invisible pour un an")
+            for main, alias in alias_pairs:
+                check(f"commande : `{main}`/`{alias}` ne sont pas proposes tous les deux",
+                      not (main in proposed and alias in proposed),
+                      "les deux écritures dans la liste de Tab = deux lignes pour la même intention")
+            for sub in proposed:
+                check(f"plugin.yml : l'usage mentionne `{sub}`", sub in yml,
+                      "une sous-commande proposee par le Tab mais absente de `usage:` : le joueur la"
+                      " decouvre par accident et l'admin ne la documente jamais")
         for permission in re.findall(r"^\s{2}(valoria\.tools\.[a-z]+):", yml, re.M):
             check(f"plugin.yml : permission {permission} utilisee par le code",
                   any((PKG / name).is_file() and permission in (PKG / name).read_text(encoding="utf-8")
