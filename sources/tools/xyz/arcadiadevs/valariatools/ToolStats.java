@@ -253,9 +253,16 @@ public final class ToolStats {
                 Counters value = kind.getValue();
                 for (Metric metric : Metric.values()) {
                     double amount = value.exact(metric);
-                    if (amount > 0.0D) {
-                        yaml.set(entry.getKey() + "." + ToolStore.name(kind.getKey()) + "." + metric.key(),
-                                metric == Metric.MONEY ? round2(amount) : Long.valueOf((long) amount));
+                    if (amount <= 0.0D) {
+                        continue;
+                    }
+                    String path = entry.getKey() + "." + ToolStore.name(kind.getKey()) + "." + metric.key();
+                    if (metric == Metric.MONEY) {
+                        // l'argent est la seule mesure decimale du fichier : l'ecrire en `12` perdrait
+                        // les 0,05 de roche qui font justement le metier du mineur
+                        yaml.set(path, Double.valueOf(round2(amount)));
+                    } else {
+                        yaml.set(path, Long.valueOf((long) amount));
                     }
                 }
             }

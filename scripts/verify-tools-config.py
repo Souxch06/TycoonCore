@@ -496,6 +496,8 @@ def check_all() -> None:
         # fichiers que je n'avais pas relu depuis mon propre remplacement du motif.
         bad = re.findall(r"catch\s*\(\s*([\w. ]+\|[\w. ]+)", code)
         check(f"{name} : aucun multi-catch de types liés", not _related(bad), str(bad)[:220])
+        if name == "ToolListener.java":
+            _related_self_test()   # une seule fois : l'auto-test ne depend pas du fichier
         if "ValoriaTools.java" == name:
             check("plugin enregistre le listener du GUI", "ToolsGui.Handler" in code)
             check("plugin relit l'economie apres l'activation", "runTaskLater" in code and "lookup" in code)
@@ -747,6 +749,17 @@ def _related(multicatches):
         "RuntimeException": "Exception", "Exception": "Throwable", "Error": "Throwable",
     }
 
+    def type_of(chunk):
+        """` IllegalArgumentException broken` -> `IllegalArgumentException`.
+
+        Le nom de la variable n'est pas un type : le garder faisait chercher la filiation d'une cle
+        inexistante, donc _related repondait « non lies » sur le cas precis qu'il doit refuser.
+        """
+        tokens = chunk.strip().replace("final ", "").split()
+        if len(tokens) > 1 and tokens[-1][:1].islower():
+            tokens.pop()                       # `RuntimeException e` : le dernier mot est le parametre
+        return tokens[0].split(".")[-1] if tokens else ""
+
     def chain_up(name):
         """Les ascendants declares (PAS les freres, PAS `Throwable` qui est commun a tout)."""
         seen = set()
@@ -761,12 +774,23 @@ def _related(multicatches):
         return parents.get(a) == b or parents.get(b) == a or b in chain_up(a) or a in chain_up(b)
 
     for clause in multicatches:
-        names = [part.strip().split(".")[-1] for part in clause.split("|") if part.strip()]
+        names = [type_of(part) for part in clause.split("|") if part.strip()]
         for i in range(len(names)):
             for j in range(i + 1, len(names)):
                 if related(names[i], names[j]):
                     return True
     return False
+def _related_self_test():
+    """Le controle des multi-catch doit voir le couple fils/peres AVEC nom de variable, et dormir sur
+    les freres (`RuntimeException | LinkageError` est legal depuis toujours dans ce depot)."""
+    if not _related(["RuntimeException | IllegalArgumentException broken"]):
+        raise SystemExit("ERREUR: _related ne voit plus `RuntimeException | IllegalArgumentException`"
+                         " — le controle qui a deja protege ce paquet est decoratif")
+    if _related(["RuntimeException | LinkageError failed", "ReflectiveOperationException | RuntimeException x"]):
+        raise SystemExit("ERREUR: _related flagge des freres (multi-catch parfaitement legal)")
+    if not _related(["java.io.IOException | FileNotFoundException e"]):
+        raise SystemExit("ERREUR: _related ne resout plus les noms qualifies (IOException et son fils"
+                         " FileNotFoundException passes)")
 
 
 def report() -> int:

@@ -478,7 +478,8 @@ public final class ToolListener implements Listener {
                 continue;
             }
             world.dropItemNaturally(origin.getLocation().add(0.5D, 0.5D, 0.5D), stack);
-            player.sendMessage(MultiTool.color("&b✦ " + pretty(material) + " &7trouvé par l'outil."));
+            player.sendMessage(MultiTool.color("&b✦ " + pretty(material.name())
+                    + " &7trouvé par l'outil."));
         }
     }
 
@@ -1070,8 +1071,10 @@ public final class ToolListener implements Listener {
             org.bukkit.util.Vector push = target.getLocation().toVector().subtract(player.getLocation().toVector());
             push.setY(Math.max(0.1D, push.getY() * 0.25D));
             target.setVelocity(push.normalize().multiply(Math.max(0.0D, strength)));
-        } catch (RuntimeException | IllegalArgumentException broken) {
-            // entite sans vélocité (armure, cadre) : rien a deplacer
+        } catch (RuntimeException | LinkageError broken) {
+            // entite sans vélocité (armure, cadre, agent externe) : rien a deplacer.
+            // `IllegalArgumentException` etait liste a cote de son propre pere ici — javac le refuse
+            // (« alternatives cannot be related by subclassing »), et il est deja couvert.
         }
     }
 
