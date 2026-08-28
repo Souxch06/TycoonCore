@@ -105,6 +105,10 @@ jobs:
         # verifie leur taille cote GitHub. La publication de la release est ce qui declenche le
         # workflow docs/CI-DEPLOY-A-COLLER.yml -> depot sur le serveur. Hors `main`, la release n'est
         # pas publiee pour eviter qu'une branche en cours deploie en production.
+        # La release est le SEUL declencheur du depot : on ne la reecrit donc que depuis main, sinon
+        # chaque push d'une branche en cours remplacerait `build-latest` et mettrait le serveur a jour
+        # d'un etat non merge. Les runs de branche gardent leurs artefacts (telechargeables a la main).
+        if: ${{ success() && github.ref == 'refs/heads/main' }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PROJECT_VERSION: '1.6.3'

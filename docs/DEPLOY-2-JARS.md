@@ -2,6 +2,18 @@
 
 ## Voie « tout automatique » : le dépôt sur le serveur par la CI
 
+> **Important, sinon tu auras DEUX dé plois qui se marchent dessus** : `deploy.yml` se déclenche sur
+> `push: main` et n'envoie **qu'un seul** jar. Si on le laisse tel quel, chaque merge écrasera le serveur
+> avec ValoriaTycoon **sans** ValoriaEconomy. Il faut donc, en plus des deux collages ci‑dessous,
+> **neutraliser l'étape SFTP de `deploy.yml`** (supprimer l'étape « Envoyer le plugin sur MCServerHost via
+> SFTP », ou retirer `push:` de son `on:`) et laisser le duo *release → `deploy-serveur.yml`* faire le
+> travail, lui, avec les deux jar et une sauvegarde préalable.
+
+Le dépôt n'est déclenché que depuis `main` (`if: github.ref == 'refs/heads/main'` sur l'étape qui publie
+la release) : une branche en cours ne peut donc pas mettre le serveur à jour d'un état non mergé ; ses
+runs gardent leurs artefacts, téléchargeables à la main.
+
+
 Deux blocs, un seul collage chacun (les fichiers `.github/workflows/*` sont les seuls que l'agent ne
 peut pas écrire — permission `workflows` refusée par GitHub, vérifiée quatre fois) :
 
