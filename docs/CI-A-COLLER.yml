@@ -67,21 +67,36 @@ jobs:
           python3 scripts/verify-economy-api.py
 
       - name: Vérifier la compatibilité Paper 26.x du JAR
+        # Les echecs d'un simple « exit code 1 » ne sont exploitables a distance : chaque controle est
+        # execute par scripts/ci-step.sh, qui recopie ses dernieres lignes dans le resume du job.
         run: |
-          python3 scripts/rebrand-classes.py --check --jar target/ValoriaTycoon-v1.6.3.jar
-          python3 scripts/install-nbt-bridge.py --check --jar target/ValoriaTycoon-v1.6.3.jar
-          python3 scripts/selfmade-api-patch.py --check --jar target/ValoriaTycoon-v1.6.3.jar
+          bash scripts/ci-step.sh "compatibilite du jar" \
+            python3 scripts/verify-paper26-compat.py target/ValoriaTycoon-v1.6.3.jar -report-annotations
+          bash scripts/ci-step.sh "renommage de marque dans le jar" \
+            python3 scripts/rebrand-classes.py --check --jar target/ValoriaTycoon-v1.6.3.jar
+          bash scripts/ci-step.sh "pont NBT dans le jar" \
+            python3 scripts/install-nbt-bridge.py --check --jar target/ValoriaTycoon-v1.6.3.jar
+          bash scripts/ci-step.sh "api tierces absentes du jar" \
+            python3 scripts/selfmade-api-patch.py --check --jar target/ValoriaTycoon-v1.6.3.jar
 
       - name: Vérifier les deux JAR produits
         run: |
-          test -f target/ValoriaEconomy-v1.6.3.jar
-          unzip -l target/ValoriaEconomy-v1.6.3.jar | grep -q 'plugin.yml'
-          unzip -l target/ValoriaEconomy-v1.6.3.jar | grep -q 'valoriaeconomy/ValoriaEconomyProvider.class'
-          ! unzip -l target/ValoriaTycoon-v1.6.3.jar | grep -q 'valoriaeconomy/'
-          unzip -l target/ValoriaTycoon-v1.6.3.jar | grep -q 'valoriateconomy/Economy.class'
-          unzip -l target/ValoriaTycoon-v1.6.3.jar | grep -q 'valoriatycoon/hologram/HologramPool.class'
-          ! unzip -l target/ValoriaTycoon-v1.6.3.jar | grep -qE 'net/milkbowl|org/holoeasy'
-          ! unzip -l target/ValoriaEconomy-v1.6.3.jar | grep -qE 'net/milkbowl|org/holoeasy'
+          bash scripts/ci-step.sh "contenu des deux jars" bash -c '
+            set -e
+            for jar in target/ValoriaTycoon-v1.6.3.jar target/ValoriaEconomy-v1.6.3.jar; do
+              echo "--- $jar"; test -f "$jar"; ls -l "$jar"; unzip -l "$jar" | tail -3
+            done
+            unzip -l target/ValoriaEconomy-v1.6.3.jar | grep -q "plugin.yml"
+            unzip -l target/ValoriaEconomy-v1.6.3.jar | grep -q "valoriaeconomy/ValoriaEconomyProvider.class"
+            unzip -l target/ValoriaEconomy-v1.6.3.jar | grep -q "valoriaeconomy/ValoriaEconomy.class"
+            unzip -l target/ValoriaTycoon-v1.6.3.jar | grep -q "valoriateconomy/Economy.class"
+            unzip -l target/ValoriaTycoon-v1.6.3.jar | grep -q "valoriatycoon/hologram/HologramPool.class"
+            unzip -l target/ValoriaTycoon-v1.6.3.jar | grep -q "module-info.class"
+            ! unzip -l target/ValoriaTycoon-v1.6.3.jar | grep -q "xyz/arcadiadevs/valoriaeconomy/"
+            ! unzip -l target/ValoriaTycoon-v1.6.3.jar | grep -qE "net/milkbowl|org/holoeasy"
+            ! unzip -l target/ValoriaEconomy-v1.6.3.jar | grep -qE "net/milkbowl|org/holoeasy"
+            echo "OK : contenu des deux jars conforme"
+          '
 
       - name: Publier les JAR construits
         uses: actions/upload-artifact@v4

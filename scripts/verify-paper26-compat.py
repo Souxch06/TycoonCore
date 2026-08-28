@@ -17,6 +17,7 @@ Sort avec le code 1 dès qu'un contrôle échoue (utilisé par le workflow de CI
 
 from importlib.machinery import SourceFileLoader
 from pathlib import Path
+import os
 import re
 import struct
 import sys
@@ -542,6 +543,23 @@ def main() -> int:
         print(line)
         failures += 0 if ok else 1
     print(f"\nContrôles: {len(results)}, en échec: {failures}")
+
+    # En CI, les lignes `KO` sont invisibles (journal replie, et le journal brut n'est pas toujours
+    # accessible). Les echecs sont donc re-emis en ANNOTATIONS via $GITHUB_STEP_SUMMARY, qui atterrit
+    # dans le resume du job ET dans l'API des annotations — c'est le seul canal de preuve utilisable a
+    # distance. Le code de sortie reste 1 : l'etape est rouge, le deploiement ne part pas.
+    if failures and "-report-annotations" in sys.argv:
+        summary = os.environ.get("GITHUB_STEP_SUMMARY")
+        detail = [f"**{label}**{(f' — {why}' if why else '')}" for label, ok, why in results if not ok]
+        body = "### Contrôles en échec\n" + "\n".join(f"- {line}" for line in detail[:40]) + "\n"
+        print(body)
+        if summary:
+            try:
+                with open(summary, "a", encoding="utf-8") as handle:
+                    handle.write(body)
+            except OSError:
+                pass
+
     if failures:
         print("ÉCHEC: le plugin n'est pas prêt pour Paper 26.x.", file=sys.stderr)
         return 1
