@@ -189,7 +189,9 @@ public final class ValoriaTools extends JavaPlugin {
             if (out.length() > 0) {
                 out.append(", ");
             }
-            out.append(kind.label()).append(" (max ").append(this.toolsConfig.maxTier(config)).append(')');
+            out.append(kind.label()).append(" (").append(this.toolsConfig.maxTier(config))
+                    .append(" paliers, ").append(this.toolsConfig.abilities(config).size())
+                    .append(" capacités)");
         }
         return out.length() == 0 ? "aucune âme configurée" : out.toString();
     }

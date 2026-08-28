@@ -2,6 +2,7 @@ package xyz.arcadiadevs.valariatools;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Locale;
 import java.util.UUID;
 import org.bukkit.ChatColor;
@@ -45,8 +46,10 @@ public final class MultiTool {
         meta.setDisplayName(color(config.itemDisplayName()));
         meta.setLore(loreFor(config, store, owner));
         mark(meta);
-        // Aucun enchantement n'est pose : les capacites viennent des paliers, pas de l'item, sinon
-        // le joueur verrait ses bonus disparaitre des qu'il retirerait l'item de sa main.
+        // Aucun enchantement n'est pose a la fabrication : les capacites viennent des paliers et des
+        // niveaux achetes, pas de l'item, sinon le joueur verrait ses bonus disparaitre des qu'il le
+        // poserait dans un coffre. Seule la capacite RANDOM_ENCHANT (« Charognard ») en ajoute un, et
+        // c'est un bonus reellement lie a cet item-la — d'ou `tool.hide-flags` pour ne pas l'afficher.
         try {
             meta.setUnbreakable(config.unbreakable());
         } catch (RuntimeException | NoSuchMethodError | NoClassDefFoundError legacy) {
@@ -118,24 +121,33 @@ public final class MultiTool {
                 int max = config.maxTier(kindConfig);
                 String bar = tier >= max ? "§a" + tier + "/" + max + " §a(max)" : "§e" + tier + "/" + max;
                 out.add("§7" + capitalize(kind.label()) + " : " + bar + " §8— §f"
-                        + unlockedSummary(config, kindConfig, tier));
+                        + unlockedSummary(config, kindConfig, tier, store, owner, kind));
             }
         }
         return out;
     }
 
-    /** « 3 capacités » : le nombre de capacités ouvertes au palier courant. */
-    private static String unlockedSummary(ToolsConfig config, ToolsConfig.KindConfig kindConfig, int tier) {
-        int unlocked = 0;
+    /**
+     * « 6/24 capacités · 41 niveaux » : ce que le palier autorise, et ce que le joueur a vraiment payé.
+     * Les deux nombres sont indispensables : le barème du wiki ouvre jusqu'à 22 capacités sur une âme,
+     * et un joueur qui lit « 22 capacités » alors qu'il n'a rien acheté croit que l'outil est cassé.
+     */
+    private static String unlockedSummary(ToolsConfig config, ToolsConfig.KindConfig kindConfig, int tier,
+            ToolStore store, UUID owner, ToolKind kind) {
+        int allowed = 0;
+        int bought = 0;
+        Map<String, Integer> levels = store.levelsOf(owner, kind);
         for (ToolsConfig.Ability ability : config.abilities(kindConfig)) {
-            if (tier >= ability.fromTier()) {
-                unlocked++;
+            if (ability.unlockedAt(tier)) {
+                allowed++;
             }
+            bought += ToolsConfig.levelOf(ability, levels, tier);
         }
-        if (unlocked == 0) {
-            return "aucune capacité";
+        if (allowed == 0) {
+            return "aucune capacité à ce palier";
         }
-        return unlocked + (unlocked > 1 ? " capacités" : " capacité");
+        return allowed + (allowed > 1 ? " capacités" : " capacité") + " · " + bought + " niveau"
+                + (bought > 1 ? "x" : "");
     }
 
     private static void mark(ItemMeta meta) {

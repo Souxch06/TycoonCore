@@ -65,6 +65,11 @@ public final class ToolsCommand implements CommandExecutor, TabCompleter {
             case "tier":
             case "set":
                 return setTier(sender, args);
+            case "ability":
+            case "capacite":
+                return ability(sender, args);
+            case "reset":
+                return reset(sender, args);
             case "stats":
                 return stats(sender);
             case "reload":
@@ -253,6 +258,144 @@ public final class ToolsCommand implements CommandExecutor, TabCompleter {
         return true;
     }
 
+    /**
+     * <code>/tools ability &lt;joueur&gt; &lt;âme&gt; &lt;capacité&gt; &lt;niveau&gt;</code> : pose le niveau d'une capacité.
+     *
+     * <p>Réservé à l'admin, et volontairement sans contrôle d'argent : c'est l'outil de réglage et de
+     * test, pas un raccourci de jeu. Le niveau est borné par <code>max-level</code> de la config, parce
+     * qu'un niveau hors barème afficherait dans le menu une capacité plus forte que ce que le admin a
+     * déclaré.</p>
+     */
+    private boolean ability(CommandSender sender, String[] args) {
+        if (!sender.hasPermission("valoria.tools.admin")) {
+            sender.sendMessage(color("&cPermission manquante (&fvaloria.tools.admin&c)."));
+            return true;
+        }
+        if (args.length < 4) {
+            sender.sendMessage(color("&cUsage : /tools ability <joueur> <ame> <capacite> [niveau]"));
+            return true;
+        }
+        Player target = Bukkit.getPlayerExact(args[1]);
+        if (target == null) {
+            sender.sendMessage(color("&cJoueur hors ligne : les niveaux sont lus en jeu."));
+            return true;
+        }
+        ToolKind kind = ToolKind.parse(args[2]);
+        if (kind == null) {
+            sender.sendMessage(color("&cÂme inconnue : &f" + args[2] + "&c. Choix : pioche, hache, canne, epee."));
+            return true;
+        }
+        ToolsConfig.KindConfig kindConfig = this.plugin.toolsConfig().kind(kind);
+        if (kindConfig == null) {
+            sender.sendMessage(color("&cAucune configuration pour cette âme."));
+            return true;
+        }
+        ToolsConfig.Ability found = findAbility(kindConfig, args[3]);
+        if (found == null) {
+            sender.sendMessage(color("&cCapacité inconnue pour &f" + kind.label() + "&c : &f" + args[3]));
+            sender.sendMessage(color("&7Choix : &f" + String.join(", ", knownIds(kindConfig))));
+            return true;
+        }
+        if (args.length < 5) {
+            int tier = this.plugin.store().tierOf(target.getUniqueId(), kind,
+                    this.plugin.toolsConfig().maxTier(kindConfig));
+            sender.sendMessage(color("&b" + found.name() + "&7 : niveau &f"
+                    + ToolsConfig.levelOf(found, this.plugin.store().levelsOf(target.getUniqueId(), kind), tier)
+                    + "&7/&f" + found.maxLevel() + "&7 (palier requis &f" + found.unlock() + "&7)"));
+            return true;
+        }
+        int level = number(args[4]);
+        if (level < 0) {
+            sender.sendMessage(color("&cNiveau invalide : &f" + args[4] + "&c (un entier, 0 pour retirer)."));
+            return true;
+        }
+        int tier = this.plugin.store().tierOf(target.getUniqueId(), kind,
+                this.plugin.toolsConfig().maxTier(kindConfig));
+        this.plugin.store().setLevel(target, kind, found.id(), level, found.maxLevel());
+        ItemStack held = target.getInventory().getItemInMainHand();
+        if (MultiTool.isMultiTool(held)) {
+            MultiTool.refresh(held, this.plugin.toolsConfig(), this.plugin.store(), target.getUniqueId());
+        }
+        if (tier < found.unlock()) {
+            sender.sendMessage(color("&eAttention : le palier " + tier + " ne permet pas encore d'utiliser "
+                    + found.name() + " (palier " + found.unlock() + " requis). Le niveau est stocké, pas perdu."));
+        }
+        sender.sendMessage(color("&a" + target.getName() + " &7: " + found.name() + " au niveau &f"
+                + Math.min(level, found.maxLevel()) + "&7/&f" + found.maxLevel()));
+        target.sendMessage(color("&a" + found.name() + "&7 : niveau &f" + Math.min(level, found.maxLevel())
+                + "&7 (réglage de l'administration)."));
+        this.plugin.saveSoon();
+        return true;
+    }
+
+    /** <code>/tools reset &lt;joueur&gt; [âme]</code> : remet une âme à zéro, palier et capacités. */
+    private boolean reset(CommandSender sender, String[] args) {
+        if (!sender.hasPermission("valoria.tools.admin")) {
+            sender.sendMessage(color("&cPermission manquante (&fvaloria.tools.admin&c)."));
+            return true;
+        }
+        if (args.length < 2) {
+            sender.sendMessage(color("&cUsage : /tools reset <joueur> [ame]"));
+            return true;
+        }
+        Player target = Bukkit.getPlayerExact(args[1]);
+        if (target == null) {
+            sender.sendMessage(color("&cJoueur hors ligne."));
+            return true;
+        }
+        List<ToolKind> kinds = new ArrayList<ToolKind>();
+        if (args.length > 2) {
+            ToolKind kind = ToolKind.parse(args[2]);
+            if (kind == null) {
+                sender.sendMessage(color("&cÂme inconnue : &f" + args[2]));
+                return true;
+            }
+            kinds.add(kind);
+        } else {
+            Collections.addAll(kinds, ToolKind.values());
+        }
+        for (ToolKind kind : kinds) {
+            this.plugin.store().reset(target, kind);
+        }
+        ItemStack held = target.getInventory().getItemInMainHand();
+        if (MultiTool.isMultiTool(held)) {
+            MultiTool.refresh(held, this.plugin.toolsConfig(), this.plugin.store(), target.getUniqueId());
+        }
+        sender.sendMessage(color("&a" + target.getName() + " &7: âmes remises au palier 1 &7("
+                + kinds.size() + " âme(s), capacités effacées)."));
+        target.sendMessage(color("&eToutes tes capacités d'outil ont été remises à zéro par l'administration."));
+        this.plugin.saveSoon();
+        return true;
+    }
+
+    /** Recherche par id, puis par nom de wiki, puis par noyau : l'admin ne doit pas retenir les ids. */
+    private static ToolsConfig.Ability findAbility(ToolsConfig.KindConfig kindConfig, String needle) {
+        String wanted = needle.trim().toLowerCase(Locale.ROOT).replace(' ', '_').replace('-', '_');
+        ToolsConfig.Ability byLabel = null;
+        ToolsConfig.Ability byKernel = null;
+        for (ToolsConfig.Ability ability : kindConfig.abilities()) {
+            if (ability.id().toLowerCase(Locale.ROOT).equals(wanted)) {
+                return ability;
+            }
+            String label = ability.name().toLowerCase(Locale.ROOT).replace(' ', '_');
+            if (byLabel == null && label.equals(wanted)) {
+                byLabel = ability;
+            }
+            if (byKernel == null && ability.type().toLowerCase(Locale.ROOT).equals(wanted)) {
+                byKernel = ability;
+            }
+        }
+        return byLabel != null ? byLabel : byKernel;
+    }
+
+    private static List<String> knownIds(ToolsConfig.KindConfig kindConfig) {
+        List<String> out = new ArrayList<String>();
+        for (ToolsConfig.Ability ability : kindConfig.abilities()) {
+            out.add(ability.id());
+        }
+        return out;
+    }
+
     private boolean stats(CommandSender sender) {
         sender.sendMessage(color("&6ValoriaTools &7— état"));
         sender.sendMessage(color("&7  économie       : &f" + this.plugin.economy().providerName()
@@ -270,6 +413,8 @@ public final class ToolsCommand implements CommandExecutor, TabCompleter {
         sender.sendMessage(color("&7  /tools give [joueur] [palier] &8— &7reçois l'outil"));
         sender.sendMessage(color("&7  /tools sell [all] &8— &7vend ce que l'outil reconnaît"));
         sender.sendMessage(color("&7  /tools set <joueur> <âme> [palier] &8— &7voir/fixer un palier &8(admin)"));
+        sender.sendMessage(color("&7  /tools ability <joueur> <âme> <capacité> [niveau] &8— &7régler une capacité &8(admin)"));
+        sender.sendMessage(color("&7  /tools reset <joueur> [âme] &8— &7remettre une âme à zéro &8(admin)"));
         sender.sendMessage(color("&7  /tools stats &8— &7état des services"));
         if (sender.hasPermission("valoria.tools.admin")) {
             sender.sendMessage(color("&7  /tools reload &8— &7recharge la configuration &8(admin)"));
@@ -286,25 +431,45 @@ public final class ToolsCommand implements CommandExecutor, TabCompleter {
             add(out, "give", sender.hasPermission("valoria.tools.give"));
             add(out, "sell", true);
             add(out, "set", sender.hasPermission("valoria.tools.admin"));
+            add(out, "ability", sender.hasPermission("valoria.tools.admin"));
+            add(out, "reset", sender.hasPermission("valoria.tools.admin"));
             add(out, "stats", sender.hasPermission("valoria.tools.admin"));
             add(out, "reload", sender.hasPermission("valoria.tools.admin"));
             return filtered(out, args[0]);
         }
-        if (args.length == 2 && (args[0].equalsIgnoreCase("set") || args[0].equalsIgnoreCase("tier"))) {
+        boolean admin = args[0].equalsIgnoreCase("set") || args[0].equalsIgnoreCase("tier")
+                || args[0].equalsIgnoreCase("ability") || args[0].equalsIgnoreCase("reset");
+        if (args.length == 2 && admin) {
             for (Player online : Bukkit.getOnlinePlayers()) {
                 out.add(online.getName());
             }
             return filtered(out, args[1]);
         }
-        if (args.length == 3 && (args[0].equalsIgnoreCase("set") || args[0].equalsIgnoreCase("tier"))) {
+        if (args.length == 3 && admin) {
             Collections.addAll(out, "pickaxe", "axe", "rod", "sword");
             return filtered(out, args[2]);
         }
         if (args.length == 4 && (args[0].equalsIgnoreCase("set") || args[0].equalsIgnoreCase("tier"))) {
-            for (int i = 1; i <= 6; i++) {
+            for (int i = 1; i <= 5; i++) {
                 out.add(String.valueOf(i));
             }
             return filtered(out, args[3]);
+        }
+        if (args.length == 4 && args[0].equalsIgnoreCase("ability")) {
+            ToolKind kind = ToolKind.parse(args[2]);
+            ToolsConfig.KindConfig kindConfig = kind == null ? null : this.plugin.toolsConfig().kind(kind);
+            if (kindConfig != null) {
+                for (ToolsConfig.Ability ability : this.plugin.toolsConfig().abilities(kindConfig)) {
+                    out.add(ability.id());
+                }
+            }
+            return filtered(out, args[3]);
+        }
+        if (args.length == 5 && args[0].equalsIgnoreCase("ability")) {
+            for (int i = 0; i <= 10; i++) {
+                out.add(String.valueOf(i));
+            }
+            return filtered(out, args[4]);
         }
         return out;
     }
@@ -341,6 +506,18 @@ public final class ToolsCommand implements CommandExecutor, TabCompleter {
             return Integer.parseInt(text) > 0;
         } catch (NumberFormatException malformed) {
             return false;
+        }
+    }
+
+    /** Un entier borné, 0 compris (retirer un niveau) ; {@code -1} quand ce n'est pas un nombre. */
+    private static int number(String text) {
+        if (text == null) {
+            return -1;
+        }
+        try {
+            return Math.max(0, Integer.parseInt(text.trim()));
+        } catch (NumberFormatException malformed) {
+            return -1;
         }
     }
 

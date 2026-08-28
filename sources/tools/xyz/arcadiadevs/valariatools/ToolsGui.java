@@ -1,10 +1,14 @@
 package xyz.arcadiadevs.valariatools;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -16,19 +20,20 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
 /**
- * L'interface d'amélioration : une rangée par âme, un bouton par décision.
+ * Le menu d'amélioration : les quatre âmes en haut, les capacités du wiki en dessous, une case par
+ * capacité — donc une seule façon de cliquer.
  *
- * <h2>Un bouton = une intention</h2>
- * <p>Chaque âme occupe trois cases : <b>améliorer</b>, <b>statistiques</b>, <b>tout vendre</b>. Rien
- * d'autre n'est cliquable, et toute la grille est remplie d'un fond neutre : une case non prévue ne
- * doit jamais être un bouton caché. C'est la leçon tirée de l'ancienne interface des générateurs, où
- * deux cases faisaient la même chose et où le joueur cliquait au hasard.</p>
+ * <h2>Pourquoi une case par capacité et pas un catalogue paginé</h2>
+ * <p>Le barème de GenTycoon compte jusqu'à 22 améliorations pour la pioche : elles tiennent toutes
+ * dans les trois rangées centrales, sans page. Un bouton = une intention (acheter un niveau), et le
+ * niveau maximal du wiki est écrit dans la tooltip du bouton : le joueur n'a jamais à deviner où s'arrête
+ * la capacité.</p>
  *
  * <h2>Les vues sont suivies, pas les joueurs</h2>
  * <p>Le holder porte l'UUID du joueur et l'âme affichée : après un <code>/tools reload</code>, on peut
  * redessiner toutes les vues ouvertes sans qu'aucune ne pointe sur une configuration périmée. La vue est
- * retirée de la liste à la fermeture, y compris par ESC — sinon une vue fantôme réapparaîtrait au
- * joueur qui rouvre son inventaire.</p>
+ * retirée de la liste à la fermeture, y compris par ESC — sinon une vue fantôme réapparaîtrait au joueur
+ * qui rouvre son inventaire.</p>
  */
 public final class ToolsGui {
 
@@ -38,9 +43,11 @@ public final class ToolsGui {
         private final UUID owner;
         private final Inventory inventory;
         private final List<ItemStack> slots = new ArrayList<ItemStack>();
+        private ToolKind kind;
 
-        View(UUID owner, String title, int size) {
+        View(UUID owner, String title, int size, ToolKind kind) {
             this.owner = owner;
+            this.kind = kind;
             this.inventory = Bukkit.createInventory(this, size, title);
         }
 
@@ -53,15 +60,24 @@ public final class ToolsGui {
             return this.owner;
         }
 
+        /** L'âme dont on affiche les capacités (le joueur la change en cliquant sur les icônes du haut). */
+        ToolKind kind() {
+            return this.kind;
+        }
+
+        void kind(ToolKind kind) {
+            this.kind = kind;
+        }
+
         void clear() {
             this.inventory.clear();
             this.slots.clear();
         }
 
         /**
-         * Garde une reference sur un item pose : un bouton dont personne ne detient la copie ne peut
-         * pas etre deplace, et le listener annule deja tout clic, les deux ensemble rendent la case
-         * vraiment decoratif (sur les anciens serveurs, `setCancelled` seul laissait echapper l'item).
+         * Garde une référence sur un item posé : un bouton dont personne ne détient la copie ne peut pas
+         * être déplacé, et le listener annule déjà tout clic — les deux ensemble rendent la case vraiment
+         * décorative (sur les anciens serveurs, <code>setCancelled</code> seul laissait échapper l'item).
          */
         void track(ItemStack stack) {
             if (stack != null) {
@@ -71,15 +87,68 @@ public final class ToolsGui {
     }
 
     /** Une seule vue par joueur : deux vues ouvertes = deux clics pour le même achat. */
-    private static final java.util.Map<UUID, View> VIEWS = new java.util.HashMap<UUID, View>();
-    private static final int SIZE = 45;
-    /** Case de la vente globale, hors des.rangees d'âmes. */
-    static final int SLOT_SELL_ALL = 40;
+    private static final Map<UUID, View> VIEWS = new HashMap<UUID, View>();
+    private static final int SIZE = 54;
+    /** Rangée du haut : quatre âmes, l'achat de palier, la vente, les stats, la fermeture. */
+    static final int SLOT_SOUL_FIRST = 0;
+    static final int SLOT_TIER = 5;
+    static final int SLOT_SELL_ALL = 6;
+    static final int SLOT_STATS = 7;
+    static final int SLOT_CLOSE = 8;
+    /** Les dix-huit premières cases utiles de la rangée centrale sont les capacités ; au-delà, du fond. */
+    static final int SLOT_ABILITY_FIRST = 9;
+    static final int ABILITY_SLOTS = 27;
+
+    /** Icônes des noyaux : une capacité se reconnaît à son symbole avant son nom. */
+    private static final Map<String, Material> ICONS = icons();
 
     private ToolsGui() {
     }
 
-    /** Le clic est traité par ce listener, enregistre par le plugin a l'activation. */
+    private static Map<String, Material> icons() {
+        Map<String, Material> out = new HashMap<String, Material>();
+        put(out, "VEIN", Material.IRON_PICKAXE);
+        put(out, "TREE_FELL", Material.OAK_LOG);
+        put(out, "AREA_BREAK", Material.TNT_MINECART);
+        put(out, "EXTRA_BLOCK", Material.STONE);
+        put(out, "GHOST_MINES", Material.GHAST_TEAR);
+        put(out, "CROP_HARVEST", Material.WHEAT);
+        put(out, "AUTO_SMELT", Material.FURNACE);
+        put(out, "FORTUNE", Material.DIAMOND);
+        put(out, "DOUBLE_DROP", Material.CHEST);
+        put(out, "SELL_ON_BREAK", Material.GOLD_NUGGET);
+        put(out, "INFINITE_DURABILITY", Material.NETHERITE_SCRAP);
+        put(out, "MONEY_MULT", Material.GOLD_INGOT);
+        put(out, "MONEY_DOUBLE", Material.GOLD_BLOCK);
+        put(out, "MONEY_POUCH", Material.PAPER);
+        put(out, "XP_FLAT", Material.EXPERIENCE_BOTTLE);
+        put(out, "XP_MULT", Material.BOOK);
+        put(out, "TREASURE", Material.TRIPWIRE_HOOK);
+        put(out, "RANDOM_ENCHANT", Material.ENCHANTED_BOOK);
+        put(out, "FURY", Material.BLAZE_POWDER);
+        put(out, "PROC_BOOSTER", Material.CLOCK);
+        put(out, "HASTE", Material.SUGAR);
+        put(out, "SWIFT", Material.FEATHER);
+        put(out, "SOUL_SPEED", Material.SOUL_SAND);
+        put(out, "CRIT", Material.DIAMOND_SWORD);
+        put(out, "DAMAGE_MULT", Material.IRON_SWORD);
+        put(out, "LIFE_STEAL", Material.REDSTONE);
+        put(out, "KNOCKBACK", Material.PISTON);
+        put(out, "POTION_APPLY", Material.POTION);
+        put(out, "AUTO_SWING", Material.BOW);
+        put(out, "MULTI_KILL", Material.ROTTEN_FLESH);
+        put(out, "AUTO_REEL", Material.TRIPWIRE_HOOK);
+        put(out, "FAST_REEL", Material.CLOCK);
+        put(out, "MULTI_CATCH", Material.COD);
+        put(out, "LUCK", Material.RABBIT_FOOT);
+        return Collections.unmodifiableMap(out);
+    }
+
+    private static void put(Map<String, Material> map, String key, Material material) {
+        map.put(key, material);
+    }
+
+    /** Le clic est traité par ce listener, enregistré par le plugin à l'activation. */
     public static final class Handler implements Listener {
 
         @EventHandler
@@ -92,50 +161,69 @@ public final class ToolsGui {
             if (event.getClickedInventory() != top || !(event.getWhoClicked() instanceof Player)) {
                 return;
             }
-            View view = (View) top.getHolder();
-            Player player = (Player) event.getWhoClicked();
+            final View view = (View) top.getHolder();
+            final Player player = (Player) event.getWhoClicked();
             if (!player.getUniqueId().equals(view.owner())) {
                 return;
             }
-            int slot = event.getSlot();
-            if (slot == SLOT_SELL_ALL) {
-                final Player seller = player;
-                Bukkit.getScheduler().runTask(ValoriaTools.get(), new Runnable() {
+            if (ValoriaTools.get() == null) {
+                return;
+            }
+            final int slot = event.getSlot();
+            final boolean bulk = event.isShiftClick();
+            final ToolKind shown = view.kind();
+            // Les clics sont reportés d'un tick : muter l'inventaire ou le solde pendant la désignation
+            // de l'événement est le chemin le plus court vers un desync.
+            Bukkit.getScheduler().runTask(ValoriaTools.get(), new Runnable() {
 
-                    @Override
-                    public void run() {
-                        sellAll(seller);
-                        render(seller);
-                    }
-                });
-                return;
-            }
-            ToolKind kind = kindOfSlot(slot);
-            if (kind == null) {
-                return;
-            }
+                @Override
+                public void run() {
+                    handle(player, view, slot, bulk, shown);
+                    render(player);
+                }
+            });
+        }
+
+        private void handle(Player player, View view, int slot, boolean bulk, ToolKind shown) {
             ValoriaTools plugin = ValoriaTools.get();
             if (plugin == null) {
                 return;
             }
-            // Les clics sont reports d'un tick : muter l'inventaire ou le solde pendant la
-            // designation de l'evenement est le chemin le plus court vers un desync.
-            final ToolKind chosen = kind;
-            final int action = slot % 3;
-            Bukkit.getScheduler().runTask(plugin, new Runnable() {
-
-                @Override
-                public void run() {
-                    if (action == 0) {
-                        upgrade(player, chosen);
-                    } else if (action == 1) {
-                        stats(player, chosen);
-                    } else {
-                        stats(player, chosen);
-                    }
-                    render(player);
-                }
-            });
+            if (slot == SLOT_CLOSE) {
+                player.closeInventory();
+                return;
+            }
+            if (slot == SLOT_SELL_ALL) {
+                sellAll(player);
+                return;
+            }
+            if (slot >= SLOT_SOUL_FIRST && slot < SLOT_SOUL_FIRST + ToolKind.values().length) {
+                ToolKind picked = ToolKind.values()[slot - SLOT_SOUL_FIRST];
+                view.kind(picked);
+                return;
+            }
+            if (slot == SLOT_STATS) {
+                stats(player, shown);
+                return;
+            }
+            if (slot == SLOT_TIER) {
+                upgradeTier(player, shown);
+                return;
+            }
+            int index = slot - SLOT_ABILITY_FIRST;
+            if (index < 0 || index >= ABILITY_SLOTS) {
+                return;
+            }
+            ToolsConfig.KindConfig kindConfig = plugin.toolsConfig().kind(shown);
+            if (kindConfig == null) {
+                player.sendMessage(MultiTool.color("&cAucune configuration pour cette âme d'outil."));
+                return;
+            }
+            List<ToolsConfig.Ability> abilities = plugin.toolsConfig().abilities(kindConfig);
+            if (index >= abilities.size()) {
+                return;
+            }
+            buyLevel(player, shown, abilities.get(index), bulk ? 10 : 1);
         }
 
         @EventHandler
@@ -146,24 +234,25 @@ public final class ToolsGui {
         }
     }
 
-    /** Case 0, 9, 18, 27 = « améliorer » ; case +1 = stats ; case +2 = vendre. */
-    static ToolKind kindOfSlot(int slot) {
-        if (slot < 0 || slot >= 12) {
-            return null;
+    /** L'âme affichée par défaut : celle de l'item tenu en main, pioche si le joueur ne vise rien. */
+    private static ToolKind currentKind(Player player) {
+        ValoriaTools plugin = ValoriaTools.get();
+        if (plugin == null) {
+            return ToolKind.PICKAXE;
         }
-        ToolKind[] order = ToolKind.values();
-        int index = slot / 3;
-        return index < order.length ? order[index] : null;
-    }
-
-    static int slotOf(ToolKind kind, int action) {
-        ToolKind[] order = ToolKind.values();
-        for (int i = 0; i < order.length; i++) {
-            if (order[i] == kind) {
-                return i * 3 + action;
+        ItemStack held = player.getInventory().getItemInMainHand();
+        try {
+            Block target = player.getTargetBlockExact(6);
+            if (target != null) {
+                ToolKind kind = plugin.matcher().kindOf(target);
+                if (kind != null) {
+                    return kind;
+                }
             }
+        } catch (RuntimeException | LinkageError unavailable) {
+            // pas de raycast sur ce serveur : l'âme de secours suffit
         }
-        return -1;
+        return plugin.toolsConfig().fallbackKind();
     }
 
     /** Ouvre (ou redessine) la vue du joueur. */
@@ -175,7 +264,8 @@ public final class ToolsGui {
         }
         View view = VIEWS.get(player.getUniqueId());
         if (view == null) {
-            view = new View(player.getUniqueId(), MultiTool.color("&8Multi-outil §7— amélioration"), SIZE);
+            view = new View(player.getUniqueId(), MultiTool.color("&8Multi-outil §7— capacités"), SIZE,
+                    currentKind(player));
             VIEWS.put(player.getUniqueId(), view);
         }
         render(view, player);
@@ -199,99 +289,52 @@ public final class ToolsGui {
         ToolStore store = plugin.store();
         view.clear();
         Inventory inventory = view.getInventory();
+        ToolKind shown = view.kind();
+        ToolsConfig.KindConfig kindConfig = config.kind(shown);
+        int tier = kindConfig == null ? 1 : store.tierOf(player.getUniqueId(), shown, config.maxTier(kindConfig));
+        Map<String, Integer> levels = store.levelsOf(player.getUniqueId(), shown);
 
-        for (ToolKind kind : ToolKind.values()) {
-            ToolsConfig.KindConfig kindConfig = config.kind(kind);
-            if (kindConfig == null) {
-                continue;
-            }
-            int tier = store.tierOf(player.getUniqueId(), kind, config.maxTier(kindConfig));
-            int max = config.maxTier(kindConfig);
-            boolean maxed = tier >= max;
-            double price = config.priceOf(kindConfig, tier + 1);
-
-            ItemStack upgrade = new ItemStack(kindConfig.material());
-            ItemMeta upgradeMeta = upgrade.getItemMeta();
-            if (upgradeMeta != null) {
-                upgradeMeta.setDisplayName(MultiTool.color((maxed ? "&a" : "&e") + MultiTool.capitalize(kind.label())
-                        + (maxed ? " — au maximum" : " — améliorer")));
+        for (int i = 0; i < ToolKind.values().length; i++) {
+            ToolKind kind = ToolKind.values()[i];
+            ToolsConfig.KindConfig selected = config.kind(kind);
+            int kindTier = selected == null ? 1
+                    : store.tierOf(player.getUniqueId(), kind, config.maxTier(selected));
+            boolean active = kind == shown;
+            ItemStack tab = new ItemStack(selected == null ? kind.fallbackMaterial() : selected.material());
+            ItemMeta tabMeta = tab.getItemMeta();
+            if (tabMeta != null) {
+                tabMeta.setDisplayName(MultiTool.color((active ? "&a▶ " : "&7") + MultiTool.capitalize(kind.label())));
                 List<String> lines = new ArrayList<String>();
-                lines.add(MultiTool.color("&7Palier actuel : &f" + tier + "&7/&f" + max));
-                if (!maxed) {
-                    lines.add(MultiTool.color("&7Prix de l'amélioration : &a" + plugin.economy().format(price)));
-                    lines.add(MultiTool.color("&7Ce que le palier " + (tier + 1) + " apporte :"));
-                    for (String detail : unlocksAt(config, kindConfig, tier + 1)) {
-                        lines.add("  " + detail);
-                    }
-                    if (lines.size() == 3) {
-                        lines.add("  &8(aucune capacite nouvelle a ce palier)");
-                    }
-                }
-                if (!plugin.economy().available()) {
-                    lines.add(MultiTool.color("&8Aucune economie : les ameliorations sont gratuites."));
-                }
-                upgradeMeta.setLore(lines);
-                upgrade.setItemMeta(upgradeMeta);
+                lines.add(MultiTool.color("&7Palier &f" + kindTier + "&7/&f"
+                        + (selected == null ? 1 : config.maxTier(selected))));
+                lines.add(MultiTool.color("&7Niveaux de capacités achetés : &f"
+                        + store.totalLevels(player.getUniqueId(), kind)));
+                lines.add(MultiTool.color(active ? "&aÂme affichée juste en dessous."
+                        : "&7Clique pour afficher ses capacités."));
+                tabMeta.setLore(lines);
+                tab.setItemMeta(tabMeta);
             }
-            view.track(upgrade);
-            inventory.setItem(slotOf(kind, 0), upgrade);
-
-            ItemStack info = new ItemStack(Material.PAPER);
-            ItemMeta infoMeta = info.getItemMeta();
-            if (infoMeta != null) {
-                infoMeta.setDisplayName(MultiTool.color("&b" + MultiTool.capitalize(kind.label()) + " — statistiques"));
-                List<String> lines = new ArrayList<String>();
-                lines.add(MultiTool.color("&7Palier : &f" + tier + "&7/&f" + max));
-                lines.add(MultiTool.color("&7Capacites actives :"));
-                List<String> active = abilitiesAt(config, kindConfig, tier);
-                if (active.isEmpty()) {
-                    lines.add("  &8(aucune)");
-                } else {
-                    lines.addAll(active);
-                }
-                infoMeta.setLore(lines);
-                info.setItemMeta(infoMeta);
-            }
-            view.track(info);
-            inventory.setItem(slotOf(kind, 1), info);
-
-            ItemStack next = new ItemStack(Material.BOOK);
-            ItemMeta nextMeta = next.getItemMeta();
-            if (nextMeta != null) {
-                nextMeta.setDisplayName(MultiTool.color("&f" + MultiTool.capitalize(kind.label())
-                        + " — palier suivant"));
-                List<String> lines = new ArrayList<String>();
-                List<String> unlocks = unlocksAt(config, kindConfig, Math.min(max, tier + 1));
-                if (maxed) {
-                    lines.add(MultiTool.color("&aTout est débloqué."));
-                } else if (unlocks.isEmpty()) {
-                    lines.add(MultiTool.color("&8Aucune capacité nouvelle au palier " + (tier + 1) + "."));
-                } else {
-                    lines.addAll(unlocks);
-                }
-                nextMeta.setLore(lines);
-                next.setItemMeta(nextMeta);
-            }
-            view.track(next);
-            inventory.setItem(slotOf(kind, 2), next);
+            view.track(tab);
+            inventory.setItem(SLOT_SOUL_FIRST + i, tab);
         }
 
-        // La vente est globale (elle depend des prix declares, pas de l'âme cliquee) : une seule case,
-        // sinon quatre boutons identiques dans la meme interface = quatre facons de cliquer travers.
-        ItemStack sell = new ItemStack(Material.GOLD_NUGGET);
-        ItemMeta sellMeta = sell.getItemMeta();
-        if (sellMeta != null) {
-            sellMeta.setDisplayName(MultiTool.color("&6Vendre mon inventaire"));
-            List<String> lines = new ArrayList<String>();
-            lines.add(MultiTool.color("&7Vend tout ce que l'outil reconnait,"));
-            lines.add(MultiTool.color("&7aux prix de &f" + (config.sellPricesDeclared()
-                    ? "la grille de l'âme" : "&c(aucun prix declare)") + "&7."));
-            lines.add(MultiTool.color("&7Le multi-outil en main n'est jamais vendu."));
-            sellMeta.setLore(lines);
-            sell.setItemMeta(sellMeta);
+        renderTier(plugin, config, store, player, shown, kindConfig, tier, inventory, view);
+        renderSell(plugin, config, inventory, view);
+        renderStats(plugin, config, store, player, shown, kindConfig, tier, inventory, view);
+        renderClose(inventory, view);
+
+        if (kindConfig != null) {
+            int index = 0;
+            for (ToolsConfig.Ability ability : config.abilities(kindConfig)) {
+                if (index >= ABILITY_SLOTS) {
+                    break;
+                }
+                ItemStack button = abilityButton(plugin, config, player, shown, ability, tier, levels);
+                view.track(button);
+                inventory.setItem(SLOT_ABILITY_FIRST + index, button);
+                index++;
+            }
         }
-        inventory.setItem(SLOT_SELL_ALL, sell);
-        view.track(sell);
 
         ItemStack filler = new ItemStack(Material.GRAY_STAINED_GLASS_PANE);
         ItemMeta fillerMeta = filler.getItemMeta();
@@ -299,70 +342,286 @@ public final class ToolsGui {
             fillerMeta.setDisplayName(" ");
             filler.setItemMeta(fillerMeta);
         }
-        for (int slot = 12; slot < SIZE; slot++) {
-            if (slot == SLOT_SELL_ALL) {
+        for (int slot = 0; slot < SIZE; slot++) {
+            if (inventory.getItem(slot) == null) {
+                view.track(filler);
+                inventory.setItem(slot, filler);
+            }
+        }
+    }
+
+    private static void renderTier(ValoriaTools plugin, ToolsConfig config, ToolStore store, Player player,
+            ToolKind kind, ToolsConfig.KindConfig kindConfig, int tier, Inventory inventory, View view) {
+        int max = kindConfig == null ? 1 : config.maxTier(kindConfig);
+        boolean maxed = kindConfig == null || tier >= max;
+        double price = kindConfig == null ? -1.0D : config.priceOf(kindConfig, tier + 1);
+        ItemStack button = new ItemStack(Material.EXPERIENCE_BOTTLE);
+        ItemMeta meta = button.getItemMeta();
+        if (meta != null) {
+            meta.setDisplayName(MultiTool.color((maxed ? "&a" : "&e") + "Palier de l'âme — "
+                    + (maxed ? "maximum atteint" : "améliorer")));
+            List<String> lines = new ArrayList<String>();
+            lines.add(MultiTool.color("&7Palier actuel : &f" + tier + "&7/&f" + max));
+            if (!maxed) {
+                lines.add(MultiTool.color("&7Prix : &a" + plugin.economy().format(price)));
+                List<String> unlocks = unlocksAt(config, kindConfig, tier + 1);
+                lines.add(MultiTool.color("&7Ce que le palier " + (tier + 1) + " débloque :"));
+                if (unlocks.isEmpty()) {
+                    lines.add(MultiTool.color("&8  (aucune capacité nouvelle)"));
+                } else {
+                    lines.addAll(unlocks);
+                }
+                lines.add(MultiTool.color("&7Le palier ne donne pas de niveau de capacité : il les autorise."));
+            }
+            if (!plugin.economy().available()) {
+                lines.add(MultiTool.color("&8Aucune économie : les améliorations sont gratuites."));
+            }
+            meta.setLore(lines);
+            button.setItemMeta(meta);
+        }
+        view.track(button);
+        inventory.setItem(SLOT_TIER, button);
+    }
+
+    private static void renderSell(ValoriaTools plugin, ToolsConfig config, Inventory inventory, View view) {
+        ItemStack sell = new ItemStack(Material.GOLD_NUGGET);
+        ItemMeta sellMeta = sell.getItemMeta();
+        if (sellMeta != null) {
+            sellMeta.setDisplayName(MultiTool.color("&6Vendre mon inventaire"));
+            List<String> lines = new ArrayList<String>();
+            lines.add(MultiTool.color("&7Vend tout ce que l'outil reconnaît,"));
+            lines.add(MultiTool.color("&7aux prix de " + (config.sellPricesDeclared() ? "&bla grille de l'âme"
+                    : "&c(aucun prix déclaré)") + "&7."));
+            lines.add(MultiTool.color("&7Le multi-outil en main n'est jamais vendu."));
+            sellMeta.setLore(lines);
+            sell.setItemMeta(sellMeta);
+        }
+        view.track(sell);
+        inventory.setItem(SLOT_SELL_ALL, sell);
+    }
+
+    private static void renderStats(ValoriaTools plugin, ToolsConfig config, ToolStore store, Player player,
+            ToolKind kind, ToolsConfig.KindConfig kindConfig, int tier, Inventory inventory, View view) {
+        ItemStack info = new ItemStack(Material.PAPER);
+        ItemMeta infoMeta = info.getItemMeta();
+        if (infoMeta != null) {
+            infoMeta.setDisplayName(MultiTool.color("&b" + MultiTool.capitalize(kind.label()) + " — statistiques"));
+            List<String> lines = new ArrayList<String>();
+            lines.add(MultiTool.color("&7Palier &f" + tier + "&7/&f" + (kindConfig == null ? 1
+                    : config.maxTier(kindConfig))));
+            int bought = 0;
+            if (kindConfig != null) {
+                for (ToolsConfig.Ability ability : config.abilities(kindConfig)) {
+                    bought += ToolsConfig.levelOf(ability, store.levelsOf(player.getUniqueId(), kind), tier);
+                }
+            }
+            lines.add(MultiTool.color("&7Niveaux de capacités achetés : &f" + bought));
+            lines.add(MultiTool.color("&8Clic = +1 niveau · Maj+Clic = +10 niveaux"));
+            lines.add(MultiTool.color("&8Le pourcentage affiché inclut déjà le Proc booster."));
+            infoMeta.setLore(lines);
+            info.setItemMeta(infoMeta);
+        }
+        view.track(info);
+        inventory.setItem(SLOT_STATS, info);
+    }
+
+    private static void renderClose(Inventory inventory, View view) {
+        ItemStack close = new ItemStack(Material.BARRIER);
+        ItemMeta closeMeta = close.getItemMeta();
+        if (closeMeta != null) {
+            closeMeta.setDisplayName(MultiTool.color("&cFermer"));
+            close.setItemMeta(closeMeta);
+        }
+        view.track(close);
+        inventory.setItem(SLOT_CLOSE, close);
+    }
+
+    /** La case d'une capacité : nom du wiki, description du wiki, niveau, effet courant, prix. */
+    private static ItemStack abilityButton(ValoriaTools plugin, ToolsConfig config, Player player,
+            ToolKind kind, ToolsConfig.Ability ability, int tier, Map<String, Integer> levels) {
+        Material icon = ICONS.get(ability.type());
+        ItemStack button = new ItemStack(icon == null ? Material.BOOK : icon);
+        ItemMeta meta = button.getItemMeta();
+        if (meta == null) {
+            return button;
+        }
+        int level = ToolsConfig.levelOf(ability, levels, tier);
+        int max = ability.maxLevel();
+        boolean locked = tier < ability.unlock();
+        boolean maxed = level >= max;
+        StringBuilder name = new StringBuilder();
+        name.append(locked ? "&8" : maxed ? "&a" : level > 0 ? "&e" : "&7").append(ability.name());
+        meta.setDisplayName(MultiTool.color(name.toString()));
+        List<String> lines = new ArrayList<String>();
+        for (String part : wrap(ability.description(), 38)) {
+            lines.add(MultiTool.color("&7" + part));
+        }
+        lines.add(MultiTool.color("&8" + ability.type() + " §8— niveau &f" + level + "&7/&f" + max));
+        if (level > 0) {
+            lines.add(MultiTool.color("&7Effet actuel :") + currentValues(ability, level));
+        }
+        if (!maxed) {
+            lines.add(MultiTool.color("&7Effet au niveau " + (level + 1) + " :") + currentValues(ability, level + 1));
+        }
+        if (locked) {
+            lines.add(MultiTool.color("&cVerrouillé : palier d'âme &f" + ability.unlock() + "&c requis."));
+        } else if (maxed) {
+            lines.add(MultiTool.color("&aCapacité au maximum du barème."));
+        } else {
+            lines.add(MultiTool.color("&7Prix du niveau " + (level + 1) + " : &a"
+                    + plugin.economy().format(ability.priceAt(level + 1))));
+        }
+        if (!plugin.economy().available()) {
+            lines.add(MultiTool.color("&8Aucune économie : les capacités sont gratuites."));
+        }
+        meta.setLore(lines);
+        if (level > 0 && !locked && level >= max) {
+            meta.setCustomModelData(Integer.valueOf(1));   // signe discret : la capacite est au max
+        }
+        button.setItemMeta(meta);
+        return button;
+    }
+
+    /** Les valeurs de la capacité, celles de la config : rien d'inventé, rien de masqué. */
+    private static String currentValues(ToolsConfig.Ability ability, int level) {
+        StringBuilder out = new StringBuilder();
+        for (String key : ability.keys()) {
+            if (key.indexOf('.') >= 0 || ability.numbers(key).isEmpty()) {
                 continue;
             }
-            view.track(filler);
-            inventory.setItem(slot, filler);
+            double value = ability.levelDecimal(key, level, 0.0D);
+            if (!Double.isFinite(value) || value == 0.0D) {
+                continue;
+            }
+            if (out.length() > 0) {
+                out.append(" §7/ ");
+            }
+            out.append("§7").append(prettyKey(key)).append(" §f").append(readable(key, value));
+            if (out.length() > 150) {
+                break;      // une tooltip qui depasse l'ecran n'est plus une information
+            }
         }
+        return out.length() == 0 ? " §8(passive)" : " §f" + out;
+    }
+
+    private static String prettyKey(String key) {
+        return key.replace('-', ' ');
+    }
+
+    /** Un pourcentage pour ce qui en est un, un nombre simple pour le reste. */
+    private static String readable(String key, double value) {
+        boolean percent = key.contains("percent") || key.contains("chance");
+        if (percent) {
+            return Math.round(value * 100.0D) + "%";
+        }
+        if (Math.abs(value - Math.rint(value)) < 0.001D) {
+            return String.valueOf((long) Math.rint(value));
+        }
+        return String.format(java.util.Locale.ROOT, "%.2f", Double.valueOf(value));
+    }
+
+    private static List<String> wrap(String text, int width) {
+        List<String> out = new ArrayList<String>();
+        if (text == null || text.trim().isEmpty()) {
+            return out;
+        }
+        StringBuilder line = new StringBuilder();
+        for (String word : text.trim().split("\\s+")) {
+            if (line.length() > 0 && line.length() + 1 + word.length() > width) {
+                out.add(line.toString());
+                line.setLength(0);
+            }
+            if (line.length() > 0) {
+                line.append(' ');
+            }
+            line.append(word);
+        }
+        if (line.length() > 0) {
+            out.add(line.toString());
+        }
+        return out;
     }
 
     /** Les capacités que le palier demandé fait apparaître. */
     private static List<String> unlocksAt(ToolsConfig config, ToolsConfig.KindConfig kindConfig, int tier) {
         List<String> out = new ArrayList<String>();
         for (ToolsConfig.Ability ability : config.abilities(kindConfig)) {
-            if (ability.fromTier() == tier) {
+            if (ability.unlock() == tier) {
                 out.add(MultiTool.color("&a+ " + ability.name()));
             }
         }
         return out;
     }
 
-    /** Les capacités actives au palier courant, avec leurs valeurs : c'est ça, le « détail des capacités ». */
-    private static List<String> abilitiesAt(ToolsConfig config, ToolsConfig.KindConfig kindConfig, int tier) {
-        List<String> out = new ArrayList<String>();
-        for (ToolsConfig.Ability ability : config.abilities(kindConfig)) {
-            if (tier < ability.fromTier()) {
-                out.add(MultiTool.color("&8✗ " + ability.name() + " §8(palier " + ability.fromTier() + ")"));
-                continue;
-            }
-            out.add(MultiTool.color("&a✓ " + ability.name()) + values(ability, tier));
+    // ------------------------------------------------------------------ achats
+
+    /**
+     * Achète {@code wanted} niveaux d'une capacité. Les niveaux sont comptés <b>un par un</b> dans le
+     * prix total : c'est la grille du wiki (le prix dépend du niveau visé), et un achat groupé à prix
+     * unique serait une faille d'économie gros comme une île.
+     */
+    private static void buyLevel(Player player, ToolKind kind, ToolsConfig.Ability ability, int wanted) {
+        ValoriaTools plugin = ValoriaTools.get();
+        if (plugin == null) {
+            return;
         }
-        return out;
+        ToolsConfig config = plugin.toolsConfig();
+        ToolsConfig.KindConfig kindConfig = config.kind(kind);
+        if (kindConfig == null) {
+            player.sendMessage(MultiTool.color("&cAucune configuration pour cette âme d'outil."));
+            return;
+        }
+        int tier = plugin.store().tierOf(player.getUniqueId(), kind, config.maxTier(kindConfig));
+        if (tier < ability.unlock()) {
+            player.sendMessage(MultiTool.color("&c" + ability.name() + " demande le palier d'âme &f"
+                    + ability.unlock() + "&c : améliore l'âme d'abord (case du haut)."));
+            return;
+        }
+        if (!ToolListener.holding(player)) {
+            player.sendMessage(MultiTool.color("&cTiens le multi-outil en main pour le modifier."));
+            return;
+        }
+        int start = ToolsConfig.levelOf(ability, plugin.store().levelsOf(player.getUniqueId(), kind), tier);
+        int ceiling = ability.maxLevel();
+        double total = 0.0D;
+        int bought = 0;
+        for (int level = start + 1; level <= ceiling && bought < Math.max(1, wanted); level++) {
+            double price = ability.priceAt(level);
+            if (price < 0.0D) {
+                break;
+            }
+            total += price;
+            bought++;
+        }
+        if (bought <= 0) {
+            player.sendMessage(MultiTool.color("&e" + ability.name() + " est déjà à son niveau maximum ("
+                    + ceiling + ")."));
+            return;
+        }
+        double cost = ToolListener.round(total);
+        if (plugin.economy().available() && cost > 0.0D && !plugin.economy().canAfford(player, cost)) {
+            player.sendMessage(MultiTool.color("&cPas assez d'argent : il manque &f"
+                    + plugin.economy().format(cost - plugin.economy().balance(player)) + "&c."));
+            return;
+        }
+        EconomyService.Outcome taken = plugin.economy().withdraw(player, cost);
+        if (!taken.success()) {
+            player.sendMessage(MultiTool.color("&cPaiement refusé : &f" + taken.reason()));
+            return;
+        }
+        plugin.store().setLevel(player, kind, ability.id(), start + bought, ceiling);
+        MultiTool.refresh(player.getInventory().getItemInMainHand(), config, plugin.store(), player.getUniqueId());
+        try {
+            player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_PLAYER_LEVELUP, 0.7F, 1.6F);
+        } catch (RuntimeException | LinkageError legacy) {
+            // son decoratif
+        }
+        player.sendMessage(MultiTool.color("&a" + ability.name() + " &7niveau &f" + (start + bought) + "&a/"
+                + ceiling + " &8(-" + plugin.economy().format(cost) + "&8)"));
     }
 
-    /** Résume les valeurs de la capacité au palier courant, sans inventer de libellé : les clés restent visibles. */
-    private static String values(ToolsConfig.Ability ability, int tier) {
-        StringBuilder out = new StringBuilder();
-        for (String key : VALUES) {
-            if (ability.numbers(key).isEmpty()) {
-                continue;
-            }
-            if (out.length() > 0) {
-                out.append(" §7/ ");
-            }
-            out.append("§7").append(key).append(" §f").append(ability.valueAt(key, tier - 1, 0));
-        }
-        for (String key : CHANCES) {
-            if (ability.numbers(key).isEmpty()) {
-                continue;
-            }
-            if (out.length() > 0) {
-                out.append(" §7/ ");
-            }
-            out.append("§7").append(key).append(" §f").append(Math.round(ability.decimalAt(key, tier - 1, 0) * 100))
-                    .append('%');
-        }
-        return out.length() == 0 ? "" : " §8(§f" + out + "§8)";
-    }
-
-    private static final String[] VALUES = {"max-blocks", "max-height", "extra-min", "extra-max"};
-    private static final String[] CHANCES = {"chance", "strength", "multiplier", "treasure-chance", "heal-hearts"};
-
-    // ------------------------------------------------------------------ actions
-
-    private static void upgrade(Player player, ToolKind kind) {
+    /** Achat du palier d'âme : ce qui autorise les capacités verrouillées par le wiki. */
+    private static void upgradeTier(Player player, ToolKind kind) {
         ValoriaTools plugin = ValoriaTools.get();
         if (plugin == null) {
             return;
@@ -392,17 +651,14 @@ public final class ToolsGui {
         }
         EconomyService.Outcome taken = plugin.economy().withdraw(player, price);
         if (!taken.success()) {
-            player.sendMessage(MultiTool.color("&cPaiement refuse : &f" + taken.reason()));
+            player.sendMessage(MultiTool.color("&cPaiement refusé : &f" + taken.reason()));
             return;
         }
         plugin.store().setTier(player, kind, tier + 1, max);
-        ItemStack tool = player.getInventory().getItemInMainHand();
-        if (MultiTool.isMultiTool(tool)) {
-            MultiTool.refresh(tool, config, plugin.store(), player.getUniqueId());
-        }
+        MultiTool.refresh(player.getInventory().getItemInMainHand(), config, plugin.store(), player.getUniqueId());
         try {
             player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_PLAYER_LEVELUP, 0.8F, 1.4F);
-        } catch (IllegalArgumentException | NoSuchFieldError | NoClassDefFoundError legacy) {
+        } catch (RuntimeException | LinkageError legacy) {
             // son decoratif
         }
         player.sendMessage(MultiTool.color("&a" + MultiTool.capitalize(kind.label()) + " → palier &f"
@@ -420,10 +676,15 @@ public final class ToolsGui {
             return;
         }
         int tier = plugin.store().tierOf(player.getUniqueId(), kind, config.maxTier(kindConfig));
+        Map<String, Integer> levels = plugin.store().levelsOf(player.getUniqueId(), kind);
         player.sendMessage(MultiTool.color("&8[&a" + MultiTool.capitalize(kind.label()) + "&8] &7palier &f"
                 + tier + "&7/&f" + config.maxTier(kindConfig)));
-        for (String line : abilitiesAt(config, kindConfig, tier)) {
-            player.sendMessage("  " + line);
+        for (ToolsConfig.Ability ability : config.abilities(kindConfig)) {
+            int level = ToolsConfig.levelOf(ability, levels, tier);
+            String mark = tier < ability.unlock() ? "&8✗" : level > 0 ? "&a✓" : "&7·";
+            player.sendMessage(MultiTool.color("  " + mark + " " + ability.name() + " §8niv. §f" + level
+                    + "&8/§f" + ability.maxLevel() + (tier < ability.unlock()
+                            ? " §8(palier " + ability.unlock() + ")" : "")));
         }
     }
 
@@ -432,7 +693,6 @@ public final class ToolsGui {
         if (plugin == null) {
             return;
         }
-        ToolsConfig config = plugin.toolsConfig();
         double total = 0.0D;
         int sold = 0;
         ItemStack[] contents = player.getInventory().getStorageContents();
@@ -475,7 +735,7 @@ public final class ToolsGui {
         VIEWS.remove(owner);
     }
 
-    /** Toutes les vues ouvertes : le plugin les redessine apres un reload. */
+    /** Toutes les vues ouvertes : le plugin les redessine après un reload. */
     public static java.util.Collection<View> views() {
         return new java.util.ArrayList<View>(VIEWS.values());
     }

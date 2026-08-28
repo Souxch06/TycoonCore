@@ -17,14 +17,14 @@ softdepend:
   - IridiumSkyblock
   - SuperiorSkyblock2
   - BentoBox
-description: Multi-outil à âmes commutantes (pioche, hache, canne à pêche, épée), améliorations par âme.
+description: Multi-outil a ames commutantes (pioche, hache/houe, canne a peche, epee) ; capacites et baremes alignes sur le wiki GenTycoon, un niveau par capacite.
 authors:
   - ArcadieDevs
 
 commands:
   valariatools:
     description: Ouvre l'interface du multi-outil et ses sous-commandes
-    usage: /<command> [give|sell|set|stats|reload|help]
+    usage: /<command> [gui|give|sell|set|ability|reset|stats|reload|help]
     aliases: [tools, outil, multitool]
 
 permissions:
@@ -35,5 +35,5 @@ permissions:
     description: Recevoir un multi-outil.
     default: true
   valoria.tools.admin:
-    description: Forcer un palier, recharger la configuration, donner a autrui.
+    description: Forcer un palier ou un niveau de capacite, recharger la configuration, donner a autrui.
     default: op

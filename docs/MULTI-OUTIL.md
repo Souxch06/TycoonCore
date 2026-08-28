@@ -1,128 +1,166 @@
-# Multi-outil (ValoriaTools) — un item, quatre âmes
+# Multi-outil (ValoriaTools) — un item, quatre âmes, barème du wiki GenTycoon
 
 ## Ce que c'est
 
-Un **seul** item dans la main, qui se comporte comme pioche, hache, canne à pêche ou épée **selon le
-bloc que tu regardes** — et dont **chaque âme s'améliore séparément** avec de l'argent (capacités
-débloquées par palier). Le comportement d'inspiration hGensPickaxe, étendu à quatre outils, écrit ici :
-aucun plugin à télécharger, y compris pour la monnaie.
+Un **seul** item dans la main, qui se comporte comme pioche, hache/houe, canne à pêche ou épée **selon
+le bloc que tu regardes** — et qui se améliore **capacité par capacité**, comme les enchantements custom
+du serveur de référence. Aucun plugin à télécharger, y compris pour la monnaie.
 
-| ce que tu vises | l'outil devient | ce que les paliers donnent |
+Le barème (noms, descriptions, verrous, niveaux maximaux) est celui du wiki **GenTycoon**, récupéré le
+2026-08-28 sur `https://wiki.gentycoon.fr/progression-metiers-and-outils/les-outils` et recopié à
+l'identique dans `docs/WIKI-GENTYCOON-OUTILS.md`. Le site principal est en maintenance « V2 » ; seule la
+version Markdown du wiki (`<url>.md`, index `/llms.txt`) répond.
+
+| âme | ce qu'elle reconnaît | capacités du wiki | + propres à Valoria |
+| --- | --- | --- | --- |
+| pioche | `#minecraft:mineable/pickaxe` | 22 (Onde sismique → Fortune → Briseur → Surcharge…) | `AUTO_SMELT`, vente à la casse |
+| hache / houe | logs, `mineable/axe`, 13 blocs de cultures | 18 (Main de Gaïa, Furie, Vitesse des âmes, Jugement divin…) | `TREE_FELL`, récolte+replantation, vente |
+| épée | entités vivantes | 18 (Tranchant, Autoclicker, Briseur de monstres, Force…) | critique, vol de vie, recul |
+| canne | le lancer (aucun bloc) | 14 (Angler, Tsunami, Proc booster, Mains dorées…) | moulinet, vente de la pêche |
+
+## Les deux compteurs
+
+1. **le palier d'âme** (1 → 50) : il **autorise** les capacités, comme le « Level minimum » / « Prestige
+   mini » du wiki. Achat dans la case centrale du haut du menu ; prix `price-base × price-ratio^palier`.
+2. **le niveau de capacité** (0 → `max-level`, jusqu'à 2000 pour les « Pouch ») : c'est le « Niveau max
+   d'enchantement » du wiki. Une case = une capacité ; **clic = +1 niveau**, **Maj+clic = +10**.
+
+Un niveau 0 = capacité non achetée = aucun effet. Quatre capacités sont `free: true` (vitesse de
+minage, abattage, récolte, vente) pour que l'outil serve dès le palier 1 — c'est le seul écart assumé
+au modèle « tout s'achète ».
+
+## Le menu
+
+Ouverture : **clic droit** avec la pioche ou la houe (dans le vide), **sneak + clic droit** avec l'épée
+ou la canne — la convention du wiki, page « Les Outils ».
+
+```
+rangée 1 :  [pioche] [hache] [canne] [épée]   .   [palier ↑]  [vendre]  [stats]  [fermer]
+rangées 2-4 : une case par capacité du wiki, dans l'ordre du fichier de config
+```
+
+La tooltip d'une capacité donne : sa description du wiki, son noyau, `niveau actuel / max`, l'effet au
+niveau courant et au niveau suivant, le prix, et le palier requis si elle est verrouillée.
+
+## Commandes
+
+```
+/tools                                     ouvre le menu
+/tools give [joueur] [palier]              reçoit l'outil
+/tools sell [all]                          vend ce que l'outil reconnaît
+/tools set <joueur> <âme> [palier]         voir / forcer un palier          (admin)
+/tools ability <joueur> <âme> <capacité> [niveau]   régler une capacité      (admin)
+/tools reset <joueur> [âme]                remettre une âme à zéro           (admin)
+/tools stats                               état des services
+/tools reload                              recharge config + paliers + vues  (admin)
+```
+
+`/tools ability` accepte l'**id** (`fortune`), le **nom du wiki** (`Fortune`) ou le **noyau** (`FORTUNE`) :
+la complétion par Tab propose les ids de l'âme choisie. Le niveau est borné par `max-level`, donc un
+réglage hors barème ne peut pas rendre une capacité plus forte que ce que le fichier déclare.
+
+## Comment une capacité du wiki devient un effet
+
+Tout est dans `resources-tools/config.yml`, régénéré par `python3 scripts/gen-tools-config.py` (la table
+du wiki y est la seule source). Le nom de **noyau** (`type:`) est la seule chose que le Java connaît :
+
+| noyau | effet | capacités du wiki qui l'utilisent |
 | --- | --- | --- |
-| pierre, minerai, bloc minable | pioche | `VEIN` (filon entier) → `FORTUNE` → `AUTO_SMELT` → `DOUBLE_DROP` → `SELL_ON_BREAK` |
-| tronc, bois | hache | `TREE_FELL` (arbre entier) → `DOUBLE_DROP` → `SELL_ON_BREAK` |
-| rien (clic dans l'eau) | canne à pêche | `AUTO_REEL` → `LUCK` → `SELL_ON_BREAK` |
-| une entité vivante | épée | `CRIT` → `KNOCKBACK` → `LIFE_STEAL` |
+| `VEIN` | casse le filon entier, au tour de dé près | Briseur |
+| `AREA_BREAK` | cube (ou plan si `flat: true`) autour du bloc, filtré `ores-only` / cultures | Onde sismique, Explosive, Surcharge, Main de Gaïa, Jugement divin |
+| `EXTRA_BLOCK` | N blocs identiques collés au bloc visé | Seconde main |
+| `GHOST_MINES` | vagues différées qui minent autour (1 tâche toutes les `interval` ticks) | Pioche fantomatique |
+| `TREE_FELL` / `CROP_HARVEST` | tronc+canopée / récolte des cultures mûres + replantation | Arbre, Récolte automatique |
+| `HASTE` / `SWIFT` / `SOUL_SPEED` | vitesse de minage (effet court re-posé à chaque bloc), vitesse de fuite, marche sur sable des âmes avec **rendu de la vitesse d'origine** | Efficacité, Speed, Célérité, Vitesse des âmes |
+| `FORTUNE` / `DOUBLE_DROP` / `AUTO_SMELT` | drops additionnels, cuisson via les recettes du serveur | Fortune, Pillage, Bonus de rendement, Auto-smelt |
+| `MONEY_MULT` / `MONEY_DOUBLE` / `MONEY_POUCH` / `FURY` | pourcentage, chance de ×2, cagnotte, mode temporaires | Braquage, Main dorée, Double gain, les cinq « Pouch », Furie |
+| `XP_MULT` / `XP_FLAT` | multiplicateur et lot d'XP (`giveExp`, jamais d'orbe) | Booster d'xp, Chercheur d'xp |
+| `TREASURE` | objet du réservoir **déclaré par la capacité** (`items: [...]`) | Trouvaille, Chercheur de spawner/bonbons/crédits, Casino |
+| `RANDOM_ENCHANT` | un enchantement réel posé sur l'item, dans la liste `enchants:` | Charognard |
+| `PROC_BOOSTER` | multiplie la chance de **toutes** les autres capacités de l'âme | Proc booster |
+| `DAMAGE_MULT` / `CRIT` / `LIFE_STEAL` / `KNOCKBACK` / `POTION_APPLY` / `AUTO_SWING` / `MULTI_KILL` | combat ; les gains de butin sont calculés **à la mort** (`EntityDeathEvent`), pas au coup | Tranchant, Force, Autoclicker, Briseur de monstres, Pillage |
+| `AUTO_REEL` / `FAST_REEL` / `MULTI_CATCH` / `LUCK` | la prise va au sac sans mouliner ; temps d'attente du bobber raccourci (`setWaitTime` par réflexion sur l'API publique, Paper seulement) ; rafales de prises ; trésors | Moulinet rapide, Angler, Tsunami, Pêche chanceuse |
+| `SELL_ON_BREAK` | vend au prix de `sell.prices` | la « vente automatique » que le wiki suppose côté serveur |
 
-## Installer
+Règles communes, appliquées par `ToolsConfig.Effect` et non par chaque noyau :
 
-Le plugin est le **troisième** jar du build : `ValoriaTools-v1.6.3.jar`, à poser dans `plugins/` avec
-`ValoriaTycoon-v1.6.3.jar` et `ValoriaEconomy-v1.6.3.jar`. Rien d'autre : pas de Vault, pas de
-ProtocolLib, pas de plugin d'outil. `plugin.yml` ne déclare **aucun `depend:`** (un `depend:` est résolu
-par nom exact et bloque tout le chargement si une seule entrée diffère — c'est le plantage historique
-de ce serveur).
+- **plusieurs capacités, un effet** : Efficacité + Speed + Célérité additionnent leur amplifier, plafonné
+  à 5 (au-delà, le client mine plus vite que le serveur n'accepte) ;
+- **les chances ne s'additionnent pas** : `1 − Π(1 − c)`, plafonné à 95 % ; le Proc booster multiplie `c`
+  avant combinaison, jamais après ;
+- **un tour de dé par geste**, pas par bloc : sinon un « Briseur 12 % » sur un filon de 20 blocs
+  déclencherait presque à chaque clic ;
+- **budgets** : rayon ≤ 5, blocs ≤ 256 par geste, vagues ≤ 8 — un barème de wiki avec `max-level: 2000`
+  ne doit jamais pouvoir écrire un tick de 20 000 blocs.
 
-En jeu :
+## Ce qui n'est pas fait, et pourquoi
 
-```
-/tools            ouvre l'interface d'amélioration
-/tools give       reçoit le multi-outil
-/tools sell [all] vend ce que l'outil reconnaît
-/tools stats      état des services (économie trouvée, âmes, capacités)
-/tools reload     recharge la configuration (admin)
-```
+- `INSTANT_BREAK` (casser n'importe quel bloc au contact) : dépend du raycast client et de la capacité
+  `INSTANT_BREAK` du joueur, tous deux redessinés selon les versions. Le plugin ne promet rien plutôt que
+  de promettre un comportement incertain.
+- MineCoins / FarmCoins / MobCoins / FishCoins / crédits / clés / spawners / générateurs / bonbons de
+  pets : **Valoria n'a pas ces monnaies ni ces systèmes**. Les capacités sont quand même là, nommées et
+  tarifées comme au wiki, mais récompensent de l'argent ou un objet que **tu** déclares (`items:`). Le
+  tableau de correspondance est dans `docs/WIKI-GENTYCOON-OUTILS.md`.
+- Les **prix** et les **valeurs d'effet** : le wiki ne les publie pas (ses pages renvoient à des captures
+  d'écran, sans chiffres). Ces nombres-là sont des réglages Valoria, éditables dans `config.yml`.
 
-## Aligner les valeurs sur un barème existant (wiki gentycoon, etc.)
+## D'où vient chaque nombre
 
-**Honnête d'abord** : `gentycoon.fr` et SpigotMC n'étaient **pas joignables depuis mon environnement**
-(réseau bloqué, `000` sur chaque domaine), et `hGensPickaxe` n'a aucun dépôt public trouvable. Donc
-**je n'ai recopié aucun chiffre** : les valeurs dans `resources-tools/config.yml` sont des **réglages
-plausibles**, pas le barème de ce serveur. Tout est fait pour que la mise à jour soit un simple
-remplacement de nombres, **sans retoucher le code ni recompiler** :
-
-```yaml
-tools:
-  pickaxe:
-    upgrade:
-      max-tier: 5
-      prices: [5000, 15000, 40000, 100000]   # prix du passage 1→2, 2→3, 3→4, 4→5
-    abilities:
-      # `from-tier` = palier d'ouverture ; les listes = UNE valeur PAR palier
-      - {type: VEIN, label: "Arrachage de filon", from-tier: 1, max-blocks: [8, 12, 18, 24, 32], similar-blocks-only: true}
-      - {type: FORTUNE, label: "Chance minérale", from-tier: 2, chance: [0.0, 0.15, 0.25, 0.35, 0.5], extra-min: 1, extra-max: 2}
-    sell:
-      prices:            # ce que rend chaque bloc, pour SELL_ON_BREAK et /tools sell
-        DIAMOND: 60.0
-        IRON_INGOT: 12.0
-```
-
-Règles de lecture du moteur :
-
-- `type` est insensible à la casse et aux tirets (`DOUBLE_DROP`, `double-drop` = même capacité) ;
-- les listes (`max-blocks`, `chance`, `multiplier`, `strength`, …) sont indexées sur le **palier** :
-  le premier nombre s'applique au palier 1. Une liste trop courte est simplement **figée sur sa
-  dernière valeur** (le palier 5 d'une liste de 3 nombres utilise le 3ᵉ) — jamais un plantage ;
-- une capacité `from-tier: 6` avec `max-tier: 5` est **ramenée** au dernier palier, avec un avertissement au log ;
-- `prices` doit contenir **exactement `max-tier - 1` entrées** : c'est vérifié par
-  `scripts/verify-tools-config.py` (sinon un palier serait gratuit ou inatteignable) ;
-- `SELL_ON_BREAK` sans grille `sell.prices` est **refusé au contrôle** : la capacité ne paierait rien ;
-- une capacité que le moteur ne connaît pas fait **échouer le contrôle de config** — pas un silence.
-
-Capacités comprises : `VEIN`, `TREE_FELL`, `AUTO_SMELT`, `FORTUNE`, `DOUBLE_DROP`,
-`INFINITE_DURABILITY`, `SELL_ON_BREAK`, `AUTO_REEL`, `LUCK`, `CRIT`, `KNOCKBACK`, `LIFE_STEAL`.
-
-## Choix de conception à connaître (et pourquoi)
-
-1. **Les paliers sont stockés par joueur, pas dans l'item** (`tools.yml`, écriture atomique). Un palier
-   porté par l'item se donne, se vend, se duplique, et se perd quand l'item casse. Le `lore` n'affiche
-   que ce que le fichier dit.
-2. **L'économie est vue par réflexion** (`EconomyService`) : le plugin cherche dans le `ServicesManager`
-   n'importe quel objet sachant faire `getBalance`/`withdrawPlayer`/`depositPlayer`/`format`. Aucun
-   import d'une API de banque → ValoriaTools démarre **aussi** si ValoriaEconomy ou Vault sont absents
-   (les améliorations deviennent alors gratuites, et le log le dit).
-3. **`AUTO_SMELT` passe par les recettes du serveur** (`getRecipesFor` + `FurnaceRecipe`), jamais par
-   une table codée : un pack qui ajoute un minerai fondu est fondu correctement sans patch. Le prix à
-   payer, honnête : pas d'XP de four (le serveur ne la doit plus quand on ne cuit pas) — d'où
-   `xp-per-block` pour compenser, réglable.
-4. **Pas d'`getTargetBlock`, pas de réflexions dans le privé du serveur.** Deux tentatives de ce genre
-   ont été écrites ici puis supprimées pendant la conception : elles cassent au premier changement de
-   version, silencieusement. Conséquence: `INSTANT_BREAK` (casser d'un clic dans le vide à distance)
-   n'existe **pas**, et la portée reste celle du jeu. `LUCK` ajoute des objets de
-   `tool.treasure.items` (ton choix) au lieu de rejouer la table de trésors de la pêche.
-5. **Les drops sont toujours calculés par le plugin** et l'événement Bukkit est annulé : c'est le seul
-   moyen qu'un filon ne double pas (ou ne perde) les items. Un `BlockBreakEvent` de trop, et un joueur
-   duplique de la valeur : d'où le garde-fou de réentrance.
-6. **Usure** : `tool.unbreakable: true` par défaut. Un outil qui se casse emporte l'ergonomie (il faut
-   le redemander) même si les paliers, eux, restent. Si tu préfères l'usure, passe `unbreakable: false`
-   et règle `durability-cost` par âme (1 par geste, même sur un filon de 30 blocs : un filon ne doit
-   pas être 30 fois plus coûteux qu'un bloc).
-
-## Limites assumées
-
-- **Aucune capacité n'est stockée dans l'item** : deux joueurs qui ont acheté des paliers différents
-  tiennent le même item — c'est voulu (l'item n'est pas un portefeuille).
-- La canne ne « vise » pas de bloc : son âme s'active au lancer, donc l'auto-reel et la vente de pêche
-  agissent sur l'événement de pêche, pas sur un clic.
-- `TREE_FELL` descend le tronc **vers le haut** depuis le bloc frappé, puis la canopée autour du
-  sommet : un arbre dont on casse la souche d'un bloc collatéral perd ses racines (elles ne sont pas
-  dans le graphe de saule). Rien de cassé, juste moins spectaculaire qu'un mod de physique d'arbres.
-- Les paliers ne sont **pas** sauvegardés dans un fichier de world-scoped : ils suivent le joueur sur
-  tous les mondes du serveur (c'est le comportement d'une économie, pas d'une île).
-
-## Vérifier sans serveur, ni JDK
-
-```bash
-python3 scripts/verify-tools-config.py          # config + plugin.yml + branchement du build
-node scripts/parse-java.mjs sources/tools       # grammaire + types des signatures (avec java-parser)
-python3 scripts/verify-source-imports.py        # imports des 32 fichiers recompilés
-python3 scripts/verify-paper26-compat.py        # 97+ contrôles sur l'arbre
-```
-
-## Si ça casse en jeu
-
-| symptôme | cause probable | où regarder |
+| ce que c'est | source | où le changer |
 | --- | --- | --- |
-| l'outil ne casse rien | `matches.tags` vide et `blocks` mal nommé | le log dit « tags Bukkit indisponibles » ; complète `matches.blocks` |
-| rien n'est vendu | `sell.prices` absent pour cette âme | `sellPrice()` du log, ou `/tools stats` |
-| « aucune économie détectée » | ValoriaEconomy absent ou enregistré après | `/tools stats` affiche le fournisseur trouvé |
-| paliers remis à 1 | `tools.yml` non sauvegardé (disque plein) | le log `sauvegarde de tools.yml impossible` |
+| noms, descriptions, verrous (`unlock`), niveaux max (`max-level`) | **wiki GenTycoon**, pages Les Outils | `scripts/gen-tools-config.py` → `config.yml` |
+| argent et XP par bloc / poisson / monstre (`jobs.gains`, `jobs.xp`) | **wiki GenTycoon**, pages Les Métiers (Mineur, Fermier, Chasseur, Pêcheur) | idem, table `JOBS` |
+| prix d'un niveau de capacité, prix d'un palier, chances par niveau | **réglages Valoria** : le wiki ne les publie pas (son propre assistant confirme : « aucune information de prix / coût par niveau d'enchantement dans les docs accessibles ») | `ability-price`, `upgrade.price-*`, `chance`/`*-step` |
+
+Le contrôle de config refuse toute valeur de `jobs.*` absente des tableaux recopiés dans
+`docs/WIKI-GENTYCOON-OUTILS.md` : un prix inventé ne peut pas se faire passer pour « le barème du serveur ».
+
+## Contrôles automatiques
+
+```
+python3 scripts/verify-tools-config.py     100 contrôles : config, noyaux, plugin.yml, pom, assemblage
+python3 scripts/check-config-literals.py   les clés de config appelées en Java sont des littéraux
+node scripts/parse-java.mjs --from-pom     syntaxe + types des 32 fichiers compilés
+```
+
+Le contrôle de config ne se contente pas de compter les lignes :
+
+- il relit les **tableaux du wiki** dans `docs/WIKI-GENTYCOON-OUTILS.md` (72 lignes) et exige que chaque
+  capacité existe dans la bonne âme, **avec le même `max-level`, le même verrou, le même noyau** ;
+- il refuse un **YAML malformé de forme** (liste et clés au même niveau) que ni `javac` ni Maven ne
+  voient, et que SnakeYAML paie d'un plugin qui ne s'active pas ;
+- ses autof-tests coupent l'herbe sous le pied du contrôle décoratif : si le parseur voit 0 capacité sur
+  88 déclarées, ou 60 capacités au lieu des 72 du wiki, le script **échoue** au lieu de valider.
+
+Un contrôle qui ne lit rien est pire qu'un contrôle absent : c'est exactement ce qui s'est produit au
+premier essai sur ce fichier (le marqueur `{type:` ne existait plus, le compteur voyait 0 = « tout bon »).
+
+## Tester en jeu (10 minutes)
+
+1. `/tools give` puis `/tools` : les quatre icônes d'âmes répondent, la pioche est sélectionnée, les
+   cases de capacités affichent les 24 lignes du barème pioche.
+2. Miner une pierre : `Vente à la casse` + `Efficacité` sont offertes au palier 1 → l'argent tombe, la
+   vitesse monte. Aucun drop doublé, pas de particules fantômes.
+3. `/tools set moi pioche 12` puis `/tools ability moi pioche fortune 5` : la case Fortune passe à
+   niveau 5, l'effet s'affiche dans la tooltip, le minerai rapporte plus.
+4. `/tools set moi pioche 46` : Surcharge (verrou 45) devient achetable ; Onde sismique et Briseur
+   cassent plusieurs blocs d'un clic, avec **une seule** usure (ou aucune si `tool.unbreakable: true`).
+5. Hache sur un arbre : tronc + canopée. Sur du blé mûr : la 3×3 est récoltée **et replantée** ; sur du
+   blé vert, **rien ne casse** (le plant repousse, l'événement n'est pas annulé).
+6. Épée sur un mob : dégâts, `Chercheur d'xp`, et `/tools ability moi épée vente-butin 1` pour voir les
+   drops vendus à la mort. Un mob qui survit au coup ne rapporte rien (volontaire).
+7. Canne : lancer normal, puis niveau 1 d'`Angler` (attente raccourcie sur Paper) et de `Moulinet rapide`
+   (poisson directement dans le sac, sans clic de moulinet).
+8. `/tools ability moi pioche briseur 0` : la capacité se **désactive** — le palier d'âme ne doit rien
+   rendre d'irrémovable.
+9. `/tools reload` avec le menu ouvert : la vue se redessine, aucune case cliquable ne reste d'un ancien
+   barème.
+10. Redémarrer le serveur : `/tools stats` et les niveaux relus depuis `tools.yml` sont intacts, y compris
+    le format ancien (`pickaxe: 12`, sans bloc `abilities:`).
+
+## Rollback
+
+`/tools reset <joueur>` remet une âme à zéro ; désinstaller = retirer `ValoriaTools-v1.6.3.jar` des
+`plugins/` et redémarrer. `tools.yml` reste dans `plugins/ValoriaTools/` (à supprimer pour repartir de
+zéro) : aucune donnée n'est écrite dans les items ni dans le monde.
