@@ -142,6 +142,31 @@ echo
 echo "$REPORT"
 printf '%s\n' "$REPORT" > "$REPORT_FILE"
 
+# Canal 1 : le resume de l'etape (visible en haut de la page du job, dans GitHub).
+if [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then
+  printf '%s\n' "$REPORT" >> "$GITHUB_STEP_SUMMARY"
+fi
+
+# Canal 2 : des annotations `::error::` / `::notice::`. C'est LE canal fiable : les annotations se
+# lisent par l'API `/check-runs/{id}/annotations` sans permission particuliere, alors que le journal
+# brut est servi par un stockage externe generalement bloque.
+python3 - "$REPORT_FILE" <<'PY'
+import os
+import sys
+from pathlib import Path
+
+text = Path(sys.argv[1]).read_text(encoding="utf-8")
+# Les decoupages doivent rester sous la taille max d'une annotation (~64 ko) et peu nombreux :
+# on tronque le rapport a 14 ko puis on le coupe en blocs de ~3 ko.
+text = text[:14000]
+chunk = 3000
+blocks = [text[i:i + chunk] for i in range(0, len(text), chunk)][:12]
+for i, block in enumerate(blocks):
+    one_line = block.replace("%", "%25").replace("\r", "").replace("\n", "%0A")
+    level = "error" if i == 0 else "notice"
+    print(f"::{level} title=Rapport de compilation ({i + 1}/{len(blocks)})::{one_line}")
+PY
+
 # Les controles du depot, meme quand la compilation echoue : un seul rapport, toute la verite.
 EXTRA=""
 for check in "python3 scripts/verify-paper26-compat.py" \
@@ -176,6 +201,7 @@ publish_report() {
 import base64
 import json
 import os
+import sys
 import urllib.error
 import urllib.request
 from pathlib import Path
@@ -238,8 +264,11 @@ print("contexte publication : repo=%s branch=%s pr=%s" % (repo, os.environ.get("
 try:
     status, perms = call("/repos/%s/actions/permissions/workflow" % repo)
     print("permissions effectives du workflow : %s" % json.dumps(perms))
+    sys.stdout.flush()
+    print("::notice title=Permissions du workflow::%s" % json.dumps(perms).replace("%", "%25"))
 except Exception as error:
     print("(permissions du workflow illisibles : %s)" % error)
+    sys.stdout.flush()
 
 published = False
 if pr:
@@ -249,7 +278,10 @@ if pr:
         published = status in (200, 201)
         print("commentaire publie sur la PR #%s (HTTP %s)" % (pr, status))
     except urllib.error.HTTPError as error:
-        print("(commentaire refuse HTTP %s : %s)" % (error.code, error.read()[:200].decode("utf-8", "replace")))
+        detail = "%s %s" % (error.code, error.read()[:200].decode("utf-8", "replace"))
+        print("(commentaire refuse HTTP %s)" % detail)
+        sys.stdout.flush()
+        raise SystemExit("commentaire impossible: " + detail[:180])
     except Exception as error:
         print("(commentaire impossible : %s)" % error)
 
