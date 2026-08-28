@@ -1,28 +1,19 @@
 name: Build and Validate ValoriaTycoon
 
-# Workflow de validation pour les Pull Requests : il compile et contrôle le JAR sans jamais
-# déployer sur le serveur (le déploiement SFTP reste réservé à main, voir .github/workflows/deploy.yml).
-#
-# IMPORTANT : ce fichier vit dans scripts/ci/ (et en copie dans docs/CI-A-COLLER.yml) parce que la
-# modification d'un fichier sous .github/workflows/ demande la permission `workflows`, refusée au
-# compte de cette session. A activer par un humain, dans le navigateur :
-#
-#     .github/workflows/build.yml  <- contenu de docs/CI-A-COLLER.yml, tel quel
-#
-# Ce workflow ne deploie RIEN : il ne fait que compiler et verifier. Aucune connexion SFTP, aucun
-# secret utilise, il ne peut donc pas toucher au serveur de prod.
-#
-# Les mêmes étapes peuvent être ajoutées à deploy.yml avant le dépôt SFTP ; les scripts
-# invoqués (patch-class-version-patterns.py, rebrand-classes.py, verify-extraction.py,
-# verify-paper26-compat.py) s'exécutent aussi bien en local, sans JDK ni réseau.
+# Workflow de validation : il compile et contrôle les deux jar, il ne deploie JAMAIS
+# (le SFTP reste uniquement dans .github/workflows/deploy.yml, reserve a main).
 
 on:
+  # chaque push sur la branche relance le build tout seul : plus rien a cliquer
+  push:
+    branches-ignore:
+      - main
   pull_request:
   workflow_dispatch:
 
 permissions:
-  # les deux ne servent QU'A publier le rapport d'echec de compilation : commentaire de PR, et repli
-  # en commit du fichier docs/DERNIER-LOG-CI.md. Aucune etape ne deploie ni ne pousse de code source.
+  # sert UNIQUEMENT a publier le rapport d'erreurs (commentaire de PR, puis repli en commit de
+  # docs/DERNIER-LOG-CI.md). Aucune etape ne deploie, aucun secret serveur n'est utilise.
   contents: write
   pull-requests: write
 
@@ -54,18 +45,18 @@ jobs:
       - name: Vérifier que le plugin ne dépend d'aucune API tierce (Vault, HoloEasy retirés)
         run: python3 scripts/selfmade-api-patch.py --check
 
+      - name: Vérifier les imports des fichiers compilés (sans JDK)
+        run: python3 scripts/verify-source-imports.py
+
       - name: Vérifier la cohérence de l'extraction
         run: python3 scripts/verify-extraction.py
 
       - name: Compiler le plugin et le plugin d'économie
-        # Le script capte la sortie de maven, publie les erreurs javac (fichier + ligne + extrait du
-        # source) en commentaire de la PR, puis rejoue les controles du depot. Sans lui, il faut
-        # ouvrir un journal de 4000 lignes replie pour trouver deux lignes utiles.
+        # capte la sortie maven, publie les erreurs javac en annotation + commentaire de PR,
+        # puis rejoue les controles du depot
         run: bash scripts/ci-maven-report.sh
 
       - name: Vérifier la surface publique des sources recompilées (sans JDK)
-        # Le parseur Java signale ici ce que javac signalerait plus tard : une methode renommeee ou
-        # changeee de type dans une source que le bytecode livre appelle en dur (NoSuchMethodError).
         run: |
           npm install --no-save java-parser@3
           node scripts/check-sources-java.mjs
@@ -87,11 +78,8 @@ jobs:
           unzip -l target/ValoriaEconomy-v1.6.3.jar | grep -q 'plugin.yml'
           unzip -l target/ValoriaEconomy-v1.6.3.jar | grep -q 'valoriaeconomy/ValoriaEconomyProvider.class'
           ! unzip -l target/ValoriaTycoon-v1.6.3.jar | grep -q 'valoriaeconomy/'
-          # l'API d'economie doit etre vue par les DEUX plugins, mais n'etre ecrite qu'une fois :
-          # elle vit dans le jar de ValoriaTycoon (ValoriaEconomy, charge en STARTUP, la fournit)
           unzip -l target/ValoriaTycoon-v1.6.3.jar | grep -q 'valoriateconomy/Economy.class'
           unzip -l target/ValoriaTycoon-v1.6.3.jar | grep -q 'valoriatycoon/hologram/HologramPool.class'
-          # aucune API tierce ne doit revenir dans un paquet livre
           ! unzip -l target/ValoriaTycoon-v1.6.3.jar | grep -qE 'net/milkbowl|org/holoeasy'
           ! unzip -l target/ValoriaEconomy-v1.6.3.jar | grep -qE 'net/milkbowl|org/holoeasy'
 
