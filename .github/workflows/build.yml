@@ -20,6 +20,11 @@ on:
   pull_request:
   workflow_dispatch:
 
+permissions:
+  contents: read
+  # uniquement pour publier le rapport d'erreurs de compilation en commentaire de la PR
+  pull-requests: write
+
 jobs:
   build-and-validate:
     name: Compilation et contrôles de compatibilité
@@ -52,7 +57,10 @@ jobs:
         run: python3 scripts/verify-extraction.py
 
       - name: Compiler le plugin et le plugin d'économie
-        run: mvn -B -ntp clean package -DskipTests
+        # Le script capte la sortie de maven, publie les erreurs javac (fichier + ligne + extrait du
+        # source) en commentaire de la PR, puis rejoue les controles du depot. Sans lui, il faut
+        # ouvrir un journal de 4000 lignes replie pour trouver deux lignes utiles.
+        run: bash scripts/ci-maven-report.sh
 
       - name: Vérifier la surface publique des sources recompilées (sans JDK)
         # Le parseur Java signale ici ce que javac signalerait plus tard : une methode renommeee ou
