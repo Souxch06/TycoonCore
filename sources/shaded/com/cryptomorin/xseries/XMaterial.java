@@ -1818,7 +1818,7 @@ public enum XMaterial {
 
         static {
             String string = Bukkit.getVersion();
-            Matcher matcher = Pattern.compile("MC: \\d\\.(\\d+)").matcher(string);
+            Matcher matcher = Pattern.compile("MC: (?:1\\.)?(\\d{1,2})").matcher(string);
             if (!matcher.find()) {
                 throw new IllegalArgumentException("Failed to parse server version from: " + string);
             }

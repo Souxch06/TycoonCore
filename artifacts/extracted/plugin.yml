@@ -6,20 +6,25 @@ authors:
   - Cuftica
   - OpenSource
 
-depend:
-  - Vault
-  - ProtocolLib
-
 softdepend:
+  # ── Bloque obligatoire fabriquee ICI : le plugin d'economie du depot ──────────────────────────
+  # declare en softdepend (et non depend) parce que Bukkit resout un depend: par le NOM exact du
+  # plugin et refuse alors de charger le paquet si l'ecriture differe (UnknownDependencyException,
+  # le blocage qui avait rendu le plugin rouge). L'ordre, lui, est garanti autrement :
+  # ValoriaEconomy est load: STARTUP, donc active avant tous les plugins POSTWORLD comme celui-ci,
+  # ce qui laisse le temps au service Economy d'etre enregistre avant setupEconomy().
+  - ValoriaEconomy
+  # ── Integrations facultatives : aucune n'est necessaire pour jouer ────────────────────────────
+  # Le serveur peut tourner sans un seul de ces plugins. Ils sont listes ici seulement pour que,
+  # s'ils sont presents, les hologrammes/placeholder/skyblock s'connectent dans le bon ordre.
+  - PlaceholderAPI
   - Oraxen
-  - Essentials
   - ItemsAdder
   - IridiumSkyblock
   - SuperiorSkyblock2
   - ASkyBlock
   - AcidIsland
   - BentoBox
-  - HoloEasy
 
 commands:
   valoriatycoon:
@@ -33,3 +38,19 @@ commands:
     description: Vend les drops présents dans l'inventaire
     usage: /selldrops
     aliases: [ sell ]
+permissions:
+  valoriatycoon.ah.use:
+    description: Ouvrir le marché des joueurs.
+    default: true
+  valoriatycoon.ah.sell:
+    description: Mettre un item en vente sur le marché.
+    default: true
+  valoriatycoon.ah.admin:
+    description: Retirer une annonce d'autrui et recharger le marché.
+    default: op
+  valoriatycoon.ah.notify:
+    description: Recevoir les annonces d'achat et de vente dans le chat.
+    default: op
+  valoriatycoon.scoreboard:
+    description: Affiche le tableau de bord ValoriaTycoon.
+    default: true

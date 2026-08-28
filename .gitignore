@@ -18,3 +18,24 @@ dist/
 # Logs temporaires
 *.log
 *.tmp
+
+# Caches Python (scripts du dépôt)
+__pycache__/
+*.pyc
+
+# Dépendance optionnelle de scripts/check-sources-java.mjs
+node_modules/
+
+# Caches des scripts de verification
+__pycache__/
+*.pyc
+
+# Brouillon local de l'agent (jamais commiter)
+.cache/
+
+# lien temporaire de l'outillage local (un lien ne matche pas le motif node_modules/)
+node_modules
+
+# manifestes npm de l'outillage local (installe 'dans le depot par erreur', jamais un livrable)
+package.json
+package-lock.json
