@@ -115,7 +115,45 @@ def main() -> int:
         check(f"aucun contenu de workflow recopie dans {rel(path)}", False,
               "supprimer ce fichier et pointer docs/CI-A-COLLER.yml ou docs/CI-DEPLOY-A-COLLER.yml a la place")
 
-        # un script supprime ne doit plus etre cite nulle part (sinon le prochain admin le recree)
+        # le controle de contenu des jar est un script, pas un bloc shell dans le YAML : inline, son echec
+    # est un code de sortie muet (c'est ce qui est arrive au run 33200967570)
+    check("le build délègue le contrôle des jar à un script", "ci-check-jars.sh" in source,
+          "un `bash -c` de quarante lignes dans le YAML ne dit pas quelle assertion est tombée")
+    script = ROOT / "scripts/ci-check-jars.sh"
+    check("scripts/ci-check-jars.sh existe et nomme chaque contrôle",
+          script.is_file() and "::error" in script.read_text(encoding="utf-8"),
+          "sans publication d'annotation, le controle est inutilisable a distance (le journal brut "
+          "n'est pas telechargeable depuis un agent)")
+
+    # un YAML qui ne se parse pas = un workflow que GitHub refuse de charger, et donc un serveur qui
+    # n'est jamais mis a jour. Le parseur complet est optionnel (le runner n'a pas de PyYAML garanti) ;
+    # les fautes reellement commises ici sont structurelles : tabulation, cle de trop au niveau 0.
+    for path in (SOURCE, MIRROR, DEPLOY, DEPLOY_NEUTRAL):
+        if not path.is_file():
+            continue
+        raw = path.read_text(encoding="utf-8")
+        check(f"{rel(path)} n'emploie aucune tabulation", "\t" not in raw,
+              "une tabulation dans un bloc literal est rejetee par le parseur YAML")
+        top = [line.split(":", 1)[0] for line in raw.splitlines() if re.match(r"^[a-zA-Z_][\w-]*:", line)]
+        missing = [key for key in ("name", "on", "jobs") if key not in top]
+        check(f"{rel(path)} déclare name, on et jobs", not missing, f"absents : {missing}")
+        if path in (SOURCE, MIRROR, DEPLOY):
+            check(f"{rel(path)} n'a aucune clé top-level hors du squelette GitHub",
+                  all(k in ("name", "on", "permissions", "concurrency", "env", "defaults", "jobs", "run-name")
+                      for k in top),
+                  f"{[k for k in top if k not in ('name','on','permissions','concurrency','env','defaults','jobs','run-name')]}")
+    import shutil as _sh
+    if _sh.which("node") and (ROOT / "node_modules/js-yaml").exists():
+        import subprocess
+        for path in (SOURCE, MIRROR, DEPLOY, DEPLOY_NEUTRAL):
+            if not path.is_file():
+                continue
+            probe = ("const y=require('js-yaml'),f=require('fs');"
+                     "try{y.load(f.readFileSync(process.argv[1],'utf8'));console.log('ok')}catch(e){console.log(e.message);process.exit(1)}")
+            res = subprocess.run(["node", "-e", probe, str(path)], capture_output=True, text=True)
+            check(f"{rel(path)} se parse (js-yaml)", res.returncode == 0, res.stdout.strip().splitlines()[:1])
+
+    # un script supprime ne doit plus etre cite nulle part (sinon le prochain admin le recree)
     # chaine de declenchement : un build qui s'interdit `main` ne publie jamais, et le silence est total
     import os
     for path in (SOURCE, MIRROR):
