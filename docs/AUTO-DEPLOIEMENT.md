@@ -65,7 +65,13 @@ Pour chacun : **Ctrl+A** dans l'éditeur → **Suppr** → **Ctrl+V** (le conten
 un onglet puis copier) → **Commit changes** directement sur `main`.
 
 Le dépôt sur `main` de `build.yml` **déclenche** la chaîne : build → vert → publication de la release
-`build-latest` → `deploy-serveur.yml` se lance → **les trois jar partent sur le serveur**.
+`build-latest` → **le build appelle `deploy-serveur.yml`** → **les trois jar partent sur le serveur**.
+
+L'appel est explicite, et ce n'est pas un détail : une release publiée avec le `GITHUB_TOKEN` du dépôt
+ne déclenche **aucun** workflow — GitHub coupe les enchaînements pour éviter les boucles, et
+`release:` ne figure pas parmi ses exceptions (`workflow_dispatch` si). Le run 33207244834 a publié les
+trois jar sans qu'aucun dépôt ne démarre, faute de cet appel. C'est l'étape « Déclencher le dépôt sur
+le serveur » de `build.yml`, qui a besoin de `permissions: actions: write`.
 
 ---
 

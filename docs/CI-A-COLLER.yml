@@ -24,6 +24,12 @@ permissions:
   # Aucune etape de ce fichier n'ouvre de connexion vers le serveur de jeu.
   contents: write
   pull-requests: write
+  # `actions: write` ne sert qu'a APPELER `deploy-serveur.yml` (etape « Declencher le depot »). Une
+  # release publiee avec le GITHUB_TOKEN du depot ne cree aucun run : GitHub coupe les enchainements
+  # pour eviter les boucles, et `release:` ne figure pas parmi ses exceptions ; `workflow_dispatch`
+  # si. Sans ce droit la release se remplit de trois jar et `plugins/` ne bouge jamais, sans erreur
+  # (run 33207244834 du 2026-08-28).
+  actions: write
 
 jobs:
   build-and-validate:
@@ -115,11 +121,12 @@ jobs:
         run: |
           bash scripts/ci-step.sh "contenu des trois jars" bash scripts/ci-check-jars.sh
 
-      - name: Publier la release `build-latest` (déclencheur du déploiement)
+      - name: Publier la release `build-latest` (source des jar déposés)
         # Le script fait tout (logique dans le depot, pas dans le YAML) : valide les jar, (re)ecrit le
-        # tag, televerse les assets, verifie leur taille. La publication de la release est ce qui
-        # declenche `deploy-serveur.yml`. Hors `main`, pas de release : une branche en cours ne doit
-        # pas mettre le serveur a jour d'un etat non merge.
+        # tag, televerse les assets, verifie leur taille. Hors `main`, pas de release : une branche en
+        # cours ne doit pas mettre le serveur a jour d'un etat non merge.
+        # NB : la release n'est PAS ce qui declenche le depot — un evenement produit avec le GITHUB_TOKEN
+        # du depot ne cree aucun run. C'est l'etape suivante qui appelle `deploy-serveur.yml`.
         if: ${{ success() && github.ref == 'refs/heads/main' }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -137,3 +144,18 @@ jobs:
             target/ValoriaEconomy-v1.6.3.jar
             target/ValoriaTools-v1.6.3.jar
           if-no-files-found: error
+
+      - name: Déclencher le dépôt sur le serveur
+        # Derniere etape, et la seule qui fasse bouger `plugins/`. `workflow_dispatch` est l'une des
+        # deux exceptions au blocage des enchainements par GITHUB_TOKEN : le build appelle donc le
+        # workflow de depot au lieu d'attendre un evenement `release:` qui ne peut pas arriver.
+        # Le script (scripts/ci-trigger-deploy.sh) refuse de partir si la release n'a pas ses trois jar,
+        # et confirme qu'un run de depot a reellement ete cree : un dispatch accepte mais jamais
+        # materialise en run serait sinon pris pour un succes — exactement la panne qu'on traque.
+        # En cas d'echec il publie une ligne `::error::` nommant la cause (droits, workflow absent).
+        if: ${{ success() && github.ref == 'refs/heads/main' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: 'build-latest'
+          DRY_RUN: '0'
+        run: bash scripts/ci-trigger-deploy.sh
