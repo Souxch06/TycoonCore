@@ -9,10 +9,13 @@ name: Build and Validate ValoriaTycoon
 # fichier installe : le pipeline etait donc muet). Si tu modifies l'un, modifie ce fichier d'abord.
 
 on:
-  # chaque push sur la branche relance le build tout seul : plus rien a cliquer
+  # TOUS les pushes, main compris. `branches-ignore: main` (la version precedente d'ici) rendait toute
+  # la chaine muette : le merge deployait `main`, le build ne se lancait pas, la release `build-latest`
+  # n'etait pas publiee, donc `deploy-serveur.yml` (declenche par la release) ne partait jamais — et le
+  # dossier `plugins/` du serveur ne voyait rien arriver, sans une seule ligne d'erreur nulle part.
+  # Le build ne peut donc JAMAIS s'interdire main ; c'est la publication de la release qui est filtree
+  # (etape « Publier la release », `if: github.ref == refs/heads/main`).
   push:
-    branches-ignore:
-      - main
   pull_request:
   workflow_dispatch:
 
@@ -105,32 +108,12 @@ jobs:
         run: python3 scripts/verify-ci-copies.py
 
       - name: Vérifier les trois JAR produits
+        # Le contenu du controle vit dans `scripts/ci-check-jars.sh`, pas dans un `bash -c '...'` de
+        # quarante lignes ici : la premiere fois que cette etape a echoué (run 33200967570), `set -e`
+        # dans le bloc inline a rendu un code 2 sans dire QUELLE assertion était tombée. Le script,
+        # lui, publie une ligne `::error::` par contrôle raté — donc lisible dans les annotations.
         run: |
-          bash scripts/ci-step.sh "contenu des trois jars" bash -c '
-            set -e
-            for jar in target/ValoriaTycoon-v1.6.3.jar target/ValoriaEconomy-v1.6.3.jar target/ValoriaTools-v1.6.3.jar; do
-              echo "--- $jar"; test -f "$jar"; ls -l "$jar"; unzip -l "$jar" | tail -3
-            done
-            # Chacun des trois paquets doit porter son propre descripteur et sa config.
-            for jar in target/ValoriaTycoon-v1.6.3.jar target/ValoriaEconomy-v1.6.3.jar target/ValoriaTools-v1.6.3.jar; do
-              unzip -l "$jar" | grep -q "plugin.yml"
-              unzip -l "$jar" | grep -q "config.yml"
-              ! unzip -l "$jar" | grep -qE "net/milkbowl|org/holoeasy"
-            done
-            # L'API d economie est vue par les deux plugins, mais n est ecrite qu une fois : elle vit
-            # dans le jar de ValoriaTycoon (ValoriaEconomy, charge en STARTUP, la resout par delegation).
-            unzip -l target/ValoriaTycoon-v1.6.3.jar | grep -q "valoriateconomy/Economy.class"
-            unzip -l target/ValoriaTycoon-v1.6.3.jar | grep -q "valoriatycoon/hologram/HologramPool.class"
-            unzip -l target/ValoriaTycoon-v1.6.3.jar | grep -q "module-info.class"
-            unzip -l target/ValoriaEconomy-v1.6.3.jar | grep -q "valoriaeconomy/ValoriaEconomyProvider.class"
-            unzip -l target/ValoriaTools-v1.6.3.jar | grep -q "valariatools/ToolListener.class"
-            # Aucun paquet ne doit embarquer un autre plugin : trois plugin.yml dans un jar = chargement aleatoire.
-            ! unzip -l target/ValoriaTycoon-v1.6.3.jar | grep -q "xyz/arcadiadevs/valoriaeconomy/"
-            ! unzip -l target/ValoriaTycoon-v1.6.3.jar | grep -q "xyz/arcadiadevs/valariatools/"
-            ! unzip -l target/ValoriaEconomy-v1.6.3.jar | grep -q "xyz/arcadiadevs/valariatools/"
-            ! unzip -l target/ValoriaTools-v1.6.3.jar | grep -q "xyz/arcadiadevs/valoriatycoon/"
-            echo "OK : contenu des trois jars conforme"
-          '
+          bash scripts/ci-step.sh "contenu des trois jars" bash scripts/ci-check-jars.sh
 
       - name: Publier la release `build-latest` (déclencheur du déploiement)
         # Le script fait tout (logique dans le depot, pas dans le YAML) : valide les jar, (re)ecrit le
