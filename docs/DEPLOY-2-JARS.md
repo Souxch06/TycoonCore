@@ -1,5 +1,18 @@
 # Déployer les deux jars
 
+## Récupérer les jars (3 voies, de la plus simple à la plus automatique)
+
+| voie | comment |
+| --- | --- |
+| **Release permanente** | https://github.com/Souxch06/ValoriaTycoon/releases/tag/build-latest → les deux `.jar` en téléchargement direct, sans jamais expirer. Actif dès que le workflow collé contient l'étape « Publier les JAR sur la release `build-latest` » (elle est dans `docs/CI-A-COLLER.yml`) |
+| **Artefact du run** | https://github.com/Souxch06/ValoriaTycoon/actions/workflows/build.yml → dernière ligne verte → en bas, **Artifacts → ValoriaTycoon-jar** (zip des deux jars, expire au bout de 90 jours) |
+| **Build local** | `mvn -B clean package` puis `target/ValoriaTycoon-v1.6.3.jar` + `target/ValoriaEconomy-v1.6.3.jar` |
+
+Ce que l'agent **ne peut pas** faire, mesuré : rapatrier les octets. Les trois domaines de fichiers de
+GitHub (`productionresultssa*.blob.core.windows.net` pour les artefacts, `objects.githubusercontent.com`
+pour les assets, `uploads.github.com` pour le téléversement) sont refusés par le réseau de la sandbox,
+tandis que `api.github.com` et `github.com` passent — d'où la publication par le runner, pas par moi.
+
 > **Le second jar s'appelle `ValoriaEconomy-v<version>.jar`, et un seul endroit le décide** :
 > `<finalName>` de l'exécution `economy-plugin-jar` du `maven-assembly-plugin`, avec
 > `appendAssemblyId=false`. Trois pièges vérifiés en build, tous bloqués par des contrôles de
