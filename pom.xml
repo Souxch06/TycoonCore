@@ -191,6 +191,16 @@
                         <!-- Les classes du plugin d'économie vivent dans leur propre paquet. -->
                         <exclude>xyz/arcadiadevs/valoriaeconomy/**</exclude>
                         <exclude>xyz/arcadiadevs/valariatools/**</exclude>
+                        <!-- L'interface d'économie vit dans le jar du FOURNISSEUR (ValoriaEconomy),
+                             pas ici. ValoriaEconomy est load: STARTUP : il se charge AVANT ce plugin,
+                             et au moment de son chargement le classloader de ValoriaTycoon n'existe
+                             pas encore — lui emprunter l'interface rendait donc ValoriaEconomy
+                             invalide dès le chargement (« Could not load plugin », Economy rouge,
+                             vu sur le serveur le 2026-08-30). Ici, le classloader de ValoriaEconomy
+                             existe déjà (softdepend: ValoriaEconomy dans plugin.yml) : ce plugin
+                             résout l'interface par délégation, LA MÊME classe que celle du service
+                             enregistré. Une seule copie à l'exécution, côté fournisseur. -->
+                        <exclude>xyz/arcadiadevs/valoriateconomy/**</exclude>
                         <!-- Filets : ces arbres ne doivent plus jamais revenir dans un paquet livré,
                              ils étaient ceux de bibliothèques tierces remplacées par du code du dépôt. -->
                         <exclude>org/holoeasy/**</exclude>

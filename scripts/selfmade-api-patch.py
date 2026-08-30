@@ -17,7 +17,8 @@ bytecode. Les noms remplacés ont été relevés dans les ``.class`` livrés —
 Renommages effectués :
 
 1. ``net/milkbowl/vault/economy/Economy`` (et ``EconomyResponse``) →
-   ``xyz/arcadiadevs/valoriateconomy/…``, notre interface d'économie, compilée dans les deux jar.
+   ``xyz/arcadiadevs/valoriateconomy/…``, notre interface d'économie, compilée dans le jar du
+   fournisseur (ValoriaEconomy) et référencée par le bytecode du jar ValoriaTycoon.
 2. ``org/holoeasy/…`` → ``xyz/arcadiadevs/valoriatycoon/hologram/…``, nos hologrammes (API
    identique : ``HologramBuilder.hologram``, ``textline``, ``item``, ``Hologram.getId``,
    ``IHologramPool.registerHolograms/get/remove``), et suppression de la bibliothèque embarquée.
@@ -244,9 +245,12 @@ def check_jar(jar_path: Path) -> int:
             if bad:
                 failures += 1
                 print(f"ERREUR: {name} référence encore une API tierce : {bad[:3]}", file=sys.stderr)
+        # PAS l'interface d'economie ici : elle vit dans le jar du FOURNISSEUR (ValoriaEconomy,
+        # load: STARTUP — chargé avant le classloader de ce plugin, il ne peut emprunter les classes
+        # de personne ; la preuve : « Could not load plugin », Economy rouge, serveur du 2026-08-30).
+        # Sa presence dans le jar d'economie est exigee par scripts/ci-check-jars.sh ; ici, on ne
+        # verifie que les REFERENCES du jar ValoriaTycoon (boucle stale_values ci-dessus).
         our_classes = [
-            "xyz/arcadiadevs/valoriateconomy/Economy.class",
-            "xyz/arcadiadevs/valoriateconomy/EconomyResponse.class",
             "xyz/arcadiadevs/valoriatycoon/hologram/Hologram.class",
             "xyz/arcadiadevs/valoriatycoon/hologram/HologramPool.class",
             "xyz/arcadiadevs/valoriatycoon/hologram/HologramBuilder.class",

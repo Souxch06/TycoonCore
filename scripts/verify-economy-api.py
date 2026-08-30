@@ -16,7 +16,7 @@ Il vérifie aussi l'invariant du dépôt : **plus aucune API Vault** (`net.milkb
 ni dans nos sources, ni dans les classes, ni dans un JAR construit.
 
     python3 scripts/verify-economy-api.py
-    python3 scripts/verify-economy-api.py --jar target/ValoriaTycoon-v1.6.3.jar
+    python3 scripts/verify-economy-api.py --jar target/ValoriaEconomy-v1.6.3.jar
 """
 
 from pathlib import Path

@@ -21,13 +21,17 @@
       <outputDirectory>/</outputDirectory>
       <includes>
         <include>xyz/arcadiadevs/valoriaeconomy/**</include>
+        <!-- L'API (xyz/arcadiadevs/valoriateconomy) vit ICI, dans le jar du FOURNISSEUR : ce plugin
+             est load: STARTUP, donc chargé avant tous les POSTWORLD — au moment de SON chargement,
+             le classloader de ValoriaTycoon n'existe pas encore, et lui emprunter l'interface
+             rendait ce plugin invalide dès le chargement (« Could not load plugin », Economy rouge
+             sur le serveur le 2026-08-30). Auto-porteur, il se charge quel que soit l'ordre ; et
+             l'unicité de la classe est préservée : ValoriaTycoon (qui déclare softdepend:
+             ValoriaEconomy) résout l'interface PAR DÉLÉGATION vers ce jar — la même classe que
+             celle du service enregistré, jamais deux Class objects. -->
+        <include>xyz/arcadiadevs/valoriateconomy/**</include>
       </includes>
     </fileSet>
-    <!-- PAS l'API (xyz/arcadiadevs/valoriateconomy) dans ce jar : ValoriaEconomy est charge en
-         STARTUP, donc le jar de ValoriaTycoon (POSTWORLD) voit ses classes par delegation au
-         classpath des jars deja charges, et le type du service enregistre est ainsi LIT DEPUIS UNE
-         SEULE SOURCE pour les deux plugins. Embarquer une copie ici donnerait deux Class objects
-         differents, d'ou un getRegistration(Economy.class) renvoyant null sans erreur visible. -->
     <fileSet>
       <directory>${project.basedir}/resources-economy</directory>
       <outputDirectory>/</outputDirectory>

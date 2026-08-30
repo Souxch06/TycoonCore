@@ -308,11 +308,179 @@ if [ "$DRY_RUN" = "1" ]; then
   # session, en LECTURE SEULE, pour tester les identifiants. Verte => l'admin voit le contenu de
   # `plugins/`, la preuve que SFTP_USERNAME/SFTP_PASSWORD sont bons ; rouge => l'erreur nomme la cause
   # (identifiant/mot de passe refuses, acces SFTP desactive, restriction d'IP, dossier absent).
-  # Aucune ecriture : pas de `put`, `rename` ni `mkdir` — on ne fait que `pwd` et `ls`.
+  # Aucune ecriture : pas de `put`, `rename` ni `mkdir` — on ne fait que `pwd`, `ls` et `get`
+  # (lecture des journaux, voir le bloc diagnostic ci-dessous).
   say "DRY_RUN : ouverture d'une session SFTP en LECTURE SEULE (test des identifiants)…"
   if run_sftp "pwd" "ls -l $PLUGINS_DIR"; then
     say "DRY_RUN : identifiants valides — la session s'ouvre, contenu de $PLUGINS_DIR :"
     tr -d '\r' < "$SFTP_LOG"
+
+    # ------------------------------------------------------------------ diagnostic ValoriaEconomy
+    # Symptome : /plugins montre ValoriaEconomy ROUGE alors que le jar (17 029 octets) est pose et
+    # verifie. La cause est ECRITE dans logs/latest.log du serveur — mais la console du panneau et
+    # les journaux bruts des runs sont inaccessibles depuis l'agent : seules les ANNOTATIONS se
+    # lisent a distance. SFTP sait LIRE ce fichier : on le rapatrie (plus le .log.gz precedent) et
+    # on publie le diagnostic. Toujours AUCUNE ecriture cote serveur : des `ls` et des `get`.
+    #
+    # DEUX limites apprises sur le terrain (runs 33325114747, 33325513670, 33326512242) :
+    #   1. une coupe `head -c` au milieu d'un accent laisse de l'UTF-8 invalide et GitHub rejette
+    #      l'annotation EN SILENCE -> iconv -c partout ou un extrait peut etre coupe ;
+    #   2. le runner plafonne une ETAPE a DIX annotations, empreintes comprises : au-dela, tout est
+    #      JETE sans erreur. Les quatre empreintes ci-dessus en occupent quatre : ce bloc n'en emet
+    #      donc que SIX, les faits essentiels, dans un ordre qui garde les plus utiles en dernier
+    #      (si une limite imprévue mord, ce sont les listing qui tranchent, pas le verdict) ; le
+    #      DETAIL part par l'API Checks (POST check-runs/{id}/annotations, 50 max) juste apres.
+    DIAG_DIR="$(mktemp -d)"
+    diag_annot() {
+      printf '::notice::%s\n' "$(printf '%s' "$1" \
+        | iconv -f UTF-8 -t UTF-8 -c \
+        | sed -e 's/%/%25/g' -e 's/\r$//' -e 's/\r//g' \
+        | awk 'BEGIN { ORS = "%0A" } { print }' | sed -e 's/%0A$//')"
+    }
+    # Les messages destines a l'API Checks (meme hygiene UTF-8, une ligne = une annotation).
+    diag_msgfile="$DIAG_DIR/messages.txt"
+    : > "$diag_msgfile"
+    diag_line() { printf '%s\n' "$1" | iconv -f UTF-8 -t UTF-8 -c >> "$diag_msgfile"; }
+
+    # --- rapatriement (les avatars d'echec sont COLLECTES, pas emis : le budget d'etape est fini) ---
+    LOG_LISTING="$DIAG_DIR/logs-ls.txt"
+    DIAG_NOTE="journaux : "
+    if run_sftp "ls -l logs"; then
+      tr -d '\r' < "$SFTP_LOG" | grep -v -E "Warning: Permanently|sftp> |^ls: " > "$LOG_LISTING"
+    else
+      : > "$LOG_LISTING"
+      DIAG_NOTE="$DIAG_NOTE listing logs/ IMPOSSIBLE ($(sftp_last)) ;"
+    fi
+    if run_sftp "get logs/latest.log $DIAG_DIR/latest.log"; then
+      DIAG_NOTE="$DIAG_NOTE latest.log $(wc -c < "$DIAG_DIR/latest.log" | tr -d ' ') octets / $(wc -l < "$DIAG_DIR/latest.log" | tr -d ' ') lignes ;"
+    else
+      : > "$DIAG_DIR/latest.log"
+      DIAG_NOTE="$DIAG_NOTE get latest.log REFUSE ($(sftp_last)) ;"
+    fi
+    PREV_GZ="$(awk '$NF ~ /\.log\.gz$/ { print $NF }' "$LOG_LISTING" | tail -1)"
+    if [ -n "$PREV_GZ" ]; then
+      if run_sftp "get logs/$PREV_GZ $DIAG_DIR/prev.log.gz"; then
+        [ -s "$DIAG_DIR/prev.log.gz" ] && zcat "$DIAG_DIR/prev.log.gz" > "$DIAG_DIR/prev.log" 2>/dev/null || true
+        DIAG_NOTE="$DIAG_NOTE $PREV_GZ $(wc -l < "$DIAG_DIR/prev.log" 2>/dev/null | tr -d ' ') lignes"
+      else
+        : > "$DIAG_DIR/prev.log"
+        DIAG_NOTE="$DIAG_NOTE get $PREV_GZ refuse ($(sftp_last))"
+      fi
+    fi
+    [ -s "$DIAG_DIR/prev.log" ] || : > "$DIAG_DIR/prev.log"
+
+    # Le journal a interpreter : le courant (latest.log), sinon le precedent.
+    SOURCE="$DIAG_DIR/latest.log"
+    SOURCE_NOM="latest.log"
+    if [ ! -s "$SOURCE" ]; then
+      SOURCE="$DIAG_DIR/prev.log"
+      SOURCE_NOM="journal precedent (latest.log absent ou vide !)"
+    fi
+
+    # Digest complet (journal du run + resume) : tout le contexte, sans contrainte de taille.
+    DIGEST="$DIAG_DIR/digest.txt"
+    : > "$DIGEST"
+    for name in latest prev; do
+      f="$DIAG_DIR/$name.log"
+      [ -s "$f" ] || continue
+      {
+        echo "===== extrait de $name.log ====="
+        grep -m 2 -E "Starting minecraft server version|This server is running|Loading [0-9]+ plugin" "$f" || true
+        echo "----- lignes Valoria / Economy -----"
+        grep -n -i -m 40 "valoria\|econom" "$f" || true
+        echo "----- erreurs / exceptions (avec 14 lignes de contexte) -----"
+        awk '/Exception|ERROR|SEVERE|Error occurred|Caused by/ { print; n = 0
+              while (n < 14 && (getline ligne) > 0) { if (ligne ~ /^(Caused by|[[:space:]]+at |\.\.\. [0-9]+ more)/) { print ligne; n++ } else break } }' "$f" || true
+        echo "----- cycle de vie des plugins -----"
+        grep -n -E "Enabling|Disabling|Ambiguous|Could not load" "$f" | head -30 || true
+        echo "----- 15 premieres lignes -----"
+        head -15 "$f" || true
+        echo "----- 25 dernieres lignes -----"
+        tail -25 "$f" || true
+      } >> "$DIGEST"
+    done
+    say "DRY_RUN : diagnostic — extrait des journaux du serveur :"
+    cat "$DIGEST"
+    if [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then
+      { echo "## Diagnostic serveur (lecture seule)"; echo '```'; cat "$DIGEST"; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+    fi
+
+    # --- les SIX faits essentiels (budget runner : 4 empreintes + 6 ici = 10 par etape) ---
+    # 1. ce qui a ete rapatrie (et les refus — un diagnostic qui ne dit pas qu'il lui manque le
+    #    journal courant ressemble a un diagnostic complet : c'est le piege du run 33325114747).
+    diag_annot "DIAGNOSTIC : $DIAG_NOTE — source analysee : $SOURCE_NOM"
+    # 2. listing plugins/ avec dates : un doublon ou une date d'avant le depot se voit ici.
+    diag_annot "DIAGNOSTIC : plugins/ (nom [octets, date du ls]) = $(awk '$NF ~ /\.jar$/ { printf "%s [%s o, %s %s %s] ; ", $NF, $5, $6, $7, $8 }' "$PRE_LIST" | head -c 700)"
+    # (le listing logs/ brut ne consomme plus d'annotation : le VERDICT et la notice « journaux »
+    #  en exploitent deja les dates et tailles — le budget d'etape est de dix, empreintes comprises.)
+    # 4. VERDICT d'horloge unique : mtime des jars vs mtime de latest.log DANS LE MEME ls.
+    #    Les horloges du serveur et du runner ne sont pas comparables ; celles d'un meme listing, si.
+    t_log="$(awk '$NF == "latest.log" { print $6, $7, $8 }' "$LOG_LISTING" | head -1)"
+    e_log="$(date -d "$t_log" +%s 2>/dev/null || printf 0)"
+    jar_le_plus_recent=""
+    e_best=0
+    for nom in $(awk '$NF ~ /\.jar$/ { print $NF }' "$PRE_LIST"); do
+      d="$(awk -v n="$nom" '$NF == n { print $6, $7, $8 }' "$PRE_LIST" | head -1)"
+      e="$(date -d "$d" +%s 2>/dev/null || printf 0)"
+      if [ "$e" -gt "$e_best" ]; then e_best="$e"; jar_le_plus_recent="$nom ($d)"; fi
+    done
+    if [ -z "$t_log" ]; then
+      diag_annot "DIAGNOSTIC VERDICT : indeterminable — latest.log absent du listing logs/ (dossier illisible ?)"
+    elif [ "$e_best" -gt "$e_log" ]; then
+      diag_annot "DIAGNOSTIC VERDICT : $jar_le_plus_recent est PLUS RECENT que latest.log ($t_log) — le serveur n'a pas redemarre depuis le dernier depot : REDEMARRER LE SERVEUR, le rouge observe est celui des anciens jars."
+    else
+      diag_annot "DIAGNOSTIC VERDICT : latest.log ($t_log) est plus recent que tous les jars — le dernier demarrage a bien charge les jars deposes."
+    fi
+    # 5. compteurs + version (une seule annotation pour les deux).
+    VERS="$(grep -m 1 -E "Starting minecraft server version|This server is running" "$SOURCE" 2>/dev/null || true)"
+    VERS_COURT="$(printf '%s' "$VERS" | grep -o -E "version [0-9][^ ]*|Paper [0-9][^ ]*" | head -1)"
+    n_en="$(grep -c 'Enabling' "$SOURCE" 2>/dev/null)"; n_en="${n_en:-0}"
+    n_er="$(grep -c 'ERROR' "$SOURCE" 2>/dev/null)"; n_er="${n_er:-0}"
+    n_do="$(grep -c 'Done (' "$SOURCE" 2>/dev/null)"; n_do="${n_do:-0}"
+    n_va="$(grep -ci 'valoria' "$SOURCE" 2>/dev/null)"; n_va="${n_va:-0}"
+    diag_annot "DIAGNOSTIC : $SOURCE_NOM ($VERS_COURT) : $n_en Enabling, $n_er ERROR, $n_do Done, $n_va lignes valoria — Enabling=0 : demarrage jamais arrive aux plugins ; Done=0 : demarrage inacheve."
+    # 6. LES lignes qui nomment la panne, mot pour mot : toutes les Enabling/Disabling/Ambiguous
+    #    (qui dit si ValoriaEconomy a ete active) puis toutes les lignes ERROR avec le haut de la
+    #    pile de la premiere « Error occurred » (run 33328165310 : les compteurs restaient muets
+    #    sur QUEL plugin avait echoue — les lignes elles-memes tenaient dans le budget).
+    CYCLE="$(grep -E "Enabling|Disabling|Ambiguous|Could not load" "$SOURCE" 2>/dev/null | head -12 | sed 's/^ *\[[^]]*\] *//' | tr '\n' '~' | tr -s ' ' | head -c 480)"
+    [ -n "$CYCLE" ] && diag_annot "DIAGNOSTIC : cycle de vie des plugins : $(printf '%s' "$CYCLE" | tr '~' ' | ')"
+    ERREURS="$(grep -E "/ERROR\]|SEVERE" "$SOURCE" 2>/dev/null | head -4 | sed 's/^ *\[[^]]*\] *//' | tr '\n' '~' | tr -s ' ' | head -c 300)"
+    PILE="$(awk '/Error occurred|ERROR/ { print; n = 0
+          while (n < 5 && (getline ligne) > 0) { if (ligne ~ /^(Caused by|[[:space:]]+(at |\.\.\. ))/) { print ligne; n++ } else break } exit }' "$SOURCE" 2>/dev/null | sed 's/^ *//' | tr '\n' '~' | tr -s ' ' | head -c 400)"
+    if [ -n "$ERREURS$PILE" ]; then
+      diag_annot "DIAGNOSTIC : lignes d'erreur : $(printf '%s' "$ERREURS" | tr '~' ' | ') || pile : $(printf '%s' "$PILE" | tr '~' ' | ')"
+    else
+      diag_annot "DIAGNOSTIC : aucune ligne d'erreur dans $SOURCE_NOM."
+    fi
+
+    # --- le DETAIL par l'API Checks : le budget d'etape (10) est epuise, l'API en accepte 50. ---
+    # job id == check run id pour un job Actions (les annotations des runs precedents se lisaient
+    # deja sur ce chemin). En dehors de la CI (script lance a la main), on saute sans erreur.
+    if [ -n "${GITHUB_RUN_ID:-}" ] && [ -n "${GITHUB_TOKEN:-${GH_TOKEN:-}}" ] && command -v gh >/dev/null 2>&1; then
+      head -8 "$SOURCE" 2>/dev/null | while IFS= read -r ligne; do diag_line "DEBUT | ${ligne:0:240}"; done
+      tail -10 "$SOURCE" 2>/dev/null | while IFS= read -r ligne; do diag_line "FIN  | ${ligne:0:240}"; done
+      grep -E "Enabling|Disabling|Ambiguous|Could not load" "$SOURCE" 2>/dev/null | head -14 | while IFS= read -r ligne; do diag_line "${ligne:0:480}"; done
+      awk '/Exception|ERROR|SEVERE|Error occurred/ { bloc = $0; n = 0
+            while (n < 14 && (getline ligne) > 0) { if (ligne ~ /^(Caused by|[[:space:]]+at |\.\.\. [0-9]+ more)/) { bloc = bloc "\n" ligne; n++ } else break }
+            print bloc }' "$SOURCE" 2>/dev/null | head -6 | while IFS= read -r bloc; do diag_line "${bloc:0:480}"; done
+      grep -n -i -m 30 "valoria\|econom" "$SOURCE" 2>/dev/null | while IFS= read -r ligne; do diag_line "${ligne:0:480}"; done
+      if ! grep -q -i "valoria" "$SOURCE" 2>/dev/null; then
+        diag_line "AVERTISSEMENT : aucune ligne valoria dans $SOURCE_NOM"
+      fi
+      if [ -s "$diag_msgfile" ]; then
+        jq -R -s 'split("\n") | map(select(length > 0)) | .[0:39]
+                  | map({path: "logs/latest.log", start_line: 1, end_line: 1,
+                         annotation_level: "notice", message: ., title: "DIAGNOSTIC serveur"})' \
+          "$diag_msgfile" > "$DIAG_DIR/annots.json" 2>/dev/null \
+          && JOB_ID="$(gh api repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/jobs --jq '.jobs[0].id' 2>/dev/null)" \
+          && [ -n "$JOB_ID" ] \
+          && gh api --method POST -H "Content-Type: application/json" \
+               "repos/$GITHUB_REPOSITORY/check-runs/$JOB_ID/annotations" --input "$DIAG_DIR/annots.json" >/dev/null 2>&1 \
+          && say "DIAGNOSTIC : $(wc -l < "$diag_msgfile" | tr -d ' ') lignes de detail publiees par l'API Checks (run $GITHUB_RUN_ID)." \
+          || say "AVERTISSEMENT : publication du detail par l'API Checks impossible — les six faits essentiels restent en annotations d'etape."
+      fi
+    fi
     exit 0
   fi
   msg="$(grep -v -i -e 'Warning: Permanently added' -e '^$' "$SFTP_LOG" | tr -d '\r' | head -c 500 | tr '\n' ' ')"

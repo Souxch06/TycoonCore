@@ -12,7 +12,9 @@ softdepend:
   # plugin et refuse alors de charger le paquet si l'ecriture differe (UnknownDependencyException,
   # le blocage qui avait rendu le plugin rouge). L'ordre, lui, est garanti autrement :
   # ValoriaEconomy est load: STARTUP, donc active avant tous les plugins POSTWORLD comme celui-ci,
-  # ce qui laisse le temps au service Economy d'etre enregistre avant setupEconomy().
+  # ce qui laisse le temps au service Economy d'etre enregistre avant setupEconomy(). Ce softdepend
+  # ouvre AUSSI le classpath du fournisseur a ce plugin : l'interface Economy vit dans le jar de
+  # ValoriaEconomy (une seule copie a l'execution, cote fournisseur).
   - ValoriaEconomy
   # ── Integrations facultatives : aucune n'est necessaire pour jouer ────────────────────────────
   # Le serveur peut tourner sans un seul de ces plugins. Ils sont listes ici seulement pour que,
