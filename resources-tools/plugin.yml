@@ -24,7 +24,7 @@ authors:
 commands:
   valariatools:
     description: Ouvre l'interface du multi-outil et ses sous-commandes
-    usage: /<command> [gui|buy|give|sell|top|aide|set|ability|reset|stats|reload|help]
+    usage: /<command> [gui|buy|give|sell|top|aide|set|ability|max|reset|stats|reload|help]
     aliases: [tools, outil, multitool]
 
 permissions:
