@@ -71,38 +71,52 @@ trim_secret() {
   printf '%s' "$s"
 }
 
-# Empreinte STRUCTURELLE d'un secret : longueur, presence d'espace (et d'autres blancs : tabulation,
-# retour, espace insecable), de point, de chiffre, casse du premier caractere — JAMAIS la valeur.
-# Pourquoi : « CX File Explorer se connecte mais la CI non » ne se tranche qu'en comparant ce que le
-# runner a RECU avec ce que le panneau affiche. Or GitHub masque toute valeur de secret imprimee
-# (elle sortirait en « *** », illisible), tandis qu'une longueur ou un « point absent » se lit
-# toujours. L'empreinte attendue du login de ce serveur, « Lucas Afonso.94b412fb » :
-# longueur=21 espaces=1 points=1 chiffres=5 1er_caractere=MAJUSCULE — tout ecart (espace double,
-# espace insecable collee par le correcteur mobile, retour chariot de fin, connexion du site a la
-# place du login) se voit SANS rien devoiler. Prepare au commit bd8b81b d'une session precedente
-# (perdu a la remise a plat de l'historique), recrit ici a l'identique.
+# Empreinte STRUCTURELLE d'un secret : longueur, presence d'une espace / d'un point / d'un chiffre,
+# casse du premier caractere — JAMAIS la valeur, pas meme un extrait. GitHub masque de toute facon
+# les secrets dans les journaux, mais l'empreinte ne doit pas dependre de ce filet : elle ne calcule
+# que des formes, donc reste lisible meme pour un secret court ou mal masque.
+#
+# Pourquoi c'est l'outil qu'il faut ici : CX File Explorer se connecte AVEC LES MÊMES QUATRE VALEURS
+# (hote artemis.mcserverhost.com, port 2022, login « Lucas Afonso.94b412fb ») alors que la CI recoit
+# « Permission denied (password,publickey) ». Les empreintes de reference, calculables a la main :
+#   SFTP_HOST     24 caracteres, espace=non, point=oui, chiffre=non, 1er caractere minuscule
+#   SFTP_PORT      4 caracteres, espace=non, point=non, chiffre=oui, 1er caractere chiffre
+#   SFTP_USERNAME 21 caracteres, espace=oui, point=oui, chiffre=oui, 1er caractere majuscule
+# Si les lignes « empreinte … » du run ne montrent pas ces formes, le secret GitHub n'est pas la
+# valeur du panneau — ex. une espace INSECABLE collee sur mobile parait identique a l'oeil mais
+# apparait ici comme espace=non ; un login sans suffixe « .id » perd son point ; l'ancien mot de
+# passe n'a souvent ni la meme longueur ni les memes caracteres. Le secret fautif se nomme SANS
+# qu'aucune valeur ne fuie dans le journal.
+#
+# Double canal volontaire : say() pour le journal brut, PLUS une annotation notice. Les journaux
+# bruts d'un run passent par un domaine inaccessible depuis l'agent (voir die()) : l'annotation est
+# le seul canal vraiment lisible a distance, et cette empreinte est faite pour etre LUE, pas juste
+# ecrite.
 empreinte_secret() {
-  local nom="$1" valeur longueur i c
-  valeur="${!nom:-}"
-  longueur="${#valeur}"
-  local espaces=0 autres_blancs=0 points=0 chiffres=0 casse
-  for ((i = 0; i < longueur; i++)); do
-    c="${valeur:i:1}"
-    case "$c" in
-      ' ') espaces=$((espaces + 1)) ;;
-      '.') points=$((points + 1)) ;;
-      [0-9]) chiffres=$((chiffres + 1)) ;;
-      *[[:space:]]*) autres_blancs=$((autres_blancs + 1)) ;;
-    esac
-  done
-  case "${valeur:0:1}" in
-    [[:upper:]]) casse='MAJUSCULE' ;;
-    [[:lower:]]) casse='minuscule' ;;
-    [0-9])       casse='chiffre' ;;
-    *)           casse='ni_lettre_ni_chiffre' ;;
+  local nom="$1" val="$2" ligne premier
+  local espace=non point=non chiffre=non casse="absent (valeur vide)"
+  case "$val" in
+    *" "*) espace=oui ;;
   esac
-  printf 'empreinte %s : longueur=%d espaces=%d autres_blancs=%d points=%d chiffres=%d 1er_caractere=%s\n' \
-    "$nom" "$longueur" "$espaces" "$autres_blancs" "$points" "$chiffres" "$casse"
+  case "$val" in
+    *"."*) point=oui ;;
+  esac
+  case "$val" in
+    *[0-9]*) chiffre=oui ;;
+  esac
+  if [ -n "$val" ]; then
+    premier="${val:0:1}"
+    if   [[ "$premier" =~ [[:upper:]] ]]; then casse="une majuscule"
+    elif [[ "$premier" =~ [[:lower:]] ]]; then casse="une minuscule"
+    elif [[ "$premier" =~ [[:digit:]] ]]; then casse="un chiffre"
+    else                                    casse="un autre caractere"
+    fi
+  fi
+  # %-13s aligne les quatre lignes (SFTP_HOST/SFTP_PORT = 9 lettres, SFTP_USERNAME/SFTP_PASSWORD = 13).
+  ligne="$(printf 'empreinte %-13s : %s caracteres, espace=%s, point=%s, chiffre=%s, 1er caractere %s' \
+            "$nom" "${#val}" "$espace" "$point" "$chiffre" "$casse")"
+  say "$ligne"
+  printf '::notice::%s\n' "$ligne"
 }
 
 # ------------------------------------------------------------------ 1. les trois jars, ou rien
@@ -200,15 +214,14 @@ SFTP_PORT=$(printf '%s' "$SFTP_PORT" | tr -cd '0-9')
 [ -n "$SFTP_HOST" ] || die "SFTP_HOST est vide apres normalisation : coller l'hote nu du panneau (sans sftp:// ni chemin)."
 [ -n "$SFTP_PORT" ] || die "SFTP_PORT n'est pas un nombre (recu: ${SFTP_PORT:-vide}) : le port SFTP du panneau, en chiffres."
 
-# Diagnostique d'empreinte structurelle : ce que le runner envoie VRAIMENT, champ par champ, apres
-# nettoyage des blancs de bordure (la valeur, elle, n'apparait jamais — GitHub la masquerait en
-# « *** »). A comparer avec l'onglet SFTP du panneau : hote « artemis.mcserverhost.com » =>
-# longueur=24 points=2 chiffres=0 ; login « Lucas Afonso.94b412fb » => longueur=21 espaces=1
-# points=1 chiffres=5 1er_caractere=MAJUSCULE. CX File Explorer vert + CI rouge avec une empreinte
-# conforme = le secret ne decrit pas le meme compte que celui tape dans CX.
-for var in SFTP_HOST SFTP_PORT SFTP_USERNAME SFTP_PASSWORD; do
-  empreinte_secret "$var"
-done
+# Empreinte APRES trimming/normalisation : elle decrit exactement les valeurs qui partent vers le
+# serveur. Comparee aux empreintes de reference (celles de CX File Explorer, voir la fonction), elle
+# nomme le secret de mauvaise forme AVANT meme que l'authentification echoue — et reste dans le
+# journal si elle echoue quand meme.
+empreinte_secret SFTP_HOST     "$SFTP_HOST"
+empreinte_secret SFTP_PORT     "$SFTP_PORT"
+empreinte_secret SFTP_USERNAME "$SFTP_USERNAME"
+empreinte_secret SFTP_PASSWORD "$SFTP_PASSWORD"
 
 if ! command -v sshpass >/dev/null 2>&1; then
   say "installation de sshpass…"
