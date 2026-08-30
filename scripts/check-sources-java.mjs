@@ -327,19 +327,14 @@ const CONTRACTS = [
       { name: 'startInteractivePool', returns: 'HologramPool', arity: 4, static: true },
       { name: 'activePool', returns: 'HologramPool', arity: 0, static: true },
       { name: 'color', returns: 'String', arity: 1, static: true },
-      { name: 'applySoul', returns: 'boolean', arity: 5, static: true },
-      { name: 'refreshHeld', returns: 'void', arity: 3, static: true },
-      { name: 'soulOf', returns: 'ToolKind', arity: 2, static: true },
-      { name: 'held', returns: 'ItemStack', arity: 1, static: true },
     ],
     mustContain: ['new NamespacedKey("valoriatycoon", "hologram-entity")', 'legacyHex', 'instanceof ArmorStand',
                   'getMethod(setter, boolean.class)', 'setDisabledSlots', 'setItemInHand'],
     mustNotContain: ['net.minecraft', 'comphenix', 'printStackTrace', 'md_5'],
   },
-  // ── ValoriaTools (multi-outil) : les fichiers de sources/tools/, tous écrits ici, donc sous contrat —
-  // la règle du dépôt
-  // est « tout fichier dans <includes> du pom a un contrat ». Sans contrat, une methode renommee dans
-  // un fichier recompille ne serait vue que par javac (et par le serveur, en jeu).
+  // ── ValoriaTools (multi-outil) : les fichiers de sources/tools/, tous écrits ici, donc sous contrat.
+  // La règle du dépôt est « tout fichier dans <includes> du pom a un contrat » : sans contrat, une méthode
+  // renommée dans un fichier recompilé ne serait vue que par javac (et par le serveur, en jeu).
   {
     file: 'sources/tools/xyz/arcadiadevs/valariatools/ValoriaTools.java',
     why: "plugin : enregistre UN SEUL exemplaire de chaque listener, relit l'economie apres l'activation",
@@ -496,6 +491,10 @@ const CONTRACTS = [
       { name: 'isMultiTool', returns: 'boolean', arity: 1, static: true },
       { name: 'refresh', returns: 'void', arity: 4, static: true },
       { name: 'color', returns: 'String', arity: 1, static: true },
+      { name: 'applySoul', returns: 'boolean', arity: 5, static: true },
+      { name: 'refreshHeld', returns: 'void', arity: 3, static: true },
+      { name: 'soulOf', returns: 'ToolKind', arity: 2, static: true },
+      { name: 'held', returns: 'ItemStack', arity: 1, static: true },
     ],
     mustContain: ['new NamespacedKey("valariatools", "multi")', 'PersistentDataType.STRING',
                   'translateAlternateColorCodes',
