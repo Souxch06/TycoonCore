@@ -323,6 +323,10 @@ if [ "$DRY_RUN" = "1" ]; then
     # precedent, qui couvre le cas « le serveur n'a pas redemarre depuis le dernier depot ») et on
     # publie l'extrait en ANNOTATIONS, seul canal vraiment lisible a distance. Toujours AUCUNE
     # ecriture cote serveur : des `ls` et des `get` uniquement.
+    #
+    # REGLE d'or apprise du premier tour : tout echec doit partir en ANNOTATION, pas seulement dans
+    # le journal du run (un `get` refuse ne laissait aucune trace lisible, et le diagnostic semblait
+    # « complet » alors qu'il manquait le journal courant).
     DIAG_DIR="$(mktemp -d)"
     diag_annot() {
       # Echappement des annotations workflow : % d'abord, puis fins de ligne en %0A (une annotation
@@ -331,26 +335,45 @@ if [ "$DRY_RUN" = "1" ]; then
         | sed -e 's/%/%25/g' -e 's/\r$//' -e 's/\r//g' \
         | awk 'BEGIN { ORS = "%0A" } { print }' | sed -e 's/%0A$//')"
     }
-    # Listing de logs/ : ses dates disent QUAND le serveur a demarre (si latest.log est plus vieux que les jars
-    # du dernier depot, le ROUGE observe est peut-etre simplement celui des jars d'avant : redemarrer d'abord).
+    diag_warn() { diag_annot "DIAGNOSTIC AVERTISSEMENT : $1"; }
+
+    # Listing de logs/ : ses dates disent QUAND le serveur a demarre (si latest.log est plus vieux
+    # que les jars du dernier depot, le ROUGE observe est peut-etre celui des jars d'avant).
     LOG_LISTING="$DIAG_DIR/logs-ls.txt"
     if run_sftp "ls -l logs"; then
-      tr -d '\r' < "$SFTP_LOG" > "$LOG_LISTING"
+      tr -d '\r' < "$SFTP_LOG" | grep -v -E "Warning: Permanently|sftp> |^ls: " > "$LOG_LISTING"
     else
       : > "$LOG_LISTING"
-      say "AVERTISSEMENT : listing logs/ impossible ($(sftp_last))"
+      diag_warn "listing logs/ impossible ($(sftp_last))"
     fi
-    run_sftp "get logs/latest.log $DIAG_DIR/latest.log" \
-      || say "AVERTISSEMENT : logs/latest.log inaccessible ($(sftp_last))"
+    if run_sftp "get logs/latest.log $DIAG_DIR/latest.log"; then
+      # Un get qui reussit peut quand meme poser un fichier vide : le compte de lignes le dit.
+      diag_annot "DIAGNOSTIC : latest.log rapatrie ($(wc -c < "$DIAG_DIR/latest.log" | tr -d ' ') octets, $(wc -l < "$DIAG_DIR/latest.log" | tr -d ' ') lignes)"
+    else
+      : > "$DIAG_DIR/latest.log"
+      diag_warn "get logs/latest.log REFUSE ($(sftp_last)) — le diagnostic porte sur le journal precedent"
+    fi
     PREV_GZ="$(awk '$NF ~ /\.log\.gz$/ { print $NF }' "$LOG_LISTING" | tail -1)"
     if [ -n "$PREV_GZ" ]; then
-      run_sftp "get logs/$PREV_GZ $DIAG_DIR/prev.log.gz" \
-        || say "AVERTISSEMENT : $PREV_GZ inaccessible ($(sftp_last))"
+      if run_sftp "get logs/$PREV_GZ $DIAG_DIR/prev.log.gz"; then
+        [ -s "$DIAG_DIR/prev.log.gz" ] && zcat "$DIAG_DIR/prev.log.gz" > "$DIAG_DIR/prev.log" 2>/dev/null || true
+        diag_annot "DIAGNOSTIC : $PREV_GZ rapatrie ($(wc -l < "$DIAG_DIR/prev.log" 2>/dev/null | tr -d ' ') lignes)"
+      else
+        diag_warn "get logs/$PREV_GZ refuse ($(sftp_last))"
+      fi
     fi
-    [ -s "$DIAG_DIR/prev.log.gz" ] && zcat "$DIAG_DIR/prev.log.gz" > "$DIAG_DIR/prev.log" 2>/dev/null || true
+    [ -s "$DIAG_DIR/prev.log" ] || : > "$DIAG_DIR/prev.log"
 
-    # Digest : version du serveur, lignes Valoria/Economy, erreurs et exceptions — borné en volume
-    # (le journal peut peser des megaoctets, les annotations sont limitees a ~50 par run).
+    # Le journal a interpreter : le courant (latest.log), sinon le precedent. Les FAITS vont en
+    # annotations (une par ligne ou par bloc) ; le digest complet va au journal et au resume du run.
+    SOURCE="$DIAG_DIR/latest.log"
+    SOURCE_NOM="latest.log"
+    if [ ! -s "$SOURCE" ]; then
+      SOURCE="$DIAG_DIR/prev.log"
+      SOURCE_NOM="prev.log.gz (latest.log absent ou vide !)"
+    fi
+
+    # Digest complet (journal + resume du run) : version, lignes Valoria/Economy, erreurs.
     DIGEST="$DIAG_DIR/digest.txt"
     : > "$DIGEST"
     for name in latest prev; do
@@ -361,34 +384,45 @@ if [ "$DRY_RUN" = "1" ]; then
         grep -m 2 -E "Starting minecraft server version|This server is running|Loading [0-9]+ plugin" "$f" || true
         echo "----- lignes Valoria / Economy -----"
         grep -n -i -m 40 "valoria\|econom" "$f" || true
-        echo "----- erreurs / exceptions -----"
-        grep -n -E -m 40 "ERROR|SEVERE|[Ee]xception|Caused by|Ambiguous|Could not load|Error occurred|NoClassDefFound|ClassNotFoundException" "$f" || true
+        echo "----- erreurs / exceptions (avec 14 lignes de contexte) -----"
+        awk '/Exception|ERROR|SEVERE|Error occurred|Caused by/ { print; n = 0
+              while (n < 14 && (getline ligne) > 0) { if (ligne ~ /^(Caused by|[[:space:]]+at |\.\.\. [0-9]+ more)/) { print ligne; n++ } else break } }' "$f" || true
+        echo "----- cycle de vie des plugins -----"
+        grep -n -E "Enabling|Disabling|Ambiguous|Could not load|auto-update|libraries" "$f" | head -30 || true
+        echo "----- 15 premieres lignes -----"
+        head -15 "$f" || true
+        echo "----- 25 dernieres lignes -----"
+        tail -25 "$f" || true
       } >> "$DIGEST"
     done
-    if [ -s "$DIGEST" ]; then
-      say "DRY_RUN : diagnostic — extrait des journaux du dernier demarrage :"
-      cat "$DIGEST"
-      if [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then
-        { echo "## Diagnostic serveur (lecture seule)"; echo '```'; cat "$DIGEST"; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
-      fi
-      # Les annotations ci-dessous sont le canal lu par l'agent (API check-runs) : une par fait.
-      diag_annot "DIAGNOSTIC : listing plugins/ = $(awk '$NF !~ /^_sauvegarde/ && $NF ~ /\.jar$/ { printf "%s (%s octets) ; ", $NF, $5 }' "$PRE_LIST" | head -c 600)"
-      diag_annot "DIAGNOSTIC : listing logs/ = $(grep -v '^total' "$LOG_LISTING" | tr '\n' ' ' | head -c 600)"
-      # La version vient du dernier demarrage disponible (latest.log, sinon le journal precedent) :
-      # `grep -m 1` compte par FICHIER, deux fichiers donnaient la ligne deux fois.
-      VERS="$(grep -m 1 -E "Starting minecraft server version|This server is running" "$DIAG_DIR/latest.log" 2>/dev/null || grep -m 1 -E "Starting minecraft server version|This server is running" "$DIAG_DIR/prev.log" 2>/dev/null || true)"
-      [ -n "$VERS" ] && diag_annot "DIAGNOSTIC : version serveur : $VERS"
-      # Les lignes qui nomment la panne (une annotation chacune, 40 max : la limite GitHub est ~50/run).
-      # Uniquement le DERNIER demarrage : le journal precedent reste dans le digest/summary, pas en
-      # annotations (sinon chaque fait sort deux fois et la limite part en doublons).
-      SOURCE_ANN="$DIAG_DIR/latest.log"
-      [ -s "$SOURCE_ANN" ] || SOURCE_ANN="$DIAG_DIR/prev.log"
-      grep -E -i "valoria|econom|ERROR|SEVERE|[Ee]xception|Caused by|Ambiguous|Could not load|NoClassDefFound|ClassNotFoundException|Error occurred" "$SOURCE_ANN" 2>/dev/null \
-        | head -40 | while IFS= read -r ligne; do
-          diag_annot "${ligne:0:480}"
-        done
-    else
-      diag_annot "DIAGNOSTIC : aucun journal rapatrie (logs/ vide ou inaccessible) — plugins/ = $(awk '$NF ~ /\.jar$/ { printf "%s (%s octets) ; ", $NF, $5 }' "$PRE_LIST" | head -c 600)"
+    say "DRY_RUN : diagnostic — extrait des journaux du serveur :"
+    cat "$DIGEST"
+    if [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then
+      { echo "## Diagnostic serveur (lecture seule)"; echo '```'; cat "$DIGEST"; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+    fi
+
+    # ---------------- FAITS, en annotations (canal lu par l'agent : API check-runs) ----------------
+    diag_annot "DIAGNOSTIC : listing plugins/ = $(awk '$NF !~ /^_sauvegarde/ && $NF ~ /\.jar$/ { printf "%s (%s octets) ; ", $NF, $5 }' "$PRE_LIST" | head -c 600)"
+    diag_annot "DIAGNOSTIC : listing logs/ = $(grep -v '^total' "$LOG_LISTING" | tr '\n' ' ' | head -c 900)"
+    VERS="$(grep -m 1 -E "Starting minecraft server version|This server is running" "$SOURCE" 2>/dev/null || true)"
+    [ -n "$VERS" ] && diag_annot "DIAGNOSTIC : version serveur ($SOURCE_NOM) : $VERS"
+    # Debut et fin du journal : la fin dit si le demarrage est ALLE au bout (« Done ») ou plante.
+    diag_annot "DIAGNOSTIC : debut de $SOURCE_NOM : $(head -8 "$SOURCE" | head -c 460)"
+    diag_annot "DIAGNOSTIC : fin de $SOURCE_NOM : $(tail -12 "$SOURCE" | head -c 460)"
+    # Cycle de vie : une annotation par ligne Enabling/Disabling/Ambiguous (12 max).
+    grep -E "Enabling|Disabling|Ambiguous|Could not load" "$SOURCE" 2>/dev/null | head -12 | while IFS= read -r ligne; do
+      diag_annot "${ligne:0:480}"
+    done
+    # Chaque exception avec sa PILE (les « at … » nomment le plugin coupable) : 5 blocs max,
+    # 14 lignes de pile chacun — la limite GitHub est ~50 annotations par run.
+    awk '/Exception|ERROR|SEVERE|Error occurred/ { bloc = $0; n = 0
+          while (n < 14 && (getline ligne) > 0) { if (ligne ~ /^(Caused by|[[:space:]]+at |\.\.\. [0-9]+ more)/) { bloc = bloc "\n" ligne; n++ } else break }
+          print bloc }' "$SOURCE" 2>/dev/null | head -5 | while IFS= read -r bloc; do
+      diag_annot "${bloc:0:480}"
+    done
+    # Et si le journal courant ne dit rien des plugins Valoria : c'est un FAIT, il faut le voir.
+    if ! grep -q -i "valoria" "$SOURCE" 2>/dev/null; then
+      diag_warn "aucune ligne « valoria » dans $SOURCE_NOM — journal d'un demarrage sans les plugins, ou mauvais journal"
     fi
     exit 0
   fi
