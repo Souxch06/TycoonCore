@@ -25,6 +25,7 @@ import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.player.PlayerFishEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.PlayerItemHeldEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
@@ -104,6 +105,8 @@ public final class ToolListener implements Listener {
     private final Map<UUID, Boost> boosts = new HashMap<UUID, Boost>();
     /** Le reliquat d'XP décimale, par joueur (voir {@link #settle(UUID, double)}). */
     private final Map<UUID, Double> xpCarry = new HashMap<UUID, Double>();
+    /** L'amplificateur de vitesse de minage posé par NOUS, par joueur : pour ne rendre que le nôtre. */
+    private final Map<UUID, Integer> passives = new HashMap<UUID, Integer>();
     private boolean handling;
     private boolean warned;
 
@@ -121,6 +124,7 @@ public final class ToolListener implements Listener {
                     && player.getOpenInventory().getTopInventory().getHolder() instanceof ToolsGui.View) {
                 ToolsGui.render(player);
             }
+            refreshPassive(player);   // la vitesse de minage vient d'une config qui vient de changer
         }
         restoreSpeeds();
     }
@@ -133,6 +137,7 @@ public final class ToolListener implements Listener {
         if (tool != null) {
             MultiTool.refresh(tool, this.config, this.store, player.getUniqueId());
         }
+        refreshPassive(player);
     }
 
     /** La vitesse de marche rendue au joueur, sinon un logout pendant une Furie le laisserait lent. */
@@ -141,7 +146,89 @@ public final class ToolListener implements Listener {
         this.castCooldown.remove(event.getPlayer().getUniqueId());
         this.xpCarry.remove(event.getPlayer().getUniqueId());   // un reliquat non rendu ne se promene pas
         this.furies.remove(event.getPlayer().getUniqueId());
+        this.passives.remove(event.getPlayer().getUniqueId());  // l'effet meurt avec la session
         restore(event.getPlayer());
+    }
+
+    // ------------------------------------------------------------------ capacites « tant que l'outil est en main »
+
+    /**
+     * Entretien la vitesse de minage accordée par l'outil tenu ({@code tool.haste-while-held}) : posée dès
+     * que l'outil arrive en main, rafraîchie chaque seconde par la tâche du plugin, rendue dès qu'il en
+     * sort.
+     *
+     * <p>Pourquoi cet entretien existe : la vitesse était posée <em>après</em> la cassure, donc le premier
+     * bloc d'une session se minait à la vitesse normale et, le temps de l'effet étant court, un joueur qui
+     * vise un coffre entre deux filons perdait le bonus sans jamais le récupérer. Un effet posé « à chaque
+     * bloc cassé » est invisible quand le bloc en question ne se casse pas — et c'est exactement ce que
+     * le joueur appelle « mes capacités ne sont pas actives ».</p>
+     */
+    public void refreshPassive(Player player) {
+        if (player == null || !this.config.enabled()) {
+            return;
+        }
+        ToolsConfig.Effect haste = holdingPassiveHaste(player);
+        if (haste == null || !haste.active()) {
+            Integer ours = this.passives.remove(player.getUniqueId());
+            if (ours != null) {
+                ((ValoriaTools) this.plugin).abilities().clearHaste(player, ours.intValue());
+            }
+            return;
+        }
+        this.passives.put(player.getUniqueId(), Integer.valueOf(Abilities.grade(haste) - 1));
+        ((ValoriaTools) this.plugin).abilities().haste(player, haste);
+    }
+
+    /** Tous les joueurs connectés (la tâche périodique du plugin, une fois par seconde). */
+    public void refreshPassives() {
+        for (Player player : this.plugin.getServer().getOnlinePlayers()) {
+            refreshPassive(player);
+        }
+    }
+
+    /**
+     * L'agrégat de Haste que l'outil doit donner à ce joueur, ou {@code null} s'il ne doit rien donner :
+     * pas d'outil en main, monde hors liste, capacité non achetée, ou réglage coupé.
+     */
+    private ToolsConfig.Effect holdingPassiveHaste(Player player) {
+        if (!this.config.hasteWhileHeld() || heldMultiTool(player) == null) {
+            return null;
+        }
+        if (!this.config.allowsWorld(player.getWorld() == null ? null : player.getWorld().getName())) {
+            return null;
+        }
+        return passiveHaste(player);
+    }
+
+    /**
+     * Le maximum des deux âmes qui minent (pioche, hache). Le max, et non la somme : les deux parts de
+     * l'outil se lisent sur le même geste, et additionner les amplifiers rendait un joueur à Haste V pour
+     * deux capacités achetées deux fois moins cher qu'annoncé.
+     *
+     * <p>Méthode publique parce que <code>/tools stats</code> doit pouvoir répondre à la question du
+     * joueur « j'ai tout maxé, je ne sens rien » sans recalculer ici une règle qui vit ici.</p>
+     */
+    public ToolsConfig.Effect passiveHaste(Player player) {
+        ToolsConfig.Effect best = ToolsConfig.Effect.none();
+        for (ToolKind kind : new ToolKind[]{ToolKind.PICKAXE, ToolKind.AXE}) {
+            ToolsConfig.KindConfig kindConfig = this.config.kind(kind);
+            if (kindConfig == null) {
+                continue;
+            }
+            int tier = this.store.tierOf(player.getUniqueId(), kind, this.config.maxTier(kindConfig));
+            ToolsConfig.Effect current = this.config.effect(kindConfig, "HASTE", tier,
+                    this.store.levelsOf(player.getUniqueId(), kind));
+            if (current.active() && (!best.active() || Abilities.grade(current) > Abilities.grade(best))) {
+                best = current;
+            }
+        }
+        return best;
+    }
+
+    /** Un changement de main est le seul moment où le joueur s'attend à sentir la différence tout de suite. */
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onHeldChange(PlayerItemHeldEvent event) {
+        refreshPassive(event.getPlayer());
     }
 
     // ------------------------------------------------------------------ casser un bloc
@@ -301,9 +388,14 @@ public final class ToolListener implements Listener {
             if (quake.active() && quake.value("particles", 0) > 0) {
                 abilities.particles(origin, "EXPLOSION_LARGE");
             }
-            ToolsConfig.Effect haste = this.config.effect(kindConfig, "HASTE", tier, levels);
-            if (haste.active()) {
-                abilities.haste(player, haste);
+            // HASTE n'est re-posée ici que si l'entretien « outil en main » est coupé. Sinon la tâche
+            // périodique en est la seule propriétaire : deux poseurs différents, et le retrait de main ne
+            // rendrait que l'amplificateur qu'elle a posé — le dernier de la cassure resterait collé.
+            if (!this.config.hasteWhileHeld()) {
+                ToolsConfig.Effect haste = this.config.effect(kindConfig, "HASTE", tier, levels);
+                if (haste.active()) {
+                    abilities.haste(player, haste);
+                }
             }
             scheduleGhosts(player, origin, kind, kindConfig, tier, levels, abilities);
         }
@@ -654,12 +746,17 @@ public final class ToolListener implements Listener {
      * Deux usages du clic droit, séparés parce qu'ils se contredisent :
      *
      * <ol>
-     *   <li><b>le menu</b> — la convention du wiki : clic droit avec la pioche et la houe, sneak + clic
-     *       droit avec l'épée et la canne. Ouvrir une interface à la place d'un coup d'épée serait
-     *       rédhibitoire, d'où la distinction par âme ;</li>
+     *   <li><b>le panneau d'amélioration</b> — <b>sneak + clic droit avec n'importe quelle âme</b>, c'est
+     *       le geste unique qu'on retient (et celui que le wiki promet pour l'épée et la canne) ; le clic
+     *       droit simple ne l'ouvre qu'avec les âmes qui minent et dans le vide, parce qu'ouvrir une
+     *       interface à la place d'un coup d'épée ou d'un clic sur un bloc interactif serait
+     *       rédhibitoire ;</li>
      *   <li><b>le lancer de ligne</b> — anti‑spam : deux clics en moins de 400 ms feraient deux lancers,
      *       et le second avalerait le premier bobber.</li>
      * </ol>
+     *
+     * <p>Le bloc visé ne sert plus qu'à choisir l'âme affichée par le panneau, jamais à décider si le
+     * panneau s'ouvre : c'est ce qui rendait l'accès imprévisible dès qu'on visait une pierre.</p>
      */
     @EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
     public void onInteract(PlayerInteractEvent event) {
@@ -683,13 +780,22 @@ public final class ToolListener implements Listener {
         if (kind == null) {
             kind = this.config.fallbackKind();
         }
-        // Le wiki : « clic droit avec la pioche et la houe, sneak + clic droit avec l'epee et la canne ».
-        // Les âmes qui minent ouvrent donc le menu sur le vide (un clic sur un minerai reste un minage) ;
-        // les âmes de combat et de pêche ne l'ouvrent qu'accroupi, pour ne voler ni le coup ni le lancer.
+        // Le wiki dit : « clic droit avec la pioche et la houe, sneak + clic droit avec l'epee et la
+        // canne ». Sur ce serveur, le geste unique que le joueur retient est « accroupi + clic droit » :
+        // il ouvre le panneau avec N'IMPORTE QUELLE âme, en visant un bloc ou non — c'est ce que le
+        // joueur cherche quand il dit « le panneau n'est pas accessible ». Le clic droit seul reste
+        // réservé aux âmes qui minent et au vide, pour ne voler ni un coup d'epee, ni un lancer de ligne,
+        // ni un clic sur un bloc qui sert a autre chose (composteur, lit, levier).
         boolean menuSoul = kind == ToolKind.PICKAXE || kind == ToolKind.AXE;
-        boolean wantsMenu = menuSoul ? block == null && !player.isSneaking() : player.isSneaking();
+        boolean wantsMenu = player.isSneaking() || (block == null && menuSoul);
         if (wantsMenu) {
             event.setUseItemInHand(org.bukkit.event.Event.Result.DENY);
+            try {
+                // accroupi contre un bloc interactif, le clic passerait quand meme a l'objet vise
+                event.setUseInteractedBlock(org.bukkit.event.Event.Result.DENY);
+            } catch (RuntimeException | LinkageError unsupported) {
+                // RIGHT_CLICK_AIR n'a rien a deny sur les serveurs les plus anciens : le menu s'ouvre assez
+            }
             this.plugin.getServer().getScheduler().runTask(this.plugin, new Runnable() {
 
                 @Override
@@ -1012,6 +1118,10 @@ public final class ToolListener implements Listener {
         if (swift.active()) {
             abilities.swift(player, swift);
         }
+        // Le « Célérité » de l'âme épée se pose à chaque coup, volontairement : ce n'est pas la vitesse de
+        // minage entretenue par `tool.haste-while-held` (qui n'agrège que pioche et hache), et la couper
+        // ici ferait disparaître une capacité achetée. Les deux se supportent : `Abilities.haste` ignore
+        // la pose si le joueur a déjà ce niveau ou mieux, donc le passif ne « saute » pas.
         ToolsConfig.Effect haste = this.config.effect(kindConfig, "HASTE", tier, levels);
         if (haste.active()) {
             abilities.haste(player, haste);

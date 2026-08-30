@@ -31,16 +31,63 @@ au modèle « tout s'achète ».
 
 ## Le menu
 
-Ouverture : **clic droit** avec la pioche ou la houe (dans le vide), **sneak + clic droit** avec l'épée
-ou la canne — la convention du wiki, page « Les Outils ».
+Ouverture : **sneak + clic droit** avec l'outil — avec n'importe quelle âme, en visant un bloc ou dans le
+vide. C'est le geste unique qu'on retient, et celui que le wiki promet déjà pour l'épée et la canne. Le
+clic droit simple ouvre aussi le panneau **avec les âmes qui minent et uniquement dans le vide** : ouvrir
+une interface à la place d'un coup d'épée, d'un lancer de ligne ou d'un clic sur un composteur serait
+rédhibitoire. `/tools` (ou `/tools hache`) fait la même chose, et la vente à la casse garde son propre
+réglage : `sell-on-break.only-when-sneaking`.
+
+Le panneau a six rangées (54 cases) et reprend la disposition des captures « GenTycoon / hGen » : âmes en
+haut à gauche, palier et solde en haut à droite, les capacités au centre, la légende des couleurs sous les
+capacités, la navigation et les services en bas.
 
 ```
-rangée 1 :  [pioche] [hache] [canne] [épée]   .   [palier ↑]  [vendre]  [stats]  [fermer]
-rangées 2-4 : une case par capacité du wiki, dans l'ordre du fichier de config
+rangée 1 : [pioche][hache][canne][épée]   ·   [Palier ↑]        [solde]   [Fermer]
+             slots 0-3 (teintés âme)          slot 6            slot 8    slot 9
+rangées 2-4 : une case par capacité du wiki, dans l'ordre du fichier de config (27 par page)
+rangée 5   : [✔ achetée][● achetable][✖ verrouillée]   ·   [?] aide (imprime le guide au chat)
+rangée 6   : [◀ page] [vendre] [bilan] [acheter ×1 / ×10 / ×100] ··············· [page ▶]
 ```
+
+| case | ce qu'elle fait |
+| --- | --- |
+| une des quatre premières | change l'âme affichée : sa liste de capacités, sa teinture, le palier lu, sa page |
+| `Palier ↑` | achète le palier d'âme suivant (`upgrade.price-base × price-ratio^palier`) ; au 50ᵉ, elle devient le résumé du barème |
+| les 27 cases du centre | **clic = +1 niveau**, **Maj+clic = +10** — multiplicés par le pas d'achat choisi en bas |
+| `×1 / ×10 / ×100` | le pas d'achat, comme sur les panneaux tycoon : « prendre dix niveaux » ne doit pas imposer dix clics ; le prix affiché est celui du paquet |
+| `vendre` / `bilan` / `Fermer` | `/tools sell`, `/tools stats` (avec le diagnostic), fermeture |
+| les trois vitrages + le livre | la légende des états, et le guide de 40 lignes dans le chat |
+
+**Un état se lit sans pack de textures.** Chaque capacité est un item vanilla : son nom porte le signe de
+l'état (`&a✔ ` achetée, `&e● ` achetable non payée, `&8✖ ` verrouillée par le palier, `&a★ ` au maximum du
+barème) et une capacité payée prend le **luisant d'enchantement** — le seul marqueur « acheté » que le
+client affiche sans resource pack. Aucun `CustomModelData` n'est utilisé : le panneau doit rester lisible
+sur un serveur nu, et les vitrages teintés de la rangée 1 font le reste de la couleur.
 
 La tooltip d'une capacité donne : sa description du wiki, son noyau, `niveau actuel / max`, l'effet au
-niveau courant et au niveau suivant, le prix, et le palier requis si elle est verrouillée.
+niveau courant et au niveau suivant, le prix du paquet demandé, et le palier requis si elle est verrouillée.
+
+## Un seul exemplaire, non droppable (`ToolGuard`)
+
+Le multi-outil n'est pas un objet qui circule : **un par joueur, et il ne se lâche pas**. `tool.undroppable`,
+`tool.single-per-player` et `tool.auto-give` règlent la garde ; les trois vont ensemble, et le troisième
+est ce qui rend les deux premiers sans danger.
+
+| règle | comment elle tient | si elle manque |
+| --- | --- | --- |
+| ne se pose pas (touche Q) | `PlayerDropItemEvent` annulé | l'item traîne par terre, n'importe qui le ramasse |
+| ne se range pas | clic d'inventaire annulé dès que l'item **quitte le sac du joueur** — coffre, baril, ender chest, entonnoir (aussi couvert côté serveur par `InventoryMoveItemEvent`), et les deux gestes `DROP` / `CONTROL_DROP`, qui ne déclenchent **pas** `PlayerDropItemEvent` : c'est le trou classique des gardes de l'item | un coffre de vendor avale l'outil, un entonnoir le vide dans une machine |
+| ne se donne pas | un doublon ramassé au sol est **détruit** (`EntityPickupItemEvent`) et rendu à son joueur s'il n'a plus rien (`grant`) ; un cadre, un cadre lumineux ou un porte-armure ne sert pas de coffre déguisé (`PlayerInteractEntityEvent`) | le premier passant ramasse l'outil tombé, ou quelqu'un l'accroche au mur d'une salle des ventes |
+| survit à la mort | `PlayerDeathEvent.keepInventory` posé quand l'outil meurt avec le joueur | un mort en fer = un joueur sans outil |
+| un seul exemplaire | à la connexion (et au relog), l'inventaire est balayé **sur les 41 cases** — `getStorageContents()`, armure et main secondaire comprises — et toute copie au-delà de la première est détruite ; le cas « outil dans un coffre ouvert » est traité par `onClose` | deux copies = deux âmes maxées pour le prix d'une |
+| revient s'il manque | `auto-give` : `grant()` pose l'outil dans la main courante (ou le premier trou), avec sa lore | un `/clear` laisse le joueur sur le carreau |
+
+Deux concessions assumées, parce que la règle ne doit pas devenir une prison : le **`/clear`** n'est pas
+combattu (l'auto-give le répare au relog ou à la commande), et l'item ne peut **pas** être dupliqué par un
+`give` admin — `/tools give` passe par `grant()`, qui refuse la deuxième copie. Un `minecraft:give` brut,
+lui, reste possible : le NBT marqué ne peut pas être posé par la commande vanilla, donc l'objet donné est
+un picotier ordinaire, sans âme — inoffensif.
 
 ## Commandes
 
@@ -57,6 +104,13 @@ niveau courant et au niveau suivant, le prix, et le palier requis si elle est ve
 /tools stats                               état des services
 /tools reload                              recharge config + paliers + vues  (admin)
 ```
+
+`/tools give <joueur> <palier>` **écrit** le palier dans `tools.yml` pour les quatre âmes (avant ce
+correctif il l'annonçait sans le poser : le joueur restait au palier 1, donc sans capacité débloquée — une
+des faces du « j'ai maxé mon outil et rien ne s'active »). `/tools buy <joueur>` refuse de débiter deux
+fois : avec `tool.single-per-player: true`, un second achat n'apporte strictement rien. `/tools stats`
+termine par le diagnostic automatique (reconnaissance des blocs, garde de l'item, effet de minage réellement
+dû) — c'est la première chose à lire quand un joueur dit « mes capacités ne marchent pas ».
 
 `/tools ability` accepte l'**id** (`fortune`), le **nom du wiki** (`Fortune`) ou le **noyau** (`FORTUNE`) :
 la complétion par Tab propose les ids de l'âme choisie. Le niveau est borné par `max-level`, donc un
@@ -138,6 +192,15 @@ au reste — le classement n'est qu'un affichage, jamais une condition de foncti
 
 ## Acheter l'outil, et où il a le droit d'agir
 
+- `tool.haste-while-held` (true) : la vitesse de minage des capacités `HASTE` est posée **tant que l'outil
+  est en main** — réappliquée une fois par seconde par une tâche du plugin, à chaque changement de main, et
+  retirée dès que l'outil quitte la main, qu'on entre dans un monde hors de `tools.allowed-worlds`, ou à la
+  déconnexion. Les deux âmes qui minent (pioche, hache) sont prises **au maximum**, jamais à la somme, et
+  seul l'amplificateur posé par nous est rendu (un autre plugin qui donne Haste n'est pas effacé).
+- `tool.undroppable`, `tool.single-per-player`, `tool.auto-give` (les trois à true) : voir la section
+  « Un seul exemplaire, non droppable ». Couper `auto-give` sans couper les deux autres laisse un joueur
+  qui a perdu son item (monde recréé, inventaire vidé par un plugin) sans moyen de le récupérer : l'objet
+  ne se pose plus, ne se prête plus, et le give admin est le seul recours.
 - `tool.price` (0 par défaut) : `/tools buy` retire ce montant et donne l'outil. À 0, la commande devient
   un give — un serveur qui n'a pas encore calé son économie ne doit pas être bloqué par notre tarif, mais
   il ne doit pas non plus être forcé à distribuer l'outil : c'est `buy` qui est ouvert aux joueurs,
@@ -158,7 +221,7 @@ python3 scripts/verify-tools-config.py     config, noyaux, plugin.yml, pom, asse
                                         # pas un nombre ici, il serait faux des qu'une regle
                                         # est ajoutee (ca l'etait : « 100 » pour 145 reels)
 python3 scripts/check-config-literals.py   les clés de config appelées en Java sont des littéraux
-node scripts/parse-java.mjs --from-pom     syntaxe + types des 32 fichiers compilés
+node scripts/parse-java.mjs --from-pom     syntaxe + types des fichiers compilés (le compte est dans la sortie)
 ```
 
 Le contrôle de config ne se contente pas de compter les lignes :
@@ -195,7 +258,14 @@ premier essai sur ce fichier (le marqueur `{type:` ne existait plus, le compteur
 8. `/tools ability moi pioche briseur 0` : la capacité se **désactive** — le palier d'âme ne doit rien
    rendre d'irrémovable.
 9. `/tools reload` avec le menu ouvert : la vue se redessine, aucune case cliquable ne reste d'un ancien
-   barème.
+   barème, et la vitesse de minage repart de la nouvelle config (un `amplifier: 3` doit se sentir sans
+   recasser de bloc).
+9 bis. Garde de l'item : **Q** avec l'outil en main → rien ne tombe ; Glisser-déposer dans un coffre →
+   refusé ; `CONTROL+CLIC` dans un coffre → refusé (c'est le trou que `PlayerDropItemEvent` ne couvre pas) ;
+   `/clear` puis relog → l'outil revient ; taper deux fois `/tools give` → une seule copie dans le sac,
+   `/tools stats` doit afficher « multi-outils dans son sac : 1 ».
+9 ter. Un `/tools set moi pioche 1` avec `Efficacité` payée niveau 4 : la vitesse suit le niveau ; `/tools
+   ability moi pioche efficacite 0` → le Haste disparaît **aussitôt** (pas au prochain bloc).
 10. Redémarrer le serveur : `/tools stats` et les niveaux relus depuis `tools.yml` sont intacts, y compris
     le format ancien (`pickaxe: 12`, sans bloc `abilities:`).
 
