@@ -59,6 +59,18 @@ sftp_user_hint() {
   printf "INDICE: le login SFTP envoye commence par \"%s***\" et ne contient AUCUN point : c'est la simple connexion au site/panneau, pas un compte SFTP. Le login SFTP est \"connexion_panneau.id_serveur\" (ex. luca.a1b2c3d4 ; parfois u12345_xxxx). Copier le champ Utilisateur EN ENTIER depuis l'onglet SFTP/Acces du panneau (bouton copier), puis l'enregistrer dans le secret GitHub SFTP_USERNAME. " "${SFTP_USERNAME:0:4}"
 }
 
+# Coupe l'espace/retour/tabulation en TROP au debut et a la fin d'un secret. Un copier-coller sur
+# mobile colle souvent un "\n" ou une espace en bout de champ : le serveur voit alors une valeur
+# differente et refuse l'authentification en silence (Permission denied), sans que rien ne le laisse
+# deviner. On NE touche PAS au blanc INTERNE, qui peut etre legitime : le login SFTP de ce serveur est
+# « Lucas Afonso.94b412fb » et contient une vraie espace. Trimming de l'exterieur seulement.
+trim_secret() {
+  local s="$1"
+  s="${s#"${s%%[![:space:]]*}"}"
+  s="${s%"${s##*[![:space:]]}"}"
+  printf '%s' "$s"
+}
+
 # ------------------------------------------------------------------ 1. les trois jars, ou rien
 JARS=("$MAIN_JAR" "$ECONOMY_JAR")
 if [ -f "$TOOLS_JAR" ]; then
@@ -139,6 +151,13 @@ fi
 for var in SFTP_HOST SFTP_PORT SFTP_USERNAME SFTP_PASSWORD; do
   [ -n "${!var:-}" ] || die "secret $var manquant : l'etape doit le publier dans son bloc env (comme deploy.yml)"
 done
+
+# On coupe d'abord tout blanc de bordure ajoute au collage (retour/espace en bout de secret, courant
+# sur mobile) ; on conserve le blanc interne (le login « Lucas Afonso.94b412fb » contient une espace).
+SFTP_HOST=$(trim_secret "$SFTP_HOST")
+SFTP_PORT=$(trim_secret "$SFTP_PORT")
+SFTP_USERNAME=$(trim_secret "$SFTP_USERNAME")
+SFTP_PASSWORD=$(trim_secret "$SFTP_PASSWORD")
 
 # Un hote colle depuis le panneau arrive parfois en « sftp://hote/ » : on normalise, sinon la session
 # SFTP echoue sur un nom d'hote invalide.
