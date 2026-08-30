@@ -1,8 +1,9 @@
 package xyz.arcadiadevs.valariatools;
 
+import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Locale;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import org.bukkit.Bukkit;
@@ -134,17 +135,20 @@ public final class ToolGuard implements Listener {
     }
 
     /**
-     * Ce qu'un clic fait à l'item : tout ce qui le transfère hors de l'inventaire en cours.
-     * {@code HOTBAR_SWAP} (la touche F) en est absent exprès : il échange deux cases <em>du joueur</em>,
-     * donc il ne fait pas sortir l'outil, et l'interdire rendrait le sac désagréable sans rien protéger.
+     * Ce qu'un clic fait à l'item : tout ce qui le transfère hors de l'inventaire en cours. La touche F
+     * ({@code HOTBAR_SWAP}) en est absente exprès : elle échange deux cases <em>du joueur</em>, elle ne
+     * fait donc pas sortir l'outil, et l'interdire rendrait le sac désagréable pour rien. Le geste
+     * « 1-9 depuis l'autre inventaire » ({@code HOTBAR_MOVE_AND_READD}) en est absent lui aussi, mais pour
+     * une autre raison : ce nom n'existe pas dans toutes les versions de l'API (le build le refuse en
+     * 1.20.4), et il est déjà couvert — un clic porté dans l'autre inventaire tombe sous la règle
+     * « l'outil ne sort pas de ton sac », qui annule avant.
      */
     private static boolean movesOut(ClickType click) {
         if (click == null) {
             return false;
         }
         return click.isShiftClick() || click == ClickType.NUMBER_KEY || click == ClickType.DOUBLE_CLICK
-                || click == ClickType.DROP || click == ClickType.CONTROL_DROP
-                || click == ClickType.HOTBAR_MOVE_AND_READD;
+                || click == ClickType.DROP || click == ClickType.CONTROL_DROP;
     }
 
     @EventHandler(priority = EventPriority.HIGH)
@@ -230,17 +234,29 @@ public final class ToolGuard implements Listener {
         if (!protects() || !this.plugin.toolsConfig().autoGive()) {
             return;
         }
+        // On reconstruit la liste plutôt que de retirer à l'itérateur : `getDrops()` n'est pas garanti
+        // modifiable selon les implémentations, alors que `setDrops(liste)` l'est depuis la 1.16.
+        List<ItemStack> keep = new ArrayList<ItemStack>();
         int removed = 0;
-        Iterator<ItemStack> drops = event.getItems().iterator();
-        while (drops.hasNext()) {
-            if (MultiTool.isMultiTool(drops.next())) {
-                drops.remove();
+        for (ItemStack drop : event.getDrops()) {
+            if (MultiTool.isMultiTool(drop)) {
                 removed++;
+            } else {
+                keep.add(drop);
             }
         }
-        if (removed > 0) {
+        if (removed <= 0) {
+            return;
+        }
+        try {
+            event.setDrops(keep);
             this.plugin.getLogger().info("multi-outil retenu à la mort de " + event.getEntity().getName()
                     + " (tool.auto-give: il revient au respawn)");
+        } catch (RuntimeException | LinkageError hostile) {
+            // Un serveur qui refuserait la liste laisse l'outil à terre : l'auto-don au respawn le
+            // rattrape. Le log dit pourquoi, le joueur n'est pas pollué d'un échec qu'il ne voit pas.
+            this.plugin.getLogger().warning("drops de mort non filtrables (" + hostile.getClass().getSimpleName()
+                    + ") : multi-outil laissé à terre, il sera rendu au respawn.");
         }
     }
 
