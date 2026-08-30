@@ -8,7 +8,7 @@
 # Modes :
 #   bash scripts/ci-release-and-deploy.sh              -> release seule (aucun envoi)
 #   DEPLOY=1 bash scripts/ci-release-and-deploy.sh     -> release + envoi des deux jar sur le serveur
-#   DEPLOY=1 DRY_RUN=1 bash …                          -> prepare, affiche, NE televerse rien
+#   DEPLOY=1 DRY_RUN=1 bash …                          -> teste les identifiants en LECTURE SEULE (liste le dossier, NE televerse rien)
 #
 # Garde-fous :
 #   - l'envoi exige les DEUX jars : un serveur avec le plugin mais sans l'economie = monnaie cassee ;
@@ -173,10 +173,31 @@ for jar in "${JARS[@]}"; do
 done
 
 if [ "$DRY_RUN" = "1" ]; then
-  say "DRY_RUN : la session SFTP qui serait jouee :"
-  say "  ${SFTP[*]} -b <fichier> $DEST"
-  printf '  %s\n' "${REMOTE_CMDS[@]}" "${UPLOAD_CMDS[@]}" "ls -l $PLUGINS_DIR"
-  exit 0
+  # La simulation ne se contente plus d'afficher la session qui « serait » jouee : elle OUVRE une vraie
+  # session, en LECTURE SEULE, pour tester les identifiants. Verte => l'admin voit le contenu de
+  # `plugins/`, la preuve que SFTP_USERNAME/SFTP_PASSWORD sont bons ; rouge => l'erreur nomme la cause
+  # (identifiant/mot de passe refuses, acces SFTP desactive, restriction d'IP, dossier absent).
+  # Aucune ecriture : pas de `put`, `rename` ni `mkdir` — on ne fait que `pwd` et `ls`.
+  say "DRY_RUN : ouverture d'une session SFTP en LECTURE SEULE (test des identifiants)…"
+  BATCH="$(mktemp)"
+  SFTP_LOG="$(mktemp)"
+  printf 'pwd\nls -l %s\nbye\n' "$PLUGINS_DIR" > "$BATCH"
+  if "${SFTP[@]}" -b "$BATCH" "$DEST" >"$SFTP_LOG" 2>&1; then
+    say "DRY_RUN : identifiants valides — la session s'ouvre, contenu de $PLUGINS_DIR :"
+    cat "$SFTP_LOG"
+    exit 0
+  fi
+  msg="$(grep -v -i -e 'Warning: Permanently added' -e '^$' "$SFTP_LOG" | head -c 500 | tr '\n' ' ')"
+  case "$msg" in
+    *"Permission denied"*|*"Authentication failed"*|*"password"*)
+      die "simulation : identifiants refuses sur ${SFTP_USERNAME:0:4}***@$SFTP_HOST:$SFTP_PORT ($msg). Verifier SFTP_USERNAME (souvent « u12345_xxxx », PAS l'identifiant du site) et regenerer SFTP_PASSWORD dans le panneau MCServerHost, puis relancer avec dry_run coche." ;;
+    *"No such file"*|*"does not exist"*|*"not found"*)
+      die "simulation : la session s'ouvre mais le dossier « $PLUGINS_DIR » est absent cote serveur ($msg). Verifier SFTP_PLUGINS_DIR ou le repertoire de base du compte dans le panneau." ;;
+    *"Connection refused"*|*"Connection timed out"*|*"No route to host"*|*"Could not resolve hostname"*)
+      die "simulation : le serveur SFTP ne repond plus ($msg) — verifier hote, port et acces SFTP dans le panneau, puis relancer." ;;
+    *)
+      die "simulation : session SFTP en echec ($msg) — causes frequentes : acces SFTP desactive pour le compte, restriction d'IP, ou dossier « $PLUGINS_DIR » inaccessible." ;;
+  esac
 fi
 
 # Un seul `sftp` par phase, avec sa sortie CAPTUREE : la panne precedente jetait stdout et stderr, donc
