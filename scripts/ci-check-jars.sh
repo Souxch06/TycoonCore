@@ -75,13 +75,17 @@ forbid_entry "$ECONOMY" "xyz/arcadiadevs/valariatools/" "ValoriaTools est son pr
 forbid_entry "$TOOLS" "xyz/arcadiadevs/valoriatycoon/" "ValoriaTycoon est son propre jar"
 forbid_entry "$TOOLS" "xyz/arcadiadevs/valoriaeconomy/" "ValoriaEconomy est son propre jar"
 
-echo "=== l'API d'economie n'existe qu'une fois ==="
-# Le type du service enregistre doit etre LIT DEPUIS UNE SEULE SOURCE : si le jar de l'implementation
-# embarquait aussi son exemplaire de l'interface, getRegistration(Economy.class) renverrait null —
-# deux objets Class differents dans deux classloaders, sans une seule ligne d'erreur.
-need_entry "$MAIN" "xyz/arcadiadevs/valoriateconomy/Economy.class"
-need_entry "$MAIN" "xyz/arcadiadevs/valoriateconomy/EconomyResponse.class"
-forbid_entry "$ECONOMY" "xyz/arcadiadevs/valoriateconomy/Economy.class" "une copie casserait la resolution du service"
+echo "=== l'API d'economie n'existe qu'une fois : dans le jar du FOURNISSEUR ==="
+# Le type du service enregistre doit etre LIT DEPUIS UNE SEULE SOURCE. Elle vit dans le jar de
+# ValoriaEconomy (load: STARTUP, chargé avant tout POSTWORLD) : au chargement de ce plugin, le
+# classloader de ValoriaTycoon n'existe pas encore — lui emprunter l'interface rendait le plugin
+# invalide au chargement (« Could not load plugin », Economy rouge, serveur du 2026-08-30).
+# ValoriaTycoon (softdepend: ValoriaEconomy) résout l'interface par délégation vers CE jar :
+# une seule classe à l'exécution, celle du service enregistré. Une copie côté Tycoon recréerait
+# deux objets Class et getRegistration(Economy.class) renverrait null sans erreur visible.
+need_entry "$ECONOMY" "xyz/arcadiadevs/valoriateconomy/Economy.class"
+need_entry "$ECONOMY" "xyz/arcadiadevs/valoriateconomy/EconomyResponse.class"
+forbid_entry "$MAIN" "xyz/arcadiadevs/valoriateconomy/Economy.class" "l'API vit dans le jar du fournisseur (ValoriaEconomy, chargé en premier) ; une copie ici casserait la résolution du service"
 need_entry "$ECONOMY" "xyz/arcadiadevs/valoriaeconomy/ValoriaEconomyProvider.class"
 need_entry "$ECONOMY" "xyz/arcadiadevs/valoriaeconomy/ValoriaEconomy.class"
 

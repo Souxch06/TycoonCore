@@ -68,8 +68,12 @@ interface.
   fournisseur **et** les `.class` livrés. Une méthode oubliée = erreur de compilation ; une signature
   décalée = `AbstractMethodError` silencieux en jeu — d'où le contrôle.
 - **Une seule copie de l'interface à l'exécution** : elle n'est embarquée que dans le jar de
-  ValoriaTycoon. Si elle était dans les deux, `getRegistration(Economy.class)` chercherait un `Class`
-  objet différent selon le classloader et renverrait `null` sans erreur visible.
+  ValoriaEconomy (côté fournisseur). Si elle était dans les deux, `getRegistration(Economy.class)`
+  chercherait un `Class` objet différent selon le classloader et renverrait `null` sans erreur
+  visible. Et si elle n'était QUE dans le jar de ValoriaTycoon, ValoriaEconomy — chargé en `STARTUP`,
+  avant le classloader de ValoriaTycoon — échouerait dès son chargement (`Could not load plugin`,
+  l'Economy rouge du 2026-08-30). Le consommateur résout l'interface par délégation via son
+  `softdepend`, jamais il ne l'embarque.
 
 ## Importer les soldes EssentialsX (une fois)
 

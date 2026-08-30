@@ -22,13 +22,21 @@ import xyz.arcadiadevs.valoriateconomy.Economy;
  * activé avant tous les plugins en {@code POSTWORLD}, donc le service est déjà enregistré quand
  * ValoriaTycoon s'éveille.</p>
  *
- * <h2>Pourquoi notre interface et pas celle de Vault</h2>
+ * <h2>Pourquoi notre interface et pas celle de Vault, et où elle vit</h2>
  * <p>La version d'origine exigeait un plugin « Vault » (le pont d'API) en plus de la banque : deux
  * briques téléchargées, dont une gelée depuis 2020 et inconnue des serveurs à numérotation
  * calendaire (26.x). Ici l'interface vit dans le dépôt
  * ({@code sources/api/xyz/arcadiadevs/valoriateconomy/Economy.java}, générée depuis
- * {@code docs/economy-api.txt}) et est embarquée dans les deux jar. Le serveur n'a besoin que des
- * deux jar construits par ce build.</p>
+ * {@code docs/economy-api.txt}) et est embarquée dans <b>ce jar</b> — côté fournisseur. Le serveur
+ * n'a besoin que des jar construits par ce build.</p>
+ *
+ * <p><b>L'interface vit dans le jar du fournisseur, pas dans celui du consommateur.</b> Ce plugin
+ * est chargé en {@code STARTUP}, avant que le classloader de ValoriaTycoon n'existe : si l'interface
+ * n'était que dans le jar de ValoriaTycoon, le chargement de CE plugin échouerait dès sa première
+ * classe ({@code Could not load plugin} — exactement l'Economy rouge du serveur du 2026-08-30).
+ * Embarquée ici, elle est chargée par CE classloader ; ValoriaTycoon, qui déclare
+ * {@code softdepend: [ValoriaEconomy]}, la résout par délégation vers ce jar — donc la MÊME classe
+ * que celle du service enregistré, jamais deux objets {@code Class}.</p>
  */
 public final class ValoriaEconomy extends JavaPlugin {
 

@@ -37,10 +37,11 @@ Le dépôt contient **deux** plugins, construits par le même build Maven :
 | `ValoriaTools` | multi-outil à âmes commutantes (pioche/hache/canne/épée) et ses paliers | `target/ValoriaTools-v1.6.3.jar` |
 
 `ValoriaEconomy` est chargé en `STARTUP` pour que le service `Economy` existe avant l'`onEnable` de
-`ValoriaTycoon`, et pour que l'interface `xyz/arcadiadevs/valoriateconomy/Economy` (embarquée dans le jar
-de ValoriaTycoon) soit la seule version vue par les deux plugins. Les deux jars suffisent : **aucun plugin
-à télécharger**, ni Vault, ni EssentialsX — voir `docs/ECONOMIE.md`, et `docs/DEPLOY-2-JARS.md` pour la
-pipeline qui ne copiera pas qu'un seul jar.
+`ValoriaTycoon`. L'interface `xyz/arcadiadevs/valoriateconomy/Economy` est embarquée dans le jar de
+`ValoriaEconomy` (côté fournisseur — chargé en premier, il ne peut emprunter les classes de personne) :
+`ValoriaTycoon` la résout par délégation via son `softdepend`, donc une seule version vue par les deux
+plugins. Les deux jars suffisent : **aucun plugin à télécharger**, ni Vault, ni EssentialsX — voir
+`docs/ECONOMIE.md`, et `docs/DEPLOY-2-JARS.md` pour la pipeline qui ne copiera pas qu'un seul jar.
 
 ## Fonctionnalités
 
