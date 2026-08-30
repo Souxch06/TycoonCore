@@ -504,6 +504,13 @@ public final class ToolsConfig {
     private final List<String> itemLore = new ArrayList<String>();
     private boolean unbreakable = true;
     private boolean hideFlags = true;
+    // L'apparence suit l'usage : le matériau de l'item devient celui de l'âme avec laquelle le joueur est
+    // en train d'interagir. Réglage distinct de `tool.material`, qui reste l'apparence de départ (et de
+    // secours) quand le morphing est coupé.
+    private boolean morphByTarget = true;
+    // Combien de capacités payées la lore de l'item énumère : au-delà, la tooltip dépasse l'écran, et une
+    // information qu'on ne peut pas lire n'est plus une information.
+    private int loreMaxAbilities = 8;
     private boolean undroppable = true;
     private boolean singlePerPlayer = true;
     private boolean autoGive = true;
@@ -539,6 +546,8 @@ public final class ToolsConfig {
         // Le contrat de l'item (voir ToolGuard) : un seul exemplaire, qui ne quitte pas le sac. Trois
         // reglages separes parce qu'ils ne protegent pas la meme chose : `undroppable` ferme les issues,
         // `single-per-player` retire les doublons, `auto-give` rend l'outil a qui ne l'a plus.
+        this.morphByTarget = root.getBoolean("tool.morph-by-target", true);
+        this.loreMaxAbilities = root.getInt("tool.lore-abilities", 8);
         this.undroppable = root.getBoolean("tool.undroppable", true);
         this.singlePerPlayer = root.getBoolean("tool.single-per-player", true);
         this.autoGive = root.getBoolean("tool.auto-give", true);
@@ -817,6 +826,16 @@ public final class ToolsConfig {
     }
 
     /** Vrai si l'outil ne peut pas sortir du sac de son joueur (clic Q, coffre, hopper, cadre, drop). */
+    /** L'item change-t-il de matériau selon le bloc (l'entité, le lancer) avec lequel on interagit ? */
+    public boolean morphByTarget() {
+        return this.morphByTarget;
+    }
+
+    /** Combien de capacités payées tiennent dans la lore de l'item. */
+    public int loreMaxAbilities() {
+        return this.loreMaxAbilities;
+    }
+
     public boolean undroppable() {
         return this.undroppable;
     }

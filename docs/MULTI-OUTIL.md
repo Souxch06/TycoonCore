@@ -6,6 +6,30 @@ Un **seul** item dans la main, qui se comporte comme pioche, hache/houe, canne �
 le bloc que tu regardes** — et qui se améliore **capacité par capacité**, comme les enchantements custom
 du serveur de référence. Aucun plugin à télécharger, y compris pour la monnaie.
 
+L'item ne se contente pas de se *conduire* autrement : il **devient** l'outil correspondant (pic de
+diamant sur la pierre, hache sur le tronc, canne au lancer, épée au coup), et sa lore énumère **les
+capacités payées de l'âme en cours**, nom et niveau. C'est la partie visible d'un moteur qui choisissait
+déjà son âme bloc par bloc — sans elle, le joueur ne pouvait pas savoir quelle âme allait payer le
+prochain geste. Les deux se coupent : `tool.morph-by-target: false` garde l'apparence de `tool.material`
+en laissant la lore suivre l'usage.
+
+Ce que l'item montre, item en main, sans ouvrir quoi que ce soit :
+
+```
+&6⚒ Multi-outil de Valoria — Hache            <- le nom porte l'ame affichee
+&7Un seul outil : il change d'âme selon le bloc que tu regardes.
+&8Âme Hache — palier 12/50                    <- l'ame en cours, son palier
+&aMain de Gaïa 4                              <- une capacite PAYEE : nom + niveau
+&aArbre abattu 12
+&aVente à la casse 3
+&8+ 4 autre(s) — /tools                       <- le plafond borne la tooltip, pas le droit
+&8Autres âmes : pic 30 · canne 1 · épée 1      <- les trois autres, en une ligne
+```
+
+Aucune capacité non achetée n'apparaît : vingt lignes grisées n'apprennent rien que le panneau ne dise
+déjà, et une tooltip plus haute que l'écran n'est plus une information. Le nombre de lignes est
+`tool.lore-abilities` (8 par défaut).
+
 Le barème (noms, descriptions, verrous, niveaux maximaux) est celui du wiki **GenTycoon**, récupéré le
 2026-08-28 sur `https://wiki.gentycoon.fr/progression-metiers-and-outils/les-outils` et recopié à
 l'identique dans `docs/WIKI-GENTYCOON-OUTILS.md`. Le site principal est en maintenance « V2 » ; seule la
@@ -197,6 +221,14 @@ au reste — le classement n'est qu'un affichage, jamais une condition de foncti
   retirée dès que l'outil quitte la main, qu'on entre dans un monde hors de `tools.allowed-worlds`, ou à la
   déconnexion. Les deux âmes qui minent (pioche, hache) sont prises **au maximum**, jamais à la somme, et
   seul l'amplificateur posé par nous est rendu (un autre plugin qui donne Haste n'est pas effacé).
+- `tool.morph-by-target` (true) : l'item prend le matériau de l'âme avec laquelle le joueur interagit.
+  Quatre moments l'écrivent — la cassure, le clic droit sur un bloc, le coup porté, le lancer de ligne —
+  plus le relevé d'une seconde qui suit le regard. Les deux premiers prennent l'âme **du bloc visé**, les
+  deux suivants **du geste** (une entité et un bobber ne sont pas des blocs, et l'âme de secours les ferait
+  retomber sur la pioche au milieu d'un combat). L'écriture est sautée quand rien ne change : réécrire la
+  main du joueur chaque seconde fait clignoter sa tooltip et rejoue l'animation de bras.
+- `tool.lore-abilities` (8) : combien de capacités payées la lore énumère, les plus avancées en premier.
+  Le reste est annoncé en une ligne, avec le raccourci vers le panneau.
 - `tool.undroppable`, `tool.single-per-player`, `tool.auto-give` (les trois à true) : voir la section
   « Un seul exemplaire, non droppable ». Couper `auto-give` sans couper les deux autres laisse un joueur
   qui a perdu son item (monde recréé, inventaire vidé par un plugin) sans moyen de le récupérer : l'objet
@@ -260,7 +292,11 @@ premier essai sur ce fichier (le marqueur `{type:` ne existait plus, le compteur
 9. `/tools reload` avec le menu ouvert : la vue se redessine, aucune case cliquable ne reste d'un ancien
    barème, et la vitesse de minage repart de la nouvelle config (un `amplifier: 3` doit se sentir sans
    recasser de bloc).
-9 bis. Garde de l'item : **Q** avec l'outil en main → rien ne tombe ; Glisser-déposer dans un coffre →
+9 bis. Âme affichée : vise une pierre → l'item est un **pic** ; vise un tronc et casse-le → il devient
+   **hache** ; un coup sur un mob → **épée** ; un lancer → **canne**. La lore doit lister les capacités
+   payées **de l'âme en cours** (nom + niveau) et rien d'autre. `/tools max` puis survol de l'item :
+   la lore est à jour **sans casser un bloc** (avant, l'écriture partait dans une copie du sac).
+9 ter. Garde de l'item : **Q** avec l'outil en main → rien ne tombe ; Glisser-déposer dans un coffre →
    refusé ; `CONTROL+CLIC` dans un coffre → refusé (c'est le trou que `PlayerDropItemEvent` ne couvre pas) ;
    `/clear` puis relog → l'outil revient ; taper deux fois `/tools give` → une seule copie dans le sac,
    `/tools stats` doit afficher « multi-outils dans son sac : 1 ».

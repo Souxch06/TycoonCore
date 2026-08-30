@@ -352,8 +352,10 @@ HEADER = """# ValoriaTools — multi-outil à âmes commutantes, barème aligné
 enabled: true
 
 tool:
-  # Matériau de l'item. Le comportement ne vient PAS de là : un NETHERITE_PICKAXE marqué vaut
-  # pioche + hache + canne + épée. Ce n'est que l'apparence (et la solidité de base).
+  # Matériau de départ de l'item. Le comportement ne vient PAS de là : un NETHERITE_PICKAXE marqué vaut
+  # pioche + hache + canne + épée. Ce n'est que l'apparence (et la solidité de base) — et, avec
+  # `morph-by-target: true` plus bas, seulement l'apparence INITIALE : dès qu'une âme sert, c'est le
+  # matériau de cette âme (`tools.<ame>.material`) qui prend la main.
   material: NETHERITE_PICKAXE
   display-name: "&6⚒ Multi-outil de Valoria"
   lore:
@@ -375,6 +377,18 @@ tool:
   undroppable: true
   single-per-player: true
   auto-give: true
+  # ------------------------------------------------------------------ ce que l'item montre
+  # true = l'item PREND LE MATÉRIAU de l'âme avec laquelle tu es en train d'interagir : pic sur la
+  # pierre, hache sur le tronc, canne au lancer, épée au coup. Le moteur choisissait déjà son âme bloc
+  # par bloc — seule l'apparence était figée sur `material` ci-dessus, et le joueur ne pouvait donc pas
+  # savoir quelle âme allait payer le prochain geste. false = l'item garde `material`, la lore seule
+  # suit l'usage (un serveur qui vend des skins par pack de textures préfère souvent ne pas changer
+  # l'objet lui-même).
+  morph-by-target: true
+  # Combien de capacités payées la lore de l'item énumère (`nom + niveau`, l'âme en cours seulement).
+  # Au-delà, la tooltip dépasse l'écran et le reste est annoncé en une ligne avec le raccourci /tools :
+  # un outil au maximum du barème a vingt-deux capacités payées, ce n'est pas lisible d'un coup.
+  lore-abilities: 8
   # La vitesse de minage des capacités HASTE est posée TANT QUE l'outil est en main : réappliquée une
   # fois par seconde et à chaque changement de main, retirée dès que l'outil quitte la main, qu'on entre
   # dans un monde hors de `worlds`, ou à la déconnexion. Avant ce réglage, la vitesse n'était re-posée
@@ -489,6 +503,10 @@ def soul(name, title, abilities, notes):
     lines = []
     lines.append("  # " + "─" * 24 + " " + title + " " + "─" * 24)
     lines.append("  %s:" % name)
+    lines.append("    # Le matériau de l'item QUAND cette âme sert : avec `tool.morph-by-target: true`,")
+    lines.append("    # c'est lui que le joueur voit dans sa main (pic sur la pierre, hache sur le tronc),")
+    lines.append("    # et c'est aussi l'icône de la rangée dans le panneau. Le comportement ne vient pas")
+    lines.append("    # de là : il vient des capacités de cette âme.")
     lines.append("    material: %s" % {"pickaxe": "DIAMOND_PICKAXE", "axe": "DIAMOND_AXE",
                                       "rod": "FISHING_ROD", "sword": "DIAMOND_SWORD"}[name])
     if notes:

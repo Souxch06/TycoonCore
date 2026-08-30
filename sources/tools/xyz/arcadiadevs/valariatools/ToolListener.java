@@ -107,6 +107,14 @@ public final class ToolListener implements Listener {
     private final Map<UUID, Double> xpCarry = new HashMap<UUID, Double>();
     /** L'amplificateur de vitesse de minage posé par NOUS, par joueur : pour ne rendre que le nôtre. */
     private final Map<UUID, Integer> passives = new HashMap<UUID, Integer>();
+    /**
+     * Jusqu'à quand l'âme affichée ne doit pas être reprise par le relevé du regard : une cassure, un
+     * coup ou un lancer ont déjà dit quelle âme est en train de servir. Sans ce court verrou, l'item
+     * clignoterait entre épée et pioche au milieu d'un combat, le bloc derrière le monstre étant une
+     * pierre.
+     */
+    private final Map<UUID, Long> pinnedUntil = new HashMap<UUID, Long>();
+    private static final long PIN_MILLIS = 3_000L;
     private boolean handling;
     private boolean warned;
 
@@ -125,6 +133,7 @@ public final class ToolListener implements Listener {
                 ToolsGui.render(player);
             }
             refreshPassive(player);   // la vitesse de minage vient d'une config qui vient de changer
+            MultiTool.refreshHeld(player, this.config, this.store);   // idem pour la lore
         }
         restoreSpeeds();
     }
@@ -133,16 +142,17 @@ public final class ToolListener implements Listener {
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
-        ItemStack tool = heldMultiTool(player);
-        if (tool != null) {
-            MultiTool.refresh(tool, this.config, this.store, player.getUniqueId());
-        }
+        // refreshHeld et non refresh : `heldMultiTool` rend une COPIE de l'item, et écrire dans une copie
+        // ne met à jour que la copie — la lore d'un joueur qui se reconnectait restait donc périmée.
+        MultiTool.refreshHeld(player, this.config, this.store);
+        refreshDisplay(player);   // l'âme affichée reprend le bloc qu'il vise maintenant
         refreshPassive(player);
     }
 
     /** La vitesse de marche rendue au joueur, sinon un logout pendant une Furie le laisserait lent. */
     @EventHandler(priority = EventPriority.MONITOR)
     public void onQuit(PlayerQuitEvent event) {
+        this.pinnedUntil.remove(event.getPlayer().getUniqueId());
         this.castCooldown.remove(event.getPlayer().getUniqueId());
         this.xpCarry.remove(event.getPlayer().getUniqueId());   // un reliquat non rendu ne se promene pas
         this.furies.remove(event.getPlayer().getUniqueId());
@@ -183,7 +193,65 @@ public final class ToolListener implements Listener {
     public void refreshPassives() {
         for (Player player : this.plugin.getServer().getOnlinePlayers()) {
             refreshPassive(player);
+            refreshDisplay(player);   // même relevé, même cadence : c'est l'état « outil en main »
         }
+    }
+
+    /**
+     * Matérialise l'âme qui sert : matériau de l'item, nom, et lore des capacités payées de cette âme.
+     * Écrite seulement quand quelque chose change (voir {@link MultiTool#applySoul}).
+     *
+     * <p>Aucune garde de réentrance ici : cette méthode est appelée <em>depuis</em> le flux de cassure,
+     * où {@code handling} est posé, et réécrire l'item du joueur ne lit aucun état partagé — l'âme ne
+     * dépend pas du matériau, justement.</p>
+     */
+    public void showKind(Player player, ToolKind kind) {
+        showKind(player, kind, 0L);
+    }
+
+    /**
+     * @param pinMillis
+     *            bloque le relevé du regard pendant cette durée. Réservé aux âmes que seul le <em>geste</em>
+     *            désigne (épée, canne) : elles ne correspondent à aucun bloc visé, et le sondage les
+     *            remettrait sur la pioche deux ticks plus tard, en pleine mêlée. Une cassure ou un clic
+     *            sur un bloc n'a pas besoin de ce verrou — le relevé calculerait la même âme.
+     */
+    private void showKind(Player player, ToolKind kind, long pinMillis) {
+        if (player == null || kind == null || !this.config.morphByTarget()) {
+            return;
+        }
+        if (pinMillis > 0L) {
+            this.pinnedUntil.put(player.getUniqueId(),
+                    Long.valueOf(System.currentTimeMillis() + pinMillis));
+        }
+        ItemStack tool = heldMultiTool(player);
+        if (tool == null) {
+            return;
+        }
+        if (MultiTool.applySoul(tool, kind, this.config, this.store, player.getUniqueId())) {
+            MultiTool.writeHeld(player, tool);
+        }
+    }
+
+    /**
+     * Le relevé du regard, une fois par seconde et au changement de main : l'item devient l'outil du bloc
+     * que le joueur vise. C'est la partie « visible » du changement d'âme — le moteur, lui, choisissait
+     * déjà son âme bloc par bloc ; seul l'affichage était figé sur {@code tool.material}, et le joueur ne
+     * pouvait donc pas savoir quelle âme allait payer le prochain coup.
+     */
+    public void refreshDisplay(Player player) {
+        if (player == null || !this.config.morphByTarget()) {
+            return;
+        }
+        Long pinned = this.pinnedUntil.get(player.getUniqueId());
+        if (pinned != null) {
+            if (pinned.longValue() > System.currentTimeMillis()) {
+                return;
+            }
+            this.pinnedUntil.remove(player.getUniqueId());
+        }
+        ToolKind kind = ((ValoriaTools) this.plugin).matcher().targetedKind(player);
+        showKind(player, kind == null ? this.config.fallbackKind() : kind);
     }
 
     /**
@@ -229,6 +297,7 @@ public final class ToolListener implements Listener {
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onHeldChange(PlayerItemHeldEvent event) {
         refreshPassive(event.getPlayer());
+        refreshDisplay(event.getPlayer());   // l'item qui revient en main doit le matériau du bloc visé
     }
 
     // ------------------------------------------------------------------ casser un bloc
@@ -254,6 +323,9 @@ public final class ToolListener implements Listener {
         if (kindConfig == null) {
             return;
         }
+        // Le bloc cassé dit quelle âme sert : l'item en prend le matériau et la liste de capacités. C'est
+        // le moment où le joueur regarde son outil, donc le seul où le changement doit être immédiat.
+        showKind(player, kind);
         int tier = this.store.tierOf(player.getUniqueId(), kind, this.config.maxTier(kindConfig));
         Map<String, Integer> levels = this.store.levelsOf(player.getUniqueId(), kind);
         Abilities abilities = ((ValoriaTools) this.plugin).abilities();
@@ -780,6 +852,9 @@ public final class ToolListener implements Listener {
         if (kind == null) {
             kind = this.config.fallbackKind();
         }
+        // Le clic droit aussi bien que la cassure décide de l'âme : c'est le geste « je veux interagir avec
+        // CE bloc », donc exactement ce que le joueur attend de voir sur son item avant de cliquer.
+        showKind(player, kind);
         // Le wiki dit : « clic droit avec la pioche et la houe, sneak + clic droit avec l'epee et la
         // canne ». Sur ce serveur, le geste unique que le joueur retient est « accroupi + clic droit » :
         // il ouvre le panneau avec N'IMPORTE QUELLE âme, en visant un bloc ou non — c'est ce que le
@@ -924,6 +999,7 @@ public final class ToolListener implements Listener {
         int tier = this.store.tierOf(player.getUniqueId(), ToolKind.ROD, this.config.maxTier(kindConfig));
         Map<String, Integer> levels = this.store.levelsOf(player.getUniqueId(), ToolKind.ROD);
         if (event.getState() == PlayerFishEvent.State.FISHING) {
+            showKind(player, ToolKind.ROD, PIN_MILLIS);   // la canne ne vise aucun bloc : le geste la choisit
             this.castCooldown.put(player.getUniqueId(), Long.valueOf(0L));
             shortenWait(player, event, this.config.effect(kindConfig, "FAST_REEL", tier, levels));
             return;
@@ -1081,6 +1157,7 @@ public final class ToolListener implements Listener {
         if (heldMultiTool(player) == null) {
             return;
         }
+        showKind(player, ToolKind.SWORD, PIN_MILLIS);   // idem : une entité n'est pas un bloc
         ToolsConfig.KindConfig kindConfig = this.config.kind(ToolKind.SWORD);
         if (kindConfig == null) {
             return;
@@ -1378,27 +1455,9 @@ public final class ToolListener implements Listener {
 
     /** L'outil tenu en main (les deux mains sont testées : le joueur peut le tenir à gauche). */
     private static ItemStack heldMultiTool(Player player) {
-        ItemStack main = null;
-        try {
-            main = player.getInventory().getItemInMainHand();
-        } catch (RuntimeException | LinkageError legacy) {
-            ItemStack[] contents = player.getInventory().getStorageContents();
-            if (contents.length > 0) {
-                main = contents[0];
-            }
-        }
-        if (MultiTool.isMultiTool(main)) {
-            return main;
-        }
-        try {
-            ItemStack off = player.getInventory().getItemInOffHand();
-            if (MultiTool.isMultiTool(off)) {
-                return off;
-            }
-        } catch (RuntimeException | LinkageError legacy) {
-            // pas de main secondaire sur ce serveur
-        }
-        return null;
+        // Une seule implémentation de « main principale puis secondaire » : la garde de l'item, le GUI et
+        // ce listener doivent trouver l'outil exactement au même endroit.
+        return MultiTool.held(player);
     }
 
     static double round(double value) {

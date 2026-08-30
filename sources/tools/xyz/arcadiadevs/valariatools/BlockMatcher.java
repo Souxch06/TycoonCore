@@ -12,6 +12,7 @@ import java.util.Set;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.block.Block;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
 /**
@@ -139,6 +140,35 @@ public final class BlockMatcher {
     /** L'âme à utiliser quand le bloc visé n'appartient à aucune liste (clic dans le vide). */
     public ToolKind fallbackKind() {
         return this.fallback;
+    }
+
+    /** Portée du regard : la même que celle du clic d'interaction, pour ne jamais promettre un bloc hors
+     *  de portée. Six, parce que c'est la distance de minage vanilla en survie. */
+    private static final int LOOK_RANGE = 6;
+
+    /**
+     * L'âme que ce joueur <b>vise</b> — le bloc sous son réticule, reconnu comme pour une cassure.
+     * {@code null} quand il ne vise rien de reconnu (ciel, eau, entité) ; l'appelant choisit alors son
+     * âme de secours.
+     *
+     * <p>Le raycast vit ici et non chez l'appelant pour deux raisons : l'API a changé de nom une fois
+     * (<code>getTargetBlock</code> → <code>getTargetBlockExact</code>, avec un comportement différent sur
+     * les liquides), et un appelant qui l'ignore ne doit pas faire tomber le plugin au premier clic. Le
+     * {@code LinkageError} est là pour cette raison, pas par décor.</p>
+     */
+    public ToolKind targetedKind(Player player) {
+        if (player == null) {
+            return null;
+        }
+        try {
+            Block target = player.getTargetBlockExact(LOOK_RANGE);
+            if (target != null) {
+                return kindOf(target);
+            }
+        } catch (RuntimeException | LinkageError unavailable) {
+            // pas de raycast sur ce serveur : l'outil garde l'âme qu'il affiche déjà
+        }
+        return null;
     }
 
     /** Vrai si au moins une règle de reconnaissance existe (sinon l'outil ne prend rien en otage). */

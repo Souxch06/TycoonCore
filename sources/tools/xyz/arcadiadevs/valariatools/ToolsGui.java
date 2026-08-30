@@ -988,8 +988,9 @@ public final class ToolsGui {
         }
         plugin.store().setLevel(player, kind, ability.id(), start + bought, ceiling);
         plugin.stats().gesture(player, kind, ToolStats.Metric.LEVELS, bought);
-        MultiTool.refresh(plugin.guard() == null ? null : plugin.guard().first(player), config,
-                plugin.store(), player.getUniqueId());
+        // refreshHeld (et non refresh sur l'item rendu par la garde) : la garde rend une copie du sac, et
+        // la lore des capacités payées doit se voir SUR l'item en main, pas sur un objet déjà jeté.
+        MultiTool.refreshHeld(player, config, plugin.store());
         plugin.refreshPassive(player);   // un niveau d'Efficacité doit se sentir au bloc suivant
         try {
             player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_PLAYER_LEVELUP, 0.7F, 1.6F);
@@ -1035,8 +1036,7 @@ public final class ToolsGui {
             return;
         }
         plugin.store().setTier(player, kind, tier + 1, max);
-        MultiTool.refresh(plugin.guard() == null ? null : plugin.guard().first(player), config,
-                plugin.store(), player.getUniqueId());
+        MultiTool.refreshHeld(player, config, plugin.store());
         plugin.refreshPassive(player);
         try {
             player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_PLAYER_LEVELUP, 0.8F, 1.4F);

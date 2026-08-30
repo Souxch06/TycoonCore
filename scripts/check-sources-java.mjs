@@ -327,6 +327,10 @@ const CONTRACTS = [
       { name: 'startInteractivePool', returns: 'HologramPool', arity: 4, static: true },
       { name: 'activePool', returns: 'HologramPool', arity: 0, static: true },
       { name: 'color', returns: 'String', arity: 1, static: true },
+      { name: 'applySoul', returns: 'boolean', arity: 5, static: true },
+      { name: 'refreshHeld', returns: 'void', arity: 3, static: true },
+      { name: 'soulOf', returns: 'ToolKind', arity: 2, static: true },
+      { name: 'held', returns: 'ItemStack', arity: 1, static: true },
     ],
     mustContain: ['new NamespacedKey("valoriatycoon", "hologram-entity")', 'legacyHex', 'instanceof ArmorStand',
                   'getMethod(setter, boolean.class)', 'setDisabledSlots', 'setItemInHand'],
@@ -377,6 +381,7 @@ const CONTRACTS = [
     mustContain: ['class Ability', 'class KindConfig', 'class Effect', 'fromTier', 'treasure.items',
                   // les trois cles de la garde sont lues ici, une seule fois, avec un defaut sur
                   'tool.undroppable', 'tool.single-per-player', 'tool.auto-give',
+                  'tool.morph-by-target', 'tool.lore-abilities',
                   'Math.max(0, this.maxTier - 1)', 'CHANCE_CEILING', 'PROC_BOOSTER', 'priceAt',
                   'ability-price.base'],
     mustNotContain: ['net.minecraft', 'milkbowl/', 'System.out'],
@@ -434,7 +439,9 @@ const CONTRACTS = [
       { name: 'fallbackKind', returns: 'ToolKind', arity: 0, static: false },
       { name: 'configured', returns: 'boolean', arity: 0, static: false },
     ],
-    mustContain: ['isTagged', 'NONE', 'getNamespace', 'NamespacedKey.fromString', 'configured()'],
+    mustContain: ['isTagged', 'NONE', 'getNamespace', 'NamespacedKey.fromString', 'configured()',
+                  // le regard du joueur se lit ici (API renommée une fois), et nulle part ailleurs
+                  'targetedKind(Player player)', 'getTargetBlockExact'],
     mustNotContain: ['net.minecraft', 'craftbukkit'],
   },
   {
@@ -475,7 +482,10 @@ const CONTRACTS = [
                   'Abilities.proc(', 'containsBlock(targets, block)',
                   // la vitesse de minage est un effet ENTRETENU (changement de main + tache periodique),
                   // plus une re-pose « au bloc d'apres » : c'est la correction du « rien ne s'active »
-                  'PlayerItemHeldEvent', 'refreshPassive(Player player)', 'holdingPassiveHaste(player)'],
+                  'PlayerItemHeldEvent', 'refreshPassive(Player player)', 'holdingPassiveHaste(player)',
+                  // l'item matérialise l'âme qui sert (matériau + lore des capacités payées) : la
+                  // partie visible du changement d'âme, sans quoi le joueur ne sait pas ce qui va payer
+                  'showKind(player, kind)', 'targetedKind(player)', 'morphByTarget'],
     mustNotContain: ['net.minecraft', 'craftbukkit', 'getTargetBlock', 'printStackTrace'],
   },
   {
@@ -488,7 +498,13 @@ const CONTRACTS = [
       { name: 'color', returns: 'String', arity: 1, static: true },
     ],
     mustContain: ['new NamespacedKey("valariatools", "multi")', 'PersistentDataType.STRING',
-                  'translateAlternateColorCodes'],
+                  'translateAlternateColorCodes',
+                  // l'âme affichée est une marque, pas un matériau deviné : deux âmes peuvent partager
+                  // un matériau, et un serveur sans morphing doit quand même savoir quoi lister
+                  'new NamespacedKey("valariatools", "soul")', 'applySoul(',
+                  // `refresh` sur la copie rendue par le sac ne mettait à jour que la copie : la lore
+                  // d'un joueur restait périmée après /tools max. C'est `refreshHeld` qui écrit.
+                  'writeHeld(player, tool)', 'setItemInMainHand'],
     mustNotContain: ['net.minecraft', 'md_5', 'printStackTrace'],
   },
   {

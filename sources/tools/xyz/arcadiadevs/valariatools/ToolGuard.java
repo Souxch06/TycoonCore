@@ -330,10 +330,9 @@ public final class ToolGuard implements Listener {
             }
             return touched;
         }
-        ItemStack held = first(player);
-        if (held != null) {
-            MultiTool.refresh(held, config, this.plugin.store(), player.getUniqueId());
-        }
+        // L'ame affichee et la lore des capacites payees se recalculent sur l'item EN MAIN (une ecriture
+        // dans la copie rendue par le sac ne serait vue de personne).
+        MultiTool.refreshHeld(player, config, this.plugin.store());
         return touched;
     }
 
@@ -365,8 +364,9 @@ public final class ToolGuard implements Listener {
     public ItemStack grant(Player player) {
         ItemStack existing = first(player);
         if (existing != null) {
-            MultiTool.refresh(existing, this.plugin.toolsConfig(), this.plugin.store(),
-                    player.getUniqueId());
+            // Un exemplaire suffit : on ne le deplace pas (distribuer l'outil ne doit pas bouleverser un
+            // sac), on remet seulement son âme et sa lore a l'heure s'il est en main.
+            MultiTool.refreshHeld(player, this.plugin.toolsConfig(), this.plugin.store());
             return existing;
         }
         ItemStack tool = MultiTool.create(this.plugin.toolsConfig(), this.plugin.store(),

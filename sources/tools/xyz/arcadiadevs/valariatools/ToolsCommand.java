@@ -706,11 +706,9 @@ public final class ToolsCommand implements CommandExecutor, TabCompleter {
      * voir au bloc suivant, pas à la prochaine tick de la tâche périodique.
      */
     private void refreshHeld(Player target) {
-        ItemStack held = target.getInventory().getItemInMainHand();
-        if (MultiTool.isMultiTool(held)) {
-            MultiTool.refresh(held, this.plugin.toolsConfig(), this.plugin.store(), target.getUniqueId());
-            target.updateInventory();
-        }
+        // MultiTool.refreshHeld ecrit dans la main : refresh() sur la copie rendue par getInventory() ne
+        // mettait à jour que cette copie, et le joueur ne voyait son outil changer qu'au bloc suivant.
+        MultiTool.refreshHeld(target, this.plugin.toolsConfig(), this.plugin.store());
         this.plugin.refreshPassive(target);
     }
 
