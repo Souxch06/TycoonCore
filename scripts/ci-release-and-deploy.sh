@@ -37,7 +37,13 @@ JAR_NAMES=()
 
 
 say() { printf '%s\n' "$*"; }
-die() { printf 'ERREUR: %s\n' "$*" >&2; exit 1; }
+die() {
+  # `::error::` : les journaux bruts du run passent par un domaine inaccessible, l'annotation est donc
+  # le SEUL canal lisible. Sans elle, un `ERREUR:` dans le stderr se perdait corps et bien.
+  printf '::error::%s\n' "$*" >&2
+  printf 'ERREUR: %s\n' "$*" >&2
+  exit 1
+}
 
 # ------------------------------------------------------------------ 1. les trois jars, ou rien
 JARS=("$MAIN_JAR" "$ECONOMY_JAR")
@@ -119,32 +125,80 @@ fi
 for var in SFTP_HOST SFTP_PORT SFTP_USERNAME SFTP_PASSWORD; do
   [ -n "${!var:-}" ] || die "secret $var manquant : l'etape doit le publier dans son bloc env (comme deploy.yml)"
 done
+
+# Un hote colle depuis le panneau arrive parfois en « sftp://hote/ » : on normalise, sinon la session
+# SFTP echoue sur un nom d'hote invalide.
+SFTP_HOST=$(printf '%s' "$SFTP_HOST" | sed -e 's#^[a-zA-Z][a-zA-Z0-9+.-]*://##' -e 's#/.*$##')
+SFTP_PORT=$(printf '%s' "$SFTP_PORT" | tr -cd '0-9')
+[ -n "$SFTP_HOST" ] || die "SFTP_HOST est vide apres normalisation : coller l'hote nu du panneau (sans sftp:// ni chemin)."
+[ -n "$SFTP_PORT" ] || die "SFTP_PORT n'est pas un nombre (recu: ${SFTP_PORT:-vide}) : le port SFTP du panneau, en chiffres."
+
 if ! command -v sshpass >/dev/null 2>&1; then
   say "installation de sshpass…"
   { sudo apt-get update -y && sudo apt-get install -y sshpass; } >/dev/null 2>&1 \
     || die "sshpass impossible a installer (etape devant tourner sur un runner Ubuntu)"
 fi
 
+# `sshpass -e` lit le mot de passe dans la variable SSHPASS. Sans cette ligne, il demarre avec un mot
+# de passe vide, sftp refuse la session, et comme la sortie etait jetee (`>/dev/null 2>&1`) on ne
+# voyait qu'un « session SFTP en echec » sans aucune cause — panne reelle du run 33306383817.
+export SSHPASS="$SFTP_PASSWORD"
+
 SFTP=(sshpass -e sftp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -P "$SFTP_PORT" "$SFTP_USERNAME@$SFTP_HOST")
+
+# Pre-vol TCP : un port ferme, un hote inconnu et un mot de passe refuse donnaient le MEME message
+# (« session SFTP en echec »). En joignant la prise avant, on sait tout de suite s'il faut regarder le
+# panneau (acces SFTP actif, bon port) ou le secret (identifiant, mot de passe).
+if timeout 20 bash -c "cat < /dev/null > /dev/tcp/$SFTP_HOST/$SFTP_PORT" 2>/dev/null; then
+  say "pre-vol OK : $SFTP_HOST:$SFTP_PORT repond"
+else
+  die "le serveur $SFTP_HOST:$SFTP_PORT n'est pas joignable depuis le runner GitHub (port ferme, hote inconnu, ou acces SFTP desactive). A verifier dans le panneau MCServerHost : hote exact, port, et activation de l'acces SFTP."
+fi
 STAMP="$(date -u +%Y%m%d-%H%M%S)"
+# Le prefixe « - » de sftp signifie « ignore l'erreur » : au premier deploiement les jar ne sont pas
+# encore sur le serveur, et un `rename` qui echoue ferait AVORTER toute la session batch avant l'envoi.
 REMOTE_CMDS=(-mkdir "$PLUGINS_DIR/_sauvegarde-$STAMP")
 for name in "${JAR_NAMES[@]}"; do
-  REMOTE_CMDS+=("rename $PLUGINS_DIR/$name $PLUGINS_DIR/_sauvegarde-$STAMP/$name")
+  REMOTE_CMDS+=("-rename $PLUGINS_DIR/$name $PLUGINS_DIR/_sauvegarde-$STAMP/$name")
+done
+# Un `put` par jar : `put src1 src2 dossier/` n'est pas garanti sur toutes les versions d'OpenSSH.
+UPLOAD_CMDS=()
+for jar in "${JARS[@]}"; do
+  UPLOAD_CMDS+=("put $jar $PLUGINS_DIR/")
 done
 
 if [ "$DRY_RUN" = "1" ]; then
   say "DRY_RUN : la session SFTP qui serait jouee :"
   say "  ${SFTP[*]}"
-  printf '  %s\n' "${REMOTE_CMDS[@]}" "put ${JARS[*]} $PLUGINS_DIR/" "ls -l $PLUGINS_DIR"
+  printf '  %s\n' "${REMOTE_CMDS[@]}" "${UPLOAD_CMDS[@]}" "ls -l $PLUGINS_DIR"
   exit 0
 fi
 
-say "sauvegarde des jar en place dans $PLUGINS_DIR/_sauvegarde-$STAMP, puis envoi des ${#JARS[@]} jar…"
-printf '%s\n' "${REMOTE_CMDS[@]}" "put ${JARS[*]} $PLUGINS_DIR/" "bye" \
-  | "${SFTP[@]}" >/dev/null 2>&1 || die "session SFTP en echec (reseau, droits, ou serveur en cours de demarrage)"
+# Un seul `sftp` par phase, avec sa sortie CAPTUREE : la panne precedente jetait stdout et stderr, donc
+# le run rougissait sans jamais dire pourquoi (et les journaux bruts sont inaccessibles — seules les
+# annotations se lisent). Le mot de passe ne peut pas fuir : sshpass le prend dans l'environnement, il
+# n'apparait dans aucune ligne de commande ni dans aucune sortie.
+SFTP_LOG="$(mktemp)"
+sftp_last() {
+  grep -v -i -e 'Warning: Permanently added' -e '^$' "$SFTP_LOG" | head -c 400 | tr '\n' ' '
+}
 
-# ls -l distant : "droits liens user group TAILLE date heure nom" -> la 5e colonne.
-LISTING=$("${SFTP[@]}" -b "ls -l $PLUGINS_DIR" 2>/dev/null)
+say "sauvegarde des jar en place dans $PLUGINS_DIR/_sauvegarde-$STAMP…"
+if printf '%s\n' "${REMOTE_CMDS[@]}" "bye" | "${SFTP[@]}" -b - >"$SFTP_LOG" 2>&1; then
+  say "sauvegarde faite : $PLUGINS_DIR/_sauvegarde-$STAMP"
+else
+  # Non bloquant : un serveur vierge n'a rien a sauvegarder, et mieux vaut deployer sans filet que pas
+  # du tout. Le message reste dans le journal du run.
+  say "AVERTISSEMENT : sauvegarde distante impossible ($(sftp_last)) — deploiement poursuivi, les jar en place seront ecrases."
+fi
+
+say "envoi des ${#JARS[@]} jar vers $PLUGINS_DIR/…"
+printf '%s\n' "${UPLOAD_CMDS[@]}" "bye" | "${SFTP[@]}" -b - >"$SFTP_LOG" 2>&1 \
+  || die "envoi SFTP en echec vers $SFTP_USERNAME@$SFTP_HOST:$SFTP_PORT : $(sftp_last) — causes frequentes : identifiant ou mot de passe refuse, compte sans acces SFTP, ou repertoire « $PLUGINS_DIR » inexistant."
+
+# `sftp -b -` lit le batch sur l'entree standard. L'ancienne ecriture passait la COMMANDE comme si
+# c'etait un FICHIER (`-b "ls -l plugins"`), ce que sftp refuse : « No such file or directory ».
+LISTING=$(printf 'ls -l %s\n' "$PLUGINS_DIR" | "${SFTP[@]}" -b - 2>/dev/null)
 fail=0
 for name in "${JAR_NAMES[@]}"; do
   want=$(stat -c %s "target/$name")
