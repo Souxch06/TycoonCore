@@ -32,6 +32,14 @@ panneau). Donc l'une des causes suivantes :
 - accès SFTP **désactivé** pour le compte ;
 - **restriction d'IP** : il faut autoriser les IP des runners GitHub (ou la désactiver).
 
+Diagnostic en place depuis le commit « Empreinte structurelle des secrets » : chaque tentative de
+dépôt affiche quatre lignes « `empreinte …` » (longueur, espace/point/chiffre, casse du 1er
+caractère — **jamais la valeur**). Référence calculable depuis CX File Explorer : hôte `24
+caractères, point=oui, chiffre=non, 1er minuscule` ; port `4 caractères, chiffre=oui, 1er chiffre` ;
+login `21 caractères, espace=oui, point=oui, chiffre=oui, 1er majuscule`. Une ligne qui dévie nomme
+le secret fautif (espace insécable collée sur mobile = `espace=non`, suffixe `.id` perdu =
+`point=non`, ancien mot de passe = autre longueur).
+
 Le dernier build de `main` (**33307721428**) est **ROUGE à l'étape 20** : c'est **voulu**. Le build
 attend maintenant le verdict du dépôt. Un build vert au-dessus d'un dépôt rouge serait un mensonge.
 Ne **pas** « réparer » ça en assouplissant le contrôle.
