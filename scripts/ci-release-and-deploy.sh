@@ -331,7 +331,11 @@ if [ "$DRY_RUN" = "1" ]; then
     diag_annot() {
       # Echappement des annotations workflow : % d'abord, puis fins de ligne en %0A (une annotation
       # peut contenir un extrait multi-lignes ; CR rejete, il ne sert qu'a brouiller la lecture).
+      # iconv -c : une coupe `head -c` au milieu d'un accent laisse une suite UTF-8 INCOMPLETE, et
+      # GitHub rejette alors l'annotation en silence (vu au run 33325513670 : l'extrait « fin du
+      # journal », plein d'accents francais, n'est jamais arrive — sans une erreur nulle part).
       printf '::notice::%s\n' "$(printf '%s' "$1" \
+        | iconv -f UTF-8 -t UTF-8 -c \
         | sed -e 's/%/%25/g' -e 's/\r$//' -e 's/\r//g' \
         | awk 'BEGIN { ORS = "%0A" } { print }' | sed -e 's/%0A$//')"
     }
@@ -402,13 +406,43 @@ if [ "$DRY_RUN" = "1" ]; then
     fi
 
     # ---------------- FAITS, en annotations (canal lu par l'agent : API check-runs) ----------------
-    diag_annot "DIAGNOSTIC : listing plugins/ = $(awk '$NF !~ /^_sauvegarde/ && $NF ~ /\.jar$/ { printf "%s (%s octets) ; ", $NF, $5 }' "$PRE_LIST" | head -c 600)"
+    diag_annot "DIAGNOSTIC : plugins/ (nom [octets, date du ls]) = $(awk '$NF ~ /\.jar$/ { printf "%s [%s o, %s %s %s] ; ", $NF, $5, $6, $7, $8 }' "$PRE_LIST" | head -c 700)"
     diag_annot "DIAGNOSTIC : listing logs/ = $(grep -v '^total' "$LOG_LISTING" | tr '\n' ' ' | head -c 900)"
+
+    # AGE RELATIF jars vs journal — tout du MEME ls, donc meme horloge : si un jar depose est plus
+    # RECENT que latest.log, le serveur tourne encore sur les jars d'avant (le rouge observe est
+    # alors celui de l'ancien demarrage, et la seule action est REDEMARRER, pas debuguer).
+    t_log="$(awk '$NF == "latest.log" { print $6, $7, $8 }' "$LOG_LISTING" | head -1)"
+    e_log="$(date -d "$t_log" +%s 2>/dev/null || printf 0)"
+    jar_le_plus_recent=""
+    e_best=0
+    for nom in $(awk '$NF ~ /\.jar$/ { print $NF }' "$PRE_LIST"); do
+      d="$(awk -v n="$nom" '$NF == n { print $6, $7, $8 }' "$PRE_LIST" | head -1)"
+      e="$(date -d "$d" +%s 2>/dev/null || printf 0)"
+      if [ "$e" -gt "$e_best" ]; then e_best="$e"; jar_le_plus_recent="$nom ($d)"; fi
+    done
+    if [ "$e_best" -gt "$e_log" ]; then
+      diag_annot "DIAGNOSTIC VERDICT : $jar_le_plus_recent est PLUS RECENT que latest.log ($t_log) — le serveur n'a pas redemarre depuis le dernier depot : REDEMARRER LE SERVEUR, le rouge observe est celui des anciens jars."
+    else
+      diag_annot "DIAGNOSTIC VERDICT : latest.log ($t_log) est plus recent que tous les jars — le dernier demarrage a bien charge les jars deposes."
+    fi
+
     VERS="$(grep -m 1 -E "Starting minecraft server version|This server is running" "$SOURCE" 2>/dev/null || true)"
     [ -n "$VERS" ] && diag_annot "DIAGNOSTIC : version serveur ($SOURCE_NOM) : $VERS"
+    # Compteurs : Enabling=0 => le demarrage n'a jamais atteint l'activation des plugins ;
+    # Done=0 => demarrage inacheve. Ce resume a tranche des questions que les extraits seuls brouillaient.
+    # `grep -c` imprime deja 0 sans match, mais sort en echec : le defaut ne doit donc s'appliquer
+    # qu'a un resultat VIDE (fichier absent), pas ajouter un second 0 apres celui de grep.
+    n_en="$(grep -c 'Enabling' "$SOURCE" 2>/dev/null)"; n_en="${n_en:-0}"
+    n_er="$(grep -c 'ERROR' "$SOURCE" 2>/dev/null)"; n_er="${n_er:-0}"
+    n_do="$(grep -c 'Done (' "$SOURCE" 2>/dev/null)"; n_do="${n_do:-0}"
+    n_va="$(grep -ci 'valoria' "$SOURCE" 2>/dev/null)"; n_va="${n_va:-0}"
+    diag_annot "DIAGNOSTIC : $SOURCE_NOM : $n_en lignes Enabling, $n_er ERROR, $n_do ligne(s) Done, $n_va lignes valoria."
     # Debut et fin du journal : la fin dit si le demarrage est ALLE au bout (« Done ») ou plante.
-    diag_annot "DIAGNOSTIC : debut de $SOURCE_NOM : $(head -8 "$SOURCE" | head -c 460)"
-    diag_annot "DIAGNOSTIC : fin de $SOURCE_NOM : $(tail -12 "$SOURCE" | head -c 460)"
+    # Chaque ligne en annotation SEPAREE (petite = sure) : un seul bloc coupe a 460 octets a deja
+    # perdu l'extrait entier sur un accent tronque.
+    head -8 "$SOURCE" 2>/dev/null | head -c 400 | while IFS= read -r ligne; do diag_annot "DEBUT | ${ligne:0:240}"; done
+    tail -10 "$SOURCE" 2>/dev/null | while IFS= read -r ligne; do diag_annot "FIN  | ${ligne:0:240}"; done
     # Cycle de vie : une annotation par ligne Enabling/Disabling/Ambiguous (12 max).
     grep -E "Enabling|Disabling|Ambiguous|Could not load" "$SOURCE" 2>/dev/null | head -12 | while IFS= read -r ligne; do
       diag_annot "${ligne:0:480}"
