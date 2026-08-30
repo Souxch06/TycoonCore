@@ -411,8 +411,8 @@ if [ "$DRY_RUN" = "1" ]; then
     diag_annot "DIAGNOSTIC : $DIAG_NOTE — source analysee : $SOURCE_NOM"
     # 2. listing plugins/ avec dates : un doublon ou une date d'avant le depot se voit ici.
     diag_annot "DIAGNOSTIC : plugins/ (nom [octets, date du ls]) = $(awk '$NF ~ /\.jar$/ { printf "%s [%s o, %s %s %s] ; ", $NF, $5, $6, $7, $8 }' "$PRE_LIST" | head -c 700)"
-    # 3. listing logs/ : quand latest.log a-t-il ete ecrit pour la derniere fois.
-    diag_annot "DIAGNOSTIC : listing logs/ = $(grep -v '^total' "$LOG_LISTING" | tr '\n' ' ' | head -c 900)"
+    # (le listing logs/ brut ne consomme plus d'annotation : le VERDICT et la notice « journaux »
+    #  en exploitent deja les dates et tailles — le budget d'etape est de dix, empreintes comprises.)
     # 4. VERDICT d'horloge unique : mtime des jars vs mtime de latest.log DANS LE MEME ls.
     #    Les horloges du serveur et du runner ne sont pas comparables ; celles d'un meme listing, si.
     t_log="$(awk '$NF == "latest.log" { print $6, $7, $8 }' "$LOG_LISTING" | head -1)"
@@ -439,11 +439,17 @@ if [ "$DRY_RUN" = "1" ]; then
     n_do="$(grep -c 'Done (' "$SOURCE" 2>/dev/null)"; n_do="${n_do:-0}"
     n_va="$(grep -ci 'valoria' "$SOURCE" 2>/dev/null)"; n_va="${n_va:-0}"
     diag_annot "DIAGNOSTIC : $SOURCE_NOM ($VERS_COURT) : $n_en Enabling, $n_er ERROR, $n_do Done, $n_va lignes valoria — Enabling=0 : demarrage jamais arrive aux plugins ; Done=0 : demarrage inacheve."
-    # 6. la premiere exception avec le haut de sa pile (le coupable, en une ligne).
-    PREMIERE_EXC="$(awk '/Exception|ERROR|SEVERE|Error occurred/ { print; n = 0
-          while (n < 3 && (getline ligne) > 0) { if (ligne ~ /^(Caused by|[[:space:]]+at )/) { print " <- " ligne; n++ } else break } exit }' "$SOURCE" 2>/dev/null)"
-    if [ -n "$PREMIERE_EXC" ]; then
-      diag_annot "DIAGNOSTIC : premiere erreur de $SOURCE_NOM : $(printf '%s' "$PREMIERE_EXC" | tr '\n' ' ' | head -c 420)"
+    # 6. LES lignes qui nomment la panne, mot pour mot : toutes les Enabling/Disabling/Ambiguous
+    #    (qui dit si ValoriaEconomy a ete active) puis toutes les lignes ERROR avec le haut de la
+    #    pile de la premiere « Error occurred » (run 33328165310 : les compteurs restaient muets
+    #    sur QUEL plugin avait echoue — les lignes elles-memes tenaient dans le budget).
+    CYCLE="$(grep -E "Enabling|Disabling|Ambiguous|Could not load" "$SOURCE" 2>/dev/null | head -12 | sed 's/^ *\[[^]]*\] *//' | tr '\n' '~' | tr -s ' ' | head -c 480)"
+    [ -n "$CYCLE" ] && diag_annot "DIAGNOSTIC : cycle de vie des plugins : $(printf '%s' "$CYCLE" | tr '~' ' | ')"
+    ERREURS="$(grep -E "/ERROR\]|SEVERE" "$SOURCE" 2>/dev/null | head -4 | sed 's/^ *\[[^]]*\] *//' | tr '\n' '~' | tr -s ' ' | head -c 300)"
+    PILE="$(awk '/Error occurred|ERROR/ { print; n = 0
+          while (n < 5 && (getline ligne) > 0) { if (ligne ~ /^(Caused by|[[:space:]]+(at |\.\.\. ))/) { print ligne; n++ } else break } exit }' "$SOURCE" 2>/dev/null | sed 's/^ *//' | tr '\n' '~' | tr -s ' ' | head -c 400)"
+    if [ -n "$ERREURS$PILE" ]; then
+      diag_annot "DIAGNOSTIC : lignes d'erreur : $(printf '%s' "$ERREURS" | tr '~' ' | ') || pile : $(printf '%s' "$PILE" | tr '~' ' | ')"
     else
       diag_annot "DIAGNOSTIC : aucune ligne d'erreur dans $SOURCE_NOM."
     fi
