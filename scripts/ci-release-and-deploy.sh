@@ -45,6 +45,20 @@ die() {
   exit 1
 }
 
+# Indice cible quand l'authentification SFTP est refusee. Sur un panneau de jeu type MCServerHost
+# (Pterodactyl), le login SFTP n'est JAMAIS la simple connexion au site : c'est
+# « connexion_panneau.id_serveur » (avec un POINT, ex. luca.a1b2c3d4), parfois « u12345_xxxx » (avec un
+# underscore). Un secret qui ne contient ni '.' ni '_' est donc la connexion au site colle a la place du
+# login SFTP — c'est la panne du run 33310555050, ou SFTP_USERNAME commencait par « Luca ». La fonction
+# ne se prononce que sur ce cas certain ; sinon elle se tait. Elle n'affiche que les 4 premiers
+# caracteres : le reste du login reste masque par GitHub.
+sftp_user_hint() {
+  case "$SFTP_USERNAME" in
+    *.*|*_*) return 0 ;;   # porte la marque d'un login SFTP complet (connexion.id ou u12345_xxxx)
+  esac
+  printf "INDICE: le login SFTP envoye commence par \"%s***\" et ne contient AUCUN point : c'est la simple connexion au site/panneau, pas un compte SFTP. Le login SFTP est \"connexion_panneau.id_serveur\" (ex. luca.a1b2c3d4 ; parfois u12345_xxxx). Copier le champ Utilisateur EN ENTIER depuis l'onglet SFTP/Acces du panneau (bouton copier), puis l'enregistrer dans le secret GitHub SFTP_USERNAME. " "${SFTP_USERNAME:0:4}"
+}
+
 # ------------------------------------------------------------------ 1. les trois jars, ou rien
 JARS=("$MAIN_JAR" "$ECONOMY_JAR")
 if [ -f "$TOOLS_JAR" ]; then
@@ -190,7 +204,7 @@ if [ "$DRY_RUN" = "1" ]; then
   msg="$(grep -v -i -e 'Warning: Permanently added' -e '^$' "$SFTP_LOG" | head -c 500 | tr '\n' ' ')"
   case "$msg" in
     *"Permission denied"*|*"Authentication failed"*|*"password"*)
-      die "simulation : identifiants refuses sur ${SFTP_USERNAME:0:4}***@$SFTP_HOST:$SFTP_PORT ($msg). Verifier SFTP_USERNAME (souvent « u12345_xxxx », PAS l'identifiant du site) et regenerer SFTP_PASSWORD dans le panneau MCServerHost, puis relancer avec dry_run coche." ;;
+      die "simulation : identifiants refuses sur ${SFTP_USERNAME:0:4}***@$SFTP_HOST:$SFTP_PORT ($msg) $(sftp_user_hint)Verifier aussi le mot de passe : sur MCServerHost c'est celui du compte PANNEAU, pas celui du site ou de la facturation. Pour en avoir le coeur net, tester d'abord les memes quatre valeurs dans FileZilla (FileZilla vert mais CI rouge = secret GitHub non mis a jour) ; puis relancer avec dry_run coche." ;;
     *"No such file"*|*"does not exist"*|*"not found"*)
       die "simulation : la session s'ouvre mais le dossier « $PLUGINS_DIR » est absent cote serveur ($msg). Verifier SFTP_PLUGINS_DIR ou le repertoire de base du compte dans le panneau." ;;
     *"Connection refused"*|*"Connection timed out"*|*"No route to host"*|*"Could not resolve hostname"*)
@@ -227,7 +241,7 @@ fi
 
 say "envoi des ${#JARS[@]} jar vers $PLUGINS_DIR/…"
 run_sftp "${UPLOAD_CMDS[@]}" \
-  || die "envoi SFTP en echec vers $SFTP_USERNAME@$SFTP_HOST:$SFTP_PORT : $(sftp_last) — causes frequentes : identifiant ou mot de passe refuse, compte sans acces SFTP, ou repertoire « $PLUGINS_DIR » inexistant."
+  || die "envoi SFTP en echec vers ${SFTP_USERNAME:0:4}***@$SFTP_HOST:$SFTP_PORT : $(sftp_last) $(sftp_user_hint)— causes frequentes : identifiant ou mot de passe refuse, compte sans acces SFTP, ou repertoire « $PLUGINS_DIR » inexistant."
 
 # Verification octet pour octet. L'ancienne ecriture passait la COMMANDE comme si c'etait un FICHIER
 # (`-b "ls -l plugins"`, que sftp refuse), et APRES la destination qui plus est.
