@@ -91,6 +91,18 @@ liste le contenu de `plugins/` (la preuve que `SFTP_USERNAME`/`SFTP_PASSWORD` so
 nomme la cause (identifiant/mot de passe refusés, accès SFTP désactivé, restriction d'IP, dossier
 absent). Toujours **aucun fichier envoyé**. Décoche `dry_run` quand tu veux l'envoi réel.
 
+Depuis le commit « Empreinte structurelle des secrets », chaque dépôt (réel ou `dry_run`) affiche
+d'abord **quatre lignes `empreinte …`** — une par secret (`SFTP_HOST`, `SFTP_PORT`, `SFTP_USERNAME`,
+`SFTP_PASSWORD`) : longueur, espace, point, chiffre, casse du premier caractère, **jamais la valeur**
+(GitHub la masquerait en « *** » ; une structure, elle, se lit toujours — et elle part aussi en
+annotation `notice`, le seul canal lisible à distance). Panneau en main, comparer :
+`artemis.mcserverhost.com` → `24 caracteres, espace=non, point=oui, chiffre=non, 1er caractere une
+minuscule` ; `Lucas Afonso.94b412fb` → `21 caracteres, espace=oui, point=oui, chiffre=oui, 1er
+caractere une majuscule`. Un écart (espace insécable collée par un correcteur mobile → `espace=non`,
+suffixe `.id` perdu → `point=non`, ancien mot de passe → autre longueur) nomme le secret fautif
+**avant même la connexion** — c'est le diagnostic à lire quand CX File Explorer passe et que la CI,
+elle, est refusée.
+
 ## Si ça casse
 - l'étape d'envoi échoue → les anciens jar sont intacts dans `plugins/_sauvegarde-<horodatage>/` :
   un `rename` inverse dans `plugins/` et un redémarrage reviennent en arrière ;
