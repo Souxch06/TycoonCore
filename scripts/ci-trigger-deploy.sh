@@ -17,12 +17,21 @@
 # reste la même (le build n'ouvre aucune connexion vers le serveur de jeu), et les trois jar restent
 # téléchargés depuis la release, donc vérifiés une seconde fois avant d'être posés.
 #
+# Deuxième panne réelle, corrigée ici (run 33304552672 du 2026-08-30) : l'appel partait, mais
+# `deploy-serveur.yml` déclare `dry_run` en `type: boolean` et le script envoyait la CHAÎNE « 0 ».
+# GitHub répondait alors `HTTP 422 : Provided value '0' for input 'dry_run' not in the list of allowed
+# values` — la valeur autorisée d'un booléen est `true` ou `false`, pas 0/1. Le build rougissait sur
+# sa dernière étape, la release était publiee, et le serveur ne bougeait toujours pas.
+#   -> `gh api ... -F` convertit « false » en booléen JSON ; `-f` l'envoie tel quel, en chaîne. Les
+#      deux formes sont tentées (booléen d'abord) pour absorber les deux lectures de l'API.
+#
 # Usage :
 #   bash scripts/ci-trigger-deploy.sh            -> déclenche le dépôt réel de `build-latest`
 #   DRY_RUN=1 bash scripts/ci-trigger-deploy.sh  -> déclenche la simulation (n'envoie rien)
 #
-# Sortie : 0 si un run de dépôt a bien été créé, 1 sinon (avec une ligne `::error::` nommant la cause,
-# lisible dans les annotations du run — un échec muet ici vaudrait un `plugins/` qui ne bouge plus).
+# Sortie : 0 si le run de dépôt a bien été créé (et n'a pas déjà rougi), 1 sinon (avec une ligne
+# `::error::` nommant la cause, lisible dans les annotations du run — un échec muet ici vaudrait un
+# `plugins/` qui ne bouge plus, et un build vert au-dessus d'un dépôt rouge mentirait tout autant).
 # ---------------------------------------------------------------------------
 set -uo pipefail
 
@@ -51,25 +60,45 @@ for jar in ValoriaTycoon ValoriaEconomy ValoriaTools; do
     || die "la release « $TAG » ne contient pas de jar $jar : le depot est refuse (le serveur ne doit jamais recevoir un plugin sans son economie ni son outil)."
 done
 
-if ! out=$(gh workflow run "$WORKFLOW" --repo "$REPO" --ref main \
-             -f tag="$TAG" -f dry_run="$DRY_RUN" 2>&1); then
+# Un booleen d'abord (`-F` : « false » devient le JSON `false`), la chaine ensuite (`-f`).
+DRY_RUN_JSON=false
+[ "$DRY_RUN" = "1" ] && DRY_RUN_JSON=true
+
+dispatch_once() {  # $1 = -F (booleen JSON) ou -f (chaine brute)
+  gh api -X POST "repos/$REPO/actions/workflows/$WORKFLOW/dispatches" \
+    -f ref=main -f "inputs[tag]=$TAG" "$1" "inputs[dry_run]=$DRY_RUN_JSON" 2>&1
+}
+
+out=""
+if ! out=$(dispatch_once -F); then
+  if second=$(dispatch_once -f); then
+    out=""
+  else
+    printf '%s\n' "second essai (chaine) refuse : $second"
+    out="$out | second essai (chaine) : $second"
+  fi
+fi
+
+if [ -n "$out" ]; then
   case "$out" in
     *"403"* | *"Resource not accessible"*)
       die "dispatch refuse (403) : le workflow de build doit declarer \`permissions: actions: write\`. Sans elle, la release se publie et le serveur n'est jamais mis a jour." ;;
     *"404"* | *"Not Found"*)
       die "workflow « $WORKFLOW » introuvable sur la branche main : le coller depuis docs/CI-DEPLOY-A-COLLER.yml dans .github/workflows/$WORKFLOW." ;;
+    *"422"* | *"not in the list of allowed values"*)
+      die "dispatch refuse (422) : l'entree \`dry_run\` de $WORKFLOW est declaree en \`boolean\` et l'API n'accepte que true ou false (ni 0/1, ni vide). Booleen puis chaine essayes. Message : $(printf '%s' "$out" | tr '\n' ' ' | head -c 400)" ;;
     *)
-      die "dispatch refuse : $(printf '%s' "$out" | head -c 300)" ;;
+      die "dispatch refuse : $(printf '%s' "$out" | tr '\n' ' ' | head -c 400)" ;;
   esac
 fi
 
-# `gh workflow run` rend la main des que la demande est acceptee : sans ce controle, un dispatch
-# accepte mais jamais materialise en run passerait pour un succes.
+# L'appel rend la main des que la demande est acceptee : sans ce controle, un dispatch accepte mais
+# jamais materialise en run passerait pour un succes.
 run_url=""
 cutoff=$(date -u -d '5 minutes ago' +%Y-%m-%dT%H:%M:%SZ)
 for _ in $(seq 1 20); do
   run_url=$(gh api "repos/$REPO/actions/workflows/$WORKFLOW/runs?per_page=5" \
-    --jq "[.workflow_runs[] | select(.event==\"workflow_dispatch\")] | sort_by(.created_at) | last | select(.created_at > \"$cutoff\") | .html_url" \
+    --jq '[.workflow_runs[] | select(.event == "workflow_dispatch")] | sort_by(.created_at) | last | select(.created_at > "'"$cutoff"'") | .html_url' \
     2>/dev/null | grep -v '^null$' || true)
   [ -n "$run_url" ] && break
   sleep 3
@@ -77,3 +106,18 @@ done
 
 [ -n "$run_url" ] || die "le dispatch a ete accepte mais aucun run de depot n'est apparu sous 60 s : voir https://github.com/$REPO/actions/workflows/$WORKFLOW (bouton « Run workflow », dry_run=$DRY_RUN)."
 say "run de depot cree : $run_url"
+
+# On attend maintenant le VERDICT, pas seulement l'existence du run : un build vert au-dessus d'un
+# depot rouge est un mensonge — la release est publiee, `plugins/` n'a pas bouge, et rien ne le dit.
+# Fenetre bornee : au-dela, le run est laisse a sa vie et le build reste vert (le depot est en cours,
+# il n'a pas echoue). En cas d'echec, la ligne `::error::` porte l'URL du run a annoter.
+run_id=${run_url##*/}
+for _ in $(seq 1 20); do
+  state=$(gh api "repos/$REPO/actions/runs/$run_id" --jq '.status + " " + (.conclusion // "")' 2>/dev/null || true)
+  case "$state" in
+    "completed success") say "depot termine : succes ($run_url)"; exit 0 ;;
+    completed*)          die "le depot a echoue ($state) : $run_url — lire SES annotations. La release est bonne, plugins/ n'a PAS ete ecrase." ;;
+  esac
+  sleep 15
+done
+say "depot encore en cours apres 5 min : $run_url (le build ne l'attend pas plus longtemps)"
