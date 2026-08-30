@@ -1,6 +1,6 @@
 # Brancher le système automatique (les deux .jar jusqu'au serveur)
 
-Le moteur est **écrit et testé** : `scripts/ci-release-and-deploy.sh` (143 lignes, testé hors CI :
+Le moteur est **écrit et testé** : `scripts/ci-release-and-deploy.sh` (252 lignes, testé hors CI :
 refus si un jar manque, refus si un jar n'est pas un zip, `DRY_RUN`, sauvegarde `plugins/_sauvegarde-<date>/`,
 contrôle de taille **côté serveur**, refus si un secret manque). Le build publie déjà l'artefact des
 trois jar. Ce qui reste à faire est **uniquement de l'installation de fichiers de workflow**, et
@@ -85,8 +85,11 @@ le serveur » de `build.yml`, qui a besoin de `permissions: actions: write`.
 
 ## Try before you trust
 Une fois B.3 en place, teste sans risque : **Actions → Déploiement auto (deploy-serveur) → Run
-workflow** → branche `main` → laisse **`dry_run` coché** → Run. Le log affiche exactement la session
-SFTP qui **serait** jouée, sans rien envoyer. Décoche `dry_run` quand tu veux l'envoi réel.
+workflow** → branche `main` → laisse **`dry_run` coché** → Run. Depuis le commit « La simulation
+verifie les identifiants », `dry_run` ouvre une vraie session SFTP en **LECTURE SEULE** : verte elle
+liste le contenu de `plugins/` (la preuve que `SFTP_USERNAME`/`SFTP_PASSWORD` sont bons), rouge elle
+nomme la cause (identifiant/mot de passe refusés, accès SFTP désactivé, restriction d'IP, dossier
+absent). Toujours **aucun fichier envoyé**. Décoche `dry_run` quand tu veux l'envoi réel.
 
 ## Si ça casse
 - l'étape d'envoi échoue → les anciens jar sont intacts dans `plugins/_sauvegarde-<horodatage>/` :
