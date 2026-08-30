@@ -317,67 +317,67 @@ if [ "$DRY_RUN" = "1" ]; then
 
     # ------------------------------------------------------------------ diagnostic ValoriaEconomy
     # Symptome : /plugins montre ValoriaEconomy ROUGE alors que le jar (17 029 octets) est pose et
-    # verifie. La cause est ECRITE dans logs/latest.log du serveur (exception dans onEnable, doublon
-    # de jar, restart manquant) — mais la console du panneau et les journaux bruts des runs sont
-    # inaccessibles depuis l'agent. SFTP sait LIRE ce fichier : on le rapatrie (plus le .log.gz
-    # precedent, qui couvre le cas « le serveur n'a pas redemarre depuis le dernier depot ») et on
-    # publie l'extrait en ANNOTATIONS, seul canal vraiment lisible a distance. Toujours AUCUNE
-    # ecriture cote serveur : des `ls` et des `get` uniquement.
+    # verifie. La cause est ECRITE dans logs/latest.log du serveur — mais la console du panneau et
+    # les journaux bruts des runs sont inaccessibles depuis l'agent : seules les ANNOTATIONS se
+    # lisent a distance. SFTP sait LIRE ce fichier : on le rapatrie (plus le .log.gz precedent) et
+    # on publie le diagnostic. Toujours AUCUNE ecriture cote serveur : des `ls` et des `get`.
     #
-    # REGLE d'or apprise du premier tour : tout echec doit partir en ANNOTATION, pas seulement dans
-    # le journal du run (un `get` refuse ne laissait aucune trace lisible, et le diagnostic semblait
-    # « complet » alors qu'il manquait le journal courant).
+    # DEUX limites apprises sur le terrain (runs 33325114747, 33325513670, 33326512242) :
+    #   1. une coupe `head -c` au milieu d'un accent laisse de l'UTF-8 invalide et GitHub rejette
+    #      l'annotation EN SILENCE -> iconv -c partout ou un extrait peut etre coupe ;
+    #   2. le runner plafonne une ETAPE a DIX annotations, empreintes comprises : au-dela, tout est
+    #      JETE sans erreur. Les quatre empreintes ci-dessus en occupent quatre : ce bloc n'en emet
+    #      donc que SIX, les faits essentiels, dans un ordre qui garde les plus utiles en dernier
+    #      (si une limite imprévue mord, ce sont les listing qui tranchent, pas le verdict) ; le
+    #      DETAIL part par l'API Checks (POST check-runs/{id}/annotations, 50 max) juste apres.
     DIAG_DIR="$(mktemp -d)"
     diag_annot() {
-      # Echappement des annotations workflow : % d'abord, puis fins de ligne en %0A (une annotation
-      # peut contenir un extrait multi-lignes ; CR rejete, il ne sert qu'a brouiller la lecture).
-      # iconv -c : une coupe `head -c` au milieu d'un accent laisse une suite UTF-8 INCOMPLETE, et
-      # GitHub rejette alors l'annotation en silence (vu au run 33325513670 : l'extrait « fin du
-      # journal », plein d'accents francais, n'est jamais arrive — sans une erreur nulle part).
       printf '::notice::%s\n' "$(printf '%s' "$1" \
         | iconv -f UTF-8 -t UTF-8 -c \
         | sed -e 's/%/%25/g' -e 's/\r$//' -e 's/\r//g' \
         | awk 'BEGIN { ORS = "%0A" } { print }' | sed -e 's/%0A$//')"
     }
-    diag_warn() { diag_annot "DIAGNOSTIC AVERTISSEMENT : $1"; }
+    # Les messages destines a l'API Checks (meme hygiene UTF-8, une ligne = une annotation).
+    diag_msgfile="$DIAG_DIR/messages.txt"
+    : > "$diag_msgfile"
+    diag_line() { printf '%s\n' "$1" | iconv -f UTF-8 -t UTF-8 -c >> "$diag_msgfile"; }
 
-    # Listing de logs/ : ses dates disent QUAND le serveur a demarre (si latest.log est plus vieux
-    # que les jars du dernier depot, le ROUGE observe est peut-etre celui des jars d'avant).
+    # --- rapatriement (les avatars d'echec sont COLLECTES, pas emis : le budget d'etape est fini) ---
     LOG_LISTING="$DIAG_DIR/logs-ls.txt"
+    DIAG_NOTE="journaux : "
     if run_sftp "ls -l logs"; then
       tr -d '\r' < "$SFTP_LOG" | grep -v -E "Warning: Permanently|sftp> |^ls: " > "$LOG_LISTING"
     else
       : > "$LOG_LISTING"
-      diag_warn "listing logs/ impossible ($(sftp_last))"
+      DIAG_NOTE="$DIAG_NOTE listing logs/ IMPOSSIBLE ($(sftp_last)) ;"
     fi
     if run_sftp "get logs/latest.log $DIAG_DIR/latest.log"; then
-      # Un get qui reussit peut quand meme poser un fichier vide : le compte de lignes le dit.
-      diag_annot "DIAGNOSTIC : latest.log rapatrie ($(wc -c < "$DIAG_DIR/latest.log" | tr -d ' ') octets, $(wc -l < "$DIAG_DIR/latest.log" | tr -d ' ') lignes)"
+      DIAG_NOTE="$DIAG_NOTE latest.log $(wc -c < "$DIAG_DIR/latest.log" | tr -d ' ') octets / $(wc -l < "$DIAG_DIR/latest.log" | tr -d ' ') lignes ;"
     else
       : > "$DIAG_DIR/latest.log"
-      diag_warn "get logs/latest.log REFUSE ($(sftp_last)) — le diagnostic porte sur le journal precedent"
+      DIAG_NOTE="$DIAG_NOTE get latest.log REFUSE ($(sftp_last)) ;"
     fi
     PREV_GZ="$(awk '$NF ~ /\.log\.gz$/ { print $NF }' "$LOG_LISTING" | tail -1)"
     if [ -n "$PREV_GZ" ]; then
       if run_sftp "get logs/$PREV_GZ $DIAG_DIR/prev.log.gz"; then
         [ -s "$DIAG_DIR/prev.log.gz" ] && zcat "$DIAG_DIR/prev.log.gz" > "$DIAG_DIR/prev.log" 2>/dev/null || true
-        diag_annot "DIAGNOSTIC : $PREV_GZ rapatrie ($(wc -l < "$DIAG_DIR/prev.log" 2>/dev/null | tr -d ' ') lignes)"
+        DIAG_NOTE="$DIAG_NOTE $PREV_GZ $(wc -l < "$DIAG_DIR/prev.log" 2>/dev/null | tr -d ' ') lignes"
       else
-        diag_warn "get logs/$PREV_GZ refuse ($(sftp_last))"
+        : > "$DIAG_DIR/prev.log"
+        DIAG_NOTE="$DIAG_NOTE get $PREV_GZ refuse ($(sftp_last))"
       fi
     fi
     [ -s "$DIAG_DIR/prev.log" ] || : > "$DIAG_DIR/prev.log"
 
-    # Le journal a interpreter : le courant (latest.log), sinon le precedent. Les FAITS vont en
-    # annotations (une par ligne ou par bloc) ; le digest complet va au journal et au resume du run.
+    # Le journal a interpreter : le courant (latest.log), sinon le precedent.
     SOURCE="$DIAG_DIR/latest.log"
     SOURCE_NOM="latest.log"
     if [ ! -s "$SOURCE" ]; then
       SOURCE="$DIAG_DIR/prev.log"
-      SOURCE_NOM="prev.log.gz (latest.log absent ou vide !)"
+      SOURCE_NOM="journal precedent (latest.log absent ou vide !)"
     fi
 
-    # Digest complet (journal + resume du run) : version, lignes Valoria/Economy, erreurs.
+    # Digest complet (journal du run + resume) : tout le contexte, sans contrainte de taille.
     DIGEST="$DIAG_DIR/digest.txt"
     : > "$DIGEST"
     for name in latest prev; do
@@ -392,7 +392,7 @@ if [ "$DRY_RUN" = "1" ]; then
         awk '/Exception|ERROR|SEVERE|Error occurred|Caused by/ { print; n = 0
               while (n < 14 && (getline ligne) > 0) { if (ligne ~ /^(Caused by|[[:space:]]+at |\.\.\. [0-9]+ more)/) { print ligne; n++ } else break } }' "$f" || true
         echo "----- cycle de vie des plugins -----"
-        grep -n -E "Enabling|Disabling|Ambiguous|Could not load|auto-update|libraries" "$f" | head -30 || true
+        grep -n -E "Enabling|Disabling|Ambiguous|Could not load" "$f" | head -30 || true
         echo "----- 15 premieres lignes -----"
         head -15 "$f" || true
         echo "----- 25 dernieres lignes -----"
@@ -405,13 +405,16 @@ if [ "$DRY_RUN" = "1" ]; then
       { echo "## Diagnostic serveur (lecture seule)"; echo '```'; cat "$DIGEST"; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
     fi
 
-    # ---------------- FAITS, en annotations (canal lu par l'agent : API check-runs) ----------------
+    # --- les SIX faits essentiels (budget runner : 4 empreintes + 6 ici = 10 par etape) ---
+    # 1. ce qui a ete rapatrie (et les refus — un diagnostic qui ne dit pas qu'il lui manque le
+    #    journal courant ressemble a un diagnostic complet : c'est le piege du run 33325114747).
+    diag_annot "DIAGNOSTIC : $DIAG_NOTE — source analysee : $SOURCE_NOM"
+    # 2. listing plugins/ avec dates : un doublon ou une date d'avant le depot se voit ici.
     diag_annot "DIAGNOSTIC : plugins/ (nom [octets, date du ls]) = $(awk '$NF ~ /\.jar$/ { printf "%s [%s o, %s %s %s] ; ", $NF, $5, $6, $7, $8 }' "$PRE_LIST" | head -c 700)"
+    # 3. listing logs/ : quand latest.log a-t-il ete ecrit pour la derniere fois.
     diag_annot "DIAGNOSTIC : listing logs/ = $(grep -v '^total' "$LOG_LISTING" | tr '\n' ' ' | head -c 900)"
-
-    # AGE RELATIF jars vs journal — tout du MEME ls, donc meme horloge : si un jar depose est plus
-    # RECENT que latest.log, le serveur tourne encore sur les jars d'avant (le rouge observe est
-    # alors celui de l'ancien demarrage, et la seule action est REDEMARRER, pas debuguer).
+    # 4. VERDICT d'horloge unique : mtime des jars vs mtime de latest.log DANS LE MEME ls.
+    #    Les horloges du serveur et du runner ne sont pas comparables ; celles d'un meme listing, si.
     t_log="$(awk '$NF == "latest.log" { print $6, $7, $8 }' "$LOG_LISTING" | head -1)"
     e_log="$(date -d "$t_log" +%s 2>/dev/null || printf 0)"
     jar_le_plus_recent=""
@@ -421,42 +424,56 @@ if [ "$DRY_RUN" = "1" ]; then
       e="$(date -d "$d" +%s 2>/dev/null || printf 0)"
       if [ "$e" -gt "$e_best" ]; then e_best="$e"; jar_le_plus_recent="$nom ($d)"; fi
     done
-    if [ "$e_best" -gt "$e_log" ]; then
+    if [ -z "$t_log" ]; then
+      diag_annot "DIAGNOSTIC VERDICT : indeterminable — latest.log absent du listing logs/ (dossier illisible ?)"
+    elif [ "$e_best" -gt "$e_log" ]; then
       diag_annot "DIAGNOSTIC VERDICT : $jar_le_plus_recent est PLUS RECENT que latest.log ($t_log) — le serveur n'a pas redemarre depuis le dernier depot : REDEMARRER LE SERVEUR, le rouge observe est celui des anciens jars."
     else
       diag_annot "DIAGNOSTIC VERDICT : latest.log ($t_log) est plus recent que tous les jars — le dernier demarrage a bien charge les jars deposes."
     fi
-
+    # 5. compteurs + version (une seule annotation pour les deux).
     VERS="$(grep -m 1 -E "Starting minecraft server version|This server is running" "$SOURCE" 2>/dev/null || true)"
-    [ -n "$VERS" ] && diag_annot "DIAGNOSTIC : version serveur ($SOURCE_NOM) : $VERS"
-    # Compteurs : Enabling=0 => le demarrage n'a jamais atteint l'activation des plugins ;
-    # Done=0 => demarrage inacheve. Ce resume a tranche des questions que les extraits seuls brouillaient.
-    # `grep -c` imprime deja 0 sans match, mais sort en echec : le defaut ne doit donc s'appliquer
-    # qu'a un resultat VIDE (fichier absent), pas ajouter un second 0 apres celui de grep.
+    VERS_COURT="$(printf '%s' "$VERS" | grep -o -E "version [0-9][^ ]*|Paper [0-9][^ ]*" | head -1)"
     n_en="$(grep -c 'Enabling' "$SOURCE" 2>/dev/null)"; n_en="${n_en:-0}"
     n_er="$(grep -c 'ERROR' "$SOURCE" 2>/dev/null)"; n_er="${n_er:-0}"
     n_do="$(grep -c 'Done (' "$SOURCE" 2>/dev/null)"; n_do="${n_do:-0}"
     n_va="$(grep -ci 'valoria' "$SOURCE" 2>/dev/null)"; n_va="${n_va:-0}"
-    diag_annot "DIAGNOSTIC : $SOURCE_NOM : $n_en lignes Enabling, $n_er ERROR, $n_do ligne(s) Done, $n_va lignes valoria."
-    # Debut et fin du journal : la fin dit si le demarrage est ALLE au bout (« Done ») ou plante.
-    # Chaque ligne en annotation SEPAREE (petite = sure) : un seul bloc coupe a 460 octets a deja
-    # perdu l'extrait entier sur un accent tronque.
-    head -8 "$SOURCE" 2>/dev/null | head -c 400 | while IFS= read -r ligne; do diag_annot "DEBUT | ${ligne:0:240}"; done
-    tail -10 "$SOURCE" 2>/dev/null | while IFS= read -r ligne; do diag_annot "FIN  | ${ligne:0:240}"; done
-    # Cycle de vie : une annotation par ligne Enabling/Disabling/Ambiguous (12 max).
-    grep -E "Enabling|Disabling|Ambiguous|Could not load" "$SOURCE" 2>/dev/null | head -12 | while IFS= read -r ligne; do
-      diag_annot "${ligne:0:480}"
-    done
-    # Chaque exception avec sa PILE (les « at … » nomment le plugin coupable) : 5 blocs max,
-    # 14 lignes de pile chacun — la limite GitHub est ~50 annotations par run.
-    awk '/Exception|ERROR|SEVERE|Error occurred/ { bloc = $0; n = 0
-          while (n < 14 && (getline ligne) > 0) { if (ligne ~ /^(Caused by|[[:space:]]+at |\.\.\. [0-9]+ more)/) { bloc = bloc "\n" ligne; n++ } else break }
-          print bloc }' "$SOURCE" 2>/dev/null | head -5 | while IFS= read -r bloc; do
-      diag_annot "${bloc:0:480}"
-    done
-    # Et si le journal courant ne dit rien des plugins Valoria : c'est un FAIT, il faut le voir.
-    if ! grep -q -i "valoria" "$SOURCE" 2>/dev/null; then
-      diag_warn "aucune ligne « valoria » dans $SOURCE_NOM — journal d'un demarrage sans les plugins, ou mauvais journal"
+    diag_annot "DIAGNOSTIC : $SOURCE_NOM ($VERS_COURT) : $n_en Enabling, $n_er ERROR, $n_do Done, $n_va lignes valoria — Enabling=0 : demarrage jamais arrive aux plugins ; Done=0 : demarrage inacheve."
+    # 6. la premiere exception avec le haut de sa pile (le coupable, en une ligne).
+    PREMIERE_EXC="$(awk '/Exception|ERROR|SEVERE|Error occurred/ { print; n = 0
+          while (n < 3 && (getline ligne) > 0) { if (ligne ~ /^(Caused by|[[:space:]]+at )/) { print " <- " ligne; n++ } else break } exit }' "$SOURCE" 2>/dev/null)"
+    if [ -n "$PREMIERE_EXC" ]; then
+      diag_annot "DIAGNOSTIC : premiere erreur de $SOURCE_NOM : $(printf '%s' "$PREMIERE_EXC" | tr '\n' ' ' | head -c 420)"
+    else
+      diag_annot "DIAGNOSTIC : aucune ligne d'erreur dans $SOURCE_NOM."
+    fi
+
+    # --- le DETAIL par l'API Checks : le budget d'etape (10) est epuise, l'API en accepte 50. ---
+    # job id == check run id pour un job Actions (les annotations des runs precedents se lisaient
+    # deja sur ce chemin). En dehors de la CI (script lance a la main), on saute sans erreur.
+    if [ -n "${GITHUB_RUN_ID:-}" ] && [ -n "${GITHUB_TOKEN:-${GH_TOKEN:-}}" ] && command -v gh >/dev/null 2>&1; then
+      head -8 "$SOURCE" 2>/dev/null | while IFS= read -r ligne; do diag_line "DEBUT | ${ligne:0:240}"; done
+      tail -10 "$SOURCE" 2>/dev/null | while IFS= read -r ligne; do diag_line "FIN  | ${ligne:0:240}"; done
+      grep -E "Enabling|Disabling|Ambiguous|Could not load" "$SOURCE" 2>/dev/null | head -14 | while IFS= read -r ligne; do diag_line "${ligne:0:480}"; done
+      awk '/Exception|ERROR|SEVERE|Error occurred/ { bloc = $0; n = 0
+            while (n < 14 && (getline ligne) > 0) { if (ligne ~ /^(Caused by|[[:space:]]+at |\.\.\. [0-9]+ more)/) { bloc = bloc "\n" ligne; n++ } else break }
+            print bloc }' "$SOURCE" 2>/dev/null | head -6 | while IFS= read -r bloc; do diag_line "${bloc:0:480}"; done
+      grep -n -i -m 30 "valoria\|econom" "$SOURCE" 2>/dev/null | while IFS= read -r ligne; do diag_line "${ligne:0:480}"; done
+      if ! grep -q -i "valoria" "$SOURCE" 2>/dev/null; then
+        diag_line "AVERTISSEMENT : aucune ligne valoria dans $SOURCE_NOM"
+      fi
+      if [ -s "$diag_msgfile" ]; then
+        jq -R -s 'split("\n") | map(select(length > 0)) | .[0:39]
+                  | map({path: "logs/latest.log", start_line: 1, end_line: 1,
+                         annotation_level: "notice", message: ., title: "DIAGNOSTIC serveur"})' \
+          "$diag_msgfile" > "$DIAG_DIR/annots.json" 2>/dev/null \
+          && JOB_ID="$(gh api repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/jobs --jq '.jobs[0].id' 2>/dev/null)" \
+          && [ -n "$JOB_ID" ] \
+          && gh api --method POST -H "Content-Type: application/json" \
+               "repos/$GITHUB_REPOSITORY/check-runs/$JOB_ID/annotations" --input "$DIAG_DIR/annots.json" >/dev/null 2>&1 \
+          && say "DIAGNOSTIC : $(wc -l < "$diag_msgfile" | tr -d ' ') lignes de detail publiees par l'API Checks (run $GITHUB_RUN_ID)." \
+          || say "AVERTISSEMENT : publication du detail par l'API Checks impossible — les six faits essentiels restent en annotations d'etape."
+      fi
     fi
     exit 0
   fi
