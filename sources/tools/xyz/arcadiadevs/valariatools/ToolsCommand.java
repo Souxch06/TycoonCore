@@ -88,6 +88,9 @@ public final class ToolsCommand implements CommandExecutor, TabCompleter {
             case "ability":
             case "capacite":
                 return ability(sender, args);
+            case "max":
+            case "maximum":
+                return maxOut(sender, args);
             case "reset":
                 return reset(sender, args);
             case "stats":
@@ -440,73 +443,307 @@ public final class ToolsCommand implements CommandExecutor, TabCompleter {
     }
 
     /**
-     * <code>/tools ability &lt;joueur&gt; &lt;âme&gt; &lt;capacité&gt; &lt;niveau&gt;</code> : pose le niveau d'une capacité.
+     * <code>/tools ability &lt;joueur&gt; &lt;âme|all&gt; &lt;capacité|all&gt; [niveau|max|+N|-N]</code>.
      *
      * <p>Réservé à l'admin, et volontairement sans contrôle d'argent : c'est l'outil de réglage et de
-     * test, pas un raccourci de jeu. Le niveau est borné par <code>max-level</code> de la config, parce
-     * qu'un niveau hors barème afficherait dans le menu une capacité plus forte que ce que le admin a
-     * déclaré.</p>
+     * test, pas un raccourci de jeu. Trois raccourcis évitent de taper vingt-deux fois la même ligne
+     * quand on veut équiper un outil d'un coup : <code>all</code> en âme (les quatre), <code>all</code>
+     * en capacité (tout le barème de l'âme), et un niveau <code>max</code> ou relatif
+     * (<code>+5</code>, <code>-3</code>). Sans niveau, la commande ne modifie rien : elle affiche.</p>
+     *
+     * <p>Le niveau reste borné par <code>max-level</code> de la config, parce qu'un niveau hors barème
+     * afficherait dans le menu une capacité plus forte que ce que le fichier déclare.</p>
+     *
+     * <p>Le joueur peut être omis par un admin en jeu qui se règle lui-même : si le premier argument
+     * n'est pas un joueur en ligne mais se lit comme une âme, la commande vise son auteur — et
+     * seulement dans ce cas, un joueur réellement nommé « pioche » garde la priorité.</p>
      */
     private boolean ability(CommandSender sender, String[] args) {
         if (!sender.hasPermission("valoria.tools.admin")) {
             sender.sendMessage(color("&cPermission manquante (&fvaloria.tools.admin&c)."));
             return true;
         }
-        if (args.length < 4) {
-            sender.sendMessage(color("&cUsage : /tools ability <joueur> <ame> <capacite> [niveau]"));
+        if (args.length < 3) {
+            usageAbility(sender);
             return true;
         }
-        Player target = Bukkit.getPlayerExact(args[1]);
+        int offset = selfShift(sender, args);
+        Player target = offset == 0 ? (Player) sender : Bukkit.getPlayerExact(args[1]);
         if (target == null) {
             sender.sendMessage(color("&cJoueur hors ligne : les niveaux sont lus en jeu."));
             return true;
         }
-        ToolKind kind = ToolKind.parse(args[2]);
-        if (kind == null) {
-            sender.sendMessage(color("&cÂme inconnue : &f" + args[2] + "&c. Choix : pioche, hache, canne, epee."));
+        if (args.length < offset + 3) {
+            usageAbility(sender);
             return true;
         }
-        ToolsConfig.KindConfig kindConfig = this.plugin.toolsConfig().kind(kind);
-        if (kindConfig == null) {
-            sender.sendMessage(color("&cAucune configuration pour cette âme."));
+        List<ToolKind> kinds = new ArrayList<ToolKind>();
+        if (!resolveKinds(kinds, args[offset + 1], sender)) {
             return true;
         }
-        ToolsConfig.Ability found = findAbility(kindConfig, args[3]);
-        if (found == null) {
-            sender.sendMessage(color("&cCapacité inconnue pour &f" + kind.label() + "&c : &f" + args[3]));
-            sender.sendMessage(color("&7Choix : &f" + String.join(", ", knownIds(kindConfig))));
+        String wanted = args[offset + 2];
+        String asked = args.length > offset + 3 ? args[offset + 3] : null;
+
+        int touched = 0;
+        int locked = 0;
+        int unknown = 0;
+        int shown = 0;
+        for (ToolKind kind : kinds) {
+            ToolsConfig.KindConfig kindConfig = this.plugin.toolsConfig().kind(kind);
+            if (kindConfig == null) {
+                sender.sendMessage(color("&cAucune configuration pour " + kind.label() + "."));
+                unknown++;
+                continue;
+            }
+            List<ToolsConfig.Ability> chosen = new ArrayList<ToolsConfig.Ability>();
+            if (isAll(wanted)) {
+                chosen.addAll(this.plugin.toolsConfig().abilities(kindConfig));
+            } else {
+                ToolsConfig.Ability found = findAbility(kindConfig, wanted);
+                if (found == null) {
+                    sender.sendMessage(color("&cCapacité inconnue pour &f" + kind.label() + "&c : &f" + wanted));
+                    if (kinds.size() == 1) {
+                        sender.sendMessage(color("&7Choix : &f" + String.join(", ", knownIds(kindConfig))
+                                + "&7, ou &fall&7 pour tout le barème."));
+                    }
+                    unknown++;
+                    continue;
+                }
+                chosen.add(found);
+            }
+            int maxTier = this.plugin.toolsConfig().maxTier(kindConfig);
+            int tier = this.plugin.store().tierOf(target.getUniqueId(), kind, maxTier);
+            Map<String, Integer> levels = this.plugin.store().levelsOf(target.getUniqueId(), kind);
+            if (asked == null) {
+                describe(sender, target, kind, chosen, levels, tier, maxTier);
+                shown++;
+                continue;
+            }
+            for (ToolsConfig.Ability ability : chosen) {
+                int level = resolveLevel(asked, ToolsConfig.levelOf(ability, levels, tier), ability.maxLevel());
+                if (level < 0) {
+                    sender.sendMessage(color("&cNiveau invalide : &f" + asked + "&c — un entier, &fmax&c,"
+                            + " &f+N&c ou &f-N&c."));
+                    return true;
+                }
+                this.plugin.store().setLevel(target, kind, ability.id(), level, ability.maxLevel());
+                if (tier < ability.unlock()) {
+                    locked++;
+                }
+                touched++;
+            }
+        }
+        if (touched == 0) {
+            // `shown > 0` = la commande a affiché sans écrire (pas de niveau demandé) : ce n'est pas un
+            // échec, et le dire ferait croire que le réglage n'a pas été enregistré.
+            if (unknown == 0 && shown == 0) {
+                sender.sendMessage(color("&eRien à régler : aucune capacité ne correspond."));
+            }
             return true;
         }
-        if (args.length < 5) {
-            int tier = this.plugin.store().tierOf(target.getUniqueId(), kind,
-                    this.plugin.toolsConfig().maxTier(kindConfig));
-            sender.sendMessage(color("&b" + found.name() + "&7 : niveau &f"
-                    + ToolsConfig.levelOf(found, this.plugin.store().levelsOf(target.getUniqueId(), kind), tier)
-                    + "&7/&f" + found.maxLevel() + "&7 (palier requis &f" + found.unlock() + "&7)"));
+        refreshHeld(target);
+        sender.sendMessage(color("&a" + target.getName() + " &7: &f" + touched + "&7 niveau(x) de capacité"
+                + " réglé(s) sur " + labelOf(kinds) + "."));
+        if (!sender.equals(target)) {
+            target.sendMessage(color("&aTes capacités d'outil ont été réglées par &f" + sender.getName() + "&a."));
+        }
+        if (locked > 0) {
+            sender.sendMessage(color("&e" + locked + " réglage(s) au-dessus du palier actuel : le niveau est"
+                    + " stocké, pas perdu, mais il ne fera effet qu'au palier requis (&f/tools set "
+                    + target.getName() + " <âme> <palier>&e)."));
+        }
+        this.plugin.saveSoon();
+        return true;
+    }
+
+    /**
+     * <code>/tools max [joueur] [âme] [niveau]</code> : le palier au maximum configuré et tout le barème
+     * de l'âme à son <code>max-level</code> — ou à <code>niveau</code> si l'admin en donne un.
+     *
+     * <p>C'est la commande d'équipement d'un coup : sans elle, préparer un outil de test demande un
+     * <code>/tools set</code> puis un <code>/tools ability</code> par capacité. Le palier est monté
+     * AVANT les niveaux, sinon chaque capacité réglée tomberait sous le verrou de palier et
+     * n'afficherait aucun effet — exactement ce qui fait croire que la commande « ne marche pas ».</p>
+     */
+    private boolean maxOut(CommandSender sender, String[] args) {
+        if (!sender.hasPermission("valoria.tools.admin")) {
+            sender.sendMessage(color("&cPermission manquante (&fvaloria.tools.admin&c)."));
             return true;
         }
-        int level = number(args[4]);
-        if (level < 0) {
-            sender.sendMessage(color("&cNiveau invalide : &f" + args[4] + "&c (un entier, 0 pour retirer)."));
+        int offset = selfShift(sender, args);
+        Player target;
+        if (offset == 0) {
+            target = (Player) sender;
+        } else if (args.length > 1) {
+            target = Bukkit.getPlayerExact(args[1]);
+            if (target == null) {
+                sender.sendMessage(color("&cJoueur hors ligne : les paliers et les niveaux se règlent en jeu."));
+                return true;
+            }
+        } else if (sender instanceof Player) {
+            target = (Player) sender;
+        } else {
+            sender.sendMessage(color("&cUsage console : /tools max <joueur> [ame] [niveau]"));
             return true;
         }
-        int tier = this.plugin.store().tierOf(target.getUniqueId(), kind,
-                this.plugin.toolsConfig().maxTier(kindConfig));
-        this.plugin.store().setLevel(target, kind, found.id(), level, found.maxLevel());
+        List<ToolKind> kinds = new ArrayList<ToolKind>();
+        if (args.length > offset + 1 && !resolveKinds(kinds, args[offset + 1], sender)) {
+            return true;
+        }
+        if (kinds.isEmpty()) {
+            Collections.addAll(kinds, ToolKind.values());
+        }
+        String asked = args.length > offset + 2 ? args[offset + 2] : "max";
+
+        int done = 0;
+        for (ToolKind kind : kinds) {
+            ToolsConfig.KindConfig kindConfig = this.plugin.toolsConfig().kind(kind);
+            if (kindConfig == null) {
+                sender.sendMessage(color("&cAucune configuration pour " + kind.label() + "."));
+                continue;
+            }
+            int maxTier = this.plugin.toolsConfig().maxTier(kindConfig);
+            this.plugin.store().setTier(target, kind, maxTier, maxTier);
+            int tier = this.plugin.store().tierOf(target.getUniqueId(), kind, maxTier);
+            int before = this.plugin.store().totalLevels(target.getUniqueId(), kind);
+            int perKind = 0;
+            for (ToolsConfig.Ability ability : this.plugin.toolsConfig().abilities(kindConfig)) {
+                int level = resolveLevel(asked, 0, ability.maxLevel());
+                if (level < 0) {
+                    sender.sendMessage(color("&cNiveau invalide : &f" + asked + "&c — un entier ou &fmax&c."));
+                    return true;
+                }
+                this.plugin.store().setLevel(target, kind, ability.id(), level, ability.maxLevel());
+                perKind++;
+            }
+            done += perKind;
+            int after = this.plugin.store().totalLevels(target.getUniqueId(), kind);
+            sender.sendMessage(color("&a" + MultiTool.capitalize(kind.label()) + "&7 : palier &f" + tier
+                    + "&7/&f" + maxTier + "&7, " + perKind + " capacité(s) — niveaux " + before + " → &f" + after));
+        }
+        if (done == 0) {
+            return true;
+        }
+        refreshHeld(target);
+        if (!sender.equals(target)) {
+            target.sendMessage(color("&aTon multi-outil a été porté au maximum par &f" + sender.getName() + "&a."));
+        }
+        this.plugin.saveSoon();
+        return true;
+    }
+
+    /** Affiche l'état d'une liste de capacités, sans rien écrire : c'est le mode sans niveau. */
+    private void describe(CommandSender sender, Player target, ToolKind kind,
+                          List<ToolsConfig.Ability> abilities, Map<String, Integer> levels,
+                          int tier, int maxTier) {
+        int total = 0;
+        int locked = 0;
+        for (ToolsConfig.Ability ability : abilities) {
+            int level = ToolsConfig.levelOf(ability, levels, tier);
+            total += level;
+            if (level > 0 && tier < ability.unlock()) {
+                locked++;
+            }
+        }
+        sender.sendMessage(color("&6" + target.getName() + " &7— " + MultiTool.capitalize(kind.label())
+                + " &8(palier &f" + tier + "&8/&f" + maxTier + "&8)"));
+        for (ToolsConfig.Ability ability : abilities) {
+            int level = ToolsConfig.levelOf(ability, levels, tier);
+            sender.sendMessage(color("  &7" + ability.name() + " &8(" + ability.id() + ")&7 : &f" + level
+                    + "&7/&f" + ability.maxLevel()
+                    + (tier < ability.unlock() ? " &8— palier " + ability.unlock() + " requis" : "")));
+        }
+        sender.sendMessage(color("&7  total &f" + total + "&7 niveau(x), " + abilities.size()
+                + " capacité(s)" + (locked > 0 ? ", &e" + locked + " sous verrou de palier" : "") + "&7."));
+    }
+
+    /** Rafraîchit la lore de l'outil tenu, si c'en est un : les niveaux y sont résumés. */
+    private void refreshHeld(Player target) {
         ItemStack held = target.getInventory().getItemInMainHand();
         if (MultiTool.isMultiTool(held)) {
             MultiTool.refresh(held, this.plugin.toolsConfig(), this.plugin.store(), target.getUniqueId());
+            target.updateInventory();
         }
-        if (tier < found.unlock()) {
-            sender.sendMessage(color("&eAttention : le palier " + tier + " ne permet pas encore d'utiliser "
-                    + found.name() + " (palier " + found.unlock() + " requis). Le niveau est stocké, pas perdu."));
+    }
+
+    private void usageAbility(CommandSender sender) {
+        sender.sendMessage(color("&cUsage : /tools ability <joueur> <ame|all> <capacite|all> [niveau|max|+N|-N]"));
+        sender.sendMessage(color("&7Le joueur est facultatif en jeu : &f/tools ability pioche all max"));
+    }
+
+    /** Nom d'une liste d'âmes pour un message : « pioche » ou « 4 âmes ». */
+    private static String labelOf(List<ToolKind> kinds) {
+        if (kinds.size() == 1) {
+            return kinds.get(0).label();
         }
-        sender.sendMessage(color("&a" + target.getName() + " &7: " + found.name() + " au niveau &f"
-                + Math.min(level, found.maxLevel()) + "&7/&f" + found.maxLevel()));
-        target.sendMessage(color("&a" + found.name() + "&7 : niveau &f" + Math.min(level, found.maxLevel())
-                + "&7 (réglage de l'administration)."));
-        this.plugin.saveSoon();
+        return kinds.size() + " âmes";
+    }
+
+    /**
+     * Remplit {@code out} avec les âmes demandées : une seule, ou toutes si l'argument vaut
+     * <code>all</code>. Retourne {@code false} si l'âme est inconnue (message déjà envoyé).
+     */
+    private static boolean resolveKinds(List<ToolKind> out, String text, CommandSender sender) {
+        if (isAll(text)) {
+            Collections.addAll(out, ToolKind.values());
+            return true;
+        }
+        ToolKind kind = ToolKind.parse(text);
+        if (kind == null) {
+            sender.sendMessage(color("&cÂme inconnue : &f" + text + "&c. Choix : pioche, hache, canne,"
+                    + " epee, all."));
+            return false;
+        }
+        out.add(kind);
         return true;
+    }
+
+    /** Vrai si l'argument vaut « tout » : les quatre âmes, ou tout le barème d'une âme. */
+    private static boolean isAll(String text) {
+        if (text == null) {
+            return false;
+        }
+        String wanted = text.trim().toLowerCase(Locale.ROOT);
+        return wanted.equals("all") || wanted.equals("*") || wanted.equals("tout") || wanted.equals("toutes");
+    }
+
+    /**
+     * Traduit ce que l'admin a tapé en niveau applicable, borné par le plafond de la capacité.
+     *
+     * <p><code>7</code> pose 7 ; <code>max</code> pose le <code>max-level</code> ; <code>+5</code> et
+     * <code>-3</code> sont relatifs au niveau courant — le réglage d'un barème à vingt-deux entrées se
+     * fait en tâtonnant, et retaper le total à chaque essai est la première raison d'abandonner.</p>
+     *
+     * @return le niveau, jamais négatif ni au-dessus du plafond ; {@code -1} si le texte n'est aucun
+     *         des trois
+     */
+    private static int resolveLevel(String text, int current, int maxLevel) {
+        if (text == null) {
+            return -1;
+        }
+        String wanted = text.trim().toLowerCase(Locale.ROOT);
+        if (wanted.equals("max") || wanted.equals("maximum")) {
+            return Math.max(0, maxLevel);
+        }
+        try {
+            int raw = Integer.parseInt(wanted);
+            int level = wanted.startsWith("+") || wanted.startsWith("-") ? current + raw : raw;
+            return Math.max(0, Math.min(level, Math.max(0, maxLevel)));
+        } catch (NumberFormatException malformed) {
+            return -1;
+        }
+    }
+
+    /**
+     * 0 quand la commande vise son auteur (le premier argument est déjà une âme), 1 quand args[1] est
+     * le joueur. Le repli ne s'applique que si ce premier argument n'est pas un joueur en ligne : un
+     * joueur nommé « pioche » doit rester ciblable.
+     */
+    private static int selfShift(CommandSender sender, String[] args) {
+        if (args.length < 2 || !(sender instanceof Player)) {
+            return 1;
+        }
+        return Bukkit.getPlayerExact(args[1]) == null && ToolKind.parse(args[1]) != null ? 0 : 1;
     }
 
     /** <code>/tools reset &lt;joueur&gt; [âme]</code> : remet une âme à zéro, palier et capacités. */
@@ -598,7 +835,8 @@ public final class ToolsCommand implements CommandExecutor, TabCompleter {
         sender.sendMessage(color("&7  /tools gui [âme] &8— &7menu, éventuellement ouvert sur une âme"));
         sender.sendMessage(color("&7  /tools sell [all] &8— &7vend ce que l'outil reconnaît"));
         sender.sendMessage(color("&7  /tools set <joueur> <âme> [palier] &8— &7voir/fixer un palier &8(admin)"));
-        sender.sendMessage(color("&7  /tools ability <joueur> <âme> <capacité> [niveau] &8— &7régler une capacité &8(admin)"));
+        sender.sendMessage(color("&7  /tools ability [joueur] <âme|all> <capacité|all> [niveau|max|+N|-N] &8— &7régler &8(admin)"));
+        sender.sendMessage(color("&7  /tools max [joueur] [âme] [niveau] &8— &7palier max et tout le barème au max &8(admin)"));
         sender.sendMessage(color("&7  /tools reset <joueur> [âme] &8— &7remettre une âme à zéro &8(admin)"));
         sender.sendMessage(color("&7  /tools stats &8— &7état des services"));
         if (sender.hasPermission("valoria.tools.admin")) {
@@ -650,6 +888,7 @@ public final class ToolsCommand implements CommandExecutor, TabCompleter {
             add(out, "sell", true);
             add(out, "set", sender.hasPermission("valoria.tools.admin"));
             add(out, "ability", sender.hasPermission("valoria.tools.admin"));
+            add(out, "max", sender.hasPermission("valoria.tools.admin"));
             add(out, "reset", sender.hasPermission("valoria.tools.admin"));
             add(out, "stats", sender.hasPermission("valoria.tools.admin"));
             add(out, "help", true);
@@ -657,15 +896,38 @@ public final class ToolsCommand implements CommandExecutor, TabCompleter {
             return filtered(out, args[0]);
         }
         boolean admin = args[0].equalsIgnoreCase("set") || args[0].equalsIgnoreCase("tier")
-                || args[0].equalsIgnoreCase("ability") || args[0].equalsIgnoreCase("reset");
+                || args[0].equalsIgnoreCase("ability") || args[0].equalsIgnoreCase("capacite")
+                || args[0].equalsIgnoreCase("max") || args[0].equalsIgnoreCase("maximum")
+                || args[0].equalsIgnoreCase("reset");
+        // `ability` et `max` acceptent d'omettre le joueur : l'admin en jeu se règle lui-même en tapant
+        // l'âme en premier. Les âmes sont donc proposées AUSSI en deuxième position — mais seulement si
+        // la commande sait se cibler, sinon le Tab proposerait une âme là où un joueur est attendu.
+        boolean selfTarget = args[0].equalsIgnoreCase("ability") || args[0].equalsIgnoreCase("capacite")
+                || args[0].equalsIgnoreCase("max") || args[0].equalsIgnoreCase("maximum");
         if (args.length == 2 && admin) {
             for (Player online : Bukkit.getOnlinePlayers()) {
                 out.add(online.getName());
             }
+            if (selfTarget && sender instanceof Player) {
+                Collections.addAll(out, "pickaxe", "axe", "rod", "sword");
+            }
             return filtered(out, args[1]);
         }
         if (args.length == 3 && admin) {
-            Collections.addAll(out, "pickaxe", "axe", "rod", "sword");
+            // forme courte déjà engagée (`/tools ability pioche …`) : le troisième mot est une capacité
+            if (selfTarget && sender instanceof Player && ToolKind.parse(args[1]) != null
+                    && Bukkit.getPlayerExact(args[1]) == null) {
+                ToolsConfig.KindConfig shortConfig =
+                        this.plugin.toolsConfig().kind(ToolKind.parse(args[1]));
+                if (shortConfig != null) {
+                    for (ToolsConfig.Ability ability : this.plugin.toolsConfig().abilities(shortConfig)) {
+                        out.add(ability.id());
+                    }
+                    out.add("all");
+                }
+                return filtered(out, args[2]);
+            }
+            Collections.addAll(out, "pickaxe", "axe", "rod", "sword", "all");
             return filtered(out, args[2]);
         }
         if (args.length == 4 && (args[0].equalsIgnoreCase("set") || args[0].equalsIgnoreCase("tier"))) {
@@ -674,7 +936,16 @@ public final class ToolsCommand implements CommandExecutor, TabCompleter {
             }
             return filtered(out, args[3]);
         }
-        if (args.length == 4 && args[0].equalsIgnoreCase("ability")) {
+        boolean abilitySub = args[0].equalsIgnoreCase("ability") || args[0].equalsIgnoreCase("capacite");
+        boolean maxSub = args[0].equalsIgnoreCase("max") || args[0].equalsIgnoreCase("maximum");
+        // forme courte (`/tools ability pioche fortune 5`) : tout est décalé d'un cran vers la gauche
+        boolean shortForm = selfTarget && sender instanceof Player && args.length > 1
+                && ToolKind.parse(args[1]) != null && Bukkit.getPlayerExact(args[1]) == null;
+        if (args.length == 4 && abilitySub) {
+            if (shortForm) {
+                levelCandidates(out);
+                return filtered(out, args[3]);
+            }
             ToolKind kind = ToolKind.parse(args[2]);
             ToolsConfig.KindConfig kindConfig = kind == null ? null : this.plugin.toolsConfig().kind(kind);
             if (kindConfig != null) {
@@ -682,15 +953,30 @@ public final class ToolsCommand implements CommandExecutor, TabCompleter {
                     out.add(ability.id());
                 }
             }
+            out.add("all");
             return filtered(out, args[3]);
         }
-        if (args.length == 5 && args[0].equalsIgnoreCase("ability")) {
-            for (int i = 0; i <= 10; i++) {
-                out.add(String.valueOf(i));
-            }
+        if (args.length == 5 && abilitySub) {
+            levelCandidates(out);
             return filtered(out, args[4]);
         }
+        if (args.length == 4 && maxSub && !shortForm) {
+            levelCandidates(out);
+            return filtered(out, args[3]);
+        }
         return out;
+    }
+
+    /**
+     * Les niveaux proposés au Tab : les petits entiers, <code>max</code>, et les pas relatifs les plus
+     * utiles. Proposer <code>+10</code> n'est pas décoratif : sans lui, l'admin qui monte un barème de
+     * vingt-deux capacités retape vingt-deux fois le même total.
+     */
+    private static void levelCandidates(List<String> out) {
+        for (int i = 0; i <= 10; i++) {
+            out.add(String.valueOf(i));
+        }
+        Collections.addAll(out, "max", "+1", "+5", "+10", "-1", "-5");
     }
 
     private static void add(List<String> out, String name, boolean allowed) {
@@ -728,19 +1014,8 @@ public final class ToolsCommand implements CommandExecutor, TabCompleter {
         }
     }
 
-    /** Un entier borné, 0 compris (retirer un niveau) ; {@code -1} quand ce n'est pas un nombre. */
-    private static int number(String text) {
-        if (text == null) {
-            return -1;
-        }
-        try {
-            return Math.max(0, Integer.parseInt(text.trim()));
-        } catch (NumberFormatException malformed) {
-            return -1;
-        }
-    }
-
     private static String color(String text) {
         return MultiTool.color(text);
     }
-}
+
+            }
