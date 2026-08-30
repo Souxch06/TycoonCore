@@ -71,6 +71,40 @@ trim_secret() {
   printf '%s' "$s"
 }
 
+# Empreinte STRUCTURELLE d'un secret : longueur, presence d'espace (et d'autres blancs : tabulation,
+# retour, espace insecable), de point, de chiffre, casse du premier caractere — JAMAIS la valeur.
+# Pourquoi : « CX File Explorer se connecte mais la CI non » ne se tranche qu'en comparant ce que le
+# runner a RECU avec ce que le panneau affiche. Or GitHub masque toute valeur de secret imprimee
+# (elle sortirait en « *** », illisible), tandis qu'une longueur ou un « point absent » se lit
+# toujours. L'empreinte attendue du login de ce serveur, « Lucas Afonso.94b412fb » :
+# longueur=21 espaces=1 points=1 chiffres=5 1er_caractere=MAJUSCULE — tout ecart (espace double,
+# espace insecable collee par le correcteur mobile, retour chariot de fin, connexion du site a la
+# place du login) se voit SANS rien devoiler. Prepare au commit bd8b81b d'une session precedente
+# (perdu a la remise a plat de l'historique), recrit ici a l'identique.
+empreinte_secret() {
+  local nom="$1" valeur longueur i c
+  valeur="${!nom:-}"
+  longueur="${#valeur}"
+  local espaces=0 autres_blancs=0 points=0 chiffres=0 casse
+  for ((i = 0; i < longueur; i++)); do
+    c="${valeur:i:1}"
+    case "$c" in
+      ' ') espaces=$((espaces + 1)) ;;
+      '.') points=$((points + 1)) ;;
+      [0-9]) chiffres=$((chiffres + 1)) ;;
+      *[[:space:]]*) autres_blancs=$((autres_blancs + 1)) ;;
+    esac
+  done
+  case "${valeur:0:1}" in
+    [[:upper:]]) casse='MAJUSCULE' ;;
+    [[:lower:]]) casse='minuscule' ;;
+    [0-9])       casse='chiffre' ;;
+    *)           casse='ni_lettre_ni_chiffre' ;;
+  esac
+  printf 'empreinte %s : longueur=%d espaces=%d autres_blancs=%d points=%d chiffres=%d 1er_caractere=%s\n' \
+    "$nom" "$longueur" "$espaces" "$autres_blancs" "$points" "$chiffres" "$casse"
+}
+
 # ------------------------------------------------------------------ 1. les trois jars, ou rien
 JARS=("$MAIN_JAR" "$ECONOMY_JAR")
 if [ -f "$TOOLS_JAR" ]; then
@@ -165,6 +199,16 @@ SFTP_HOST=$(printf '%s' "$SFTP_HOST" | sed -e 's#^[a-zA-Z][a-zA-Z0-9+.-]*://##' 
 SFTP_PORT=$(printf '%s' "$SFTP_PORT" | tr -cd '0-9')
 [ -n "$SFTP_HOST" ] || die "SFTP_HOST est vide apres normalisation : coller l'hote nu du panneau (sans sftp:// ni chemin)."
 [ -n "$SFTP_PORT" ] || die "SFTP_PORT n'est pas un nombre (recu: ${SFTP_PORT:-vide}) : le port SFTP du panneau, en chiffres."
+
+# Diagnostique d'empreinte structurelle : ce que le runner envoie VRAIMENT, champ par champ, apres
+# nettoyage des blancs de bordure (la valeur, elle, n'apparait jamais — GitHub la masquerait en
+# « *** »). A comparer avec l'onglet SFTP du panneau : hote « artemis.mcserverhost.com » =>
+# longueur=24 points=2 chiffres=0 ; login « Lucas Afonso.94b412fb » => longueur=21 espaces=1
+# points=1 chiffres=5 1er_caractere=MAJUSCULE. CX File Explorer vert + CI rouge avec une empreinte
+# conforme = le secret ne decrit pas le meme compte que celui tape dans CX.
+for var in SFTP_HOST SFTP_PORT SFTP_USERNAME SFTP_PASSWORD; do
+  empreinte_secret "$var"
+done
 
 if ! command -v sshpass >/dev/null 2>&1; then
   say "installation de sshpass…"
