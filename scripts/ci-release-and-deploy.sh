@@ -54,7 +54,7 @@ die() {
 # caracteres : le reste du login reste masque par GitHub.
 sftp_user_hint() {
   case "$SFTP_USERNAME" in
-    *.*|*_*) return 0 ;;   # porte la marque d'un login SFTP complet (connexion.id ou u12345_xxxx)
+    *.*|*_|*) return 0 ;;   # porte la marque d'un login SFTP complet (connexion.id ou u12345_xxxx)
   esac
   printf "INDICE: le login SFTP envoye commence par \"%s***\" et ne contient AUCUN point : c'est la simple connexion au site/panneau, pas un compte SFTP. Le login SFTP est \"connexion_panneau.id_serveur\" (ex. luca.a1b2c3d4 ; parfois u12345_xxxx). Copier le champ Utilisateur EN ENTIER depuis l'onglet SFTP/Acces du panneau (bouton copier), puis l'enregistrer dans le secret GitHub SFTP_USERNAME. " "${SFTP_USERNAME:0:4}"
 }
@@ -237,8 +237,18 @@ export SSHPASS="$SFTP_PASSWORD"
 # ATTENTION a l'ORDRE : sftp n'accepte ses options QU'AVANT la destination. « sftp -o ... user@hote
 # -b fichier » echoue sur son usage (exit 1) sans jamais ouvrir la session — panne reelle du run
 # 33307097547, longtemps prise pour un mot de passe refuse. Les options restent donc dans le tableau
-# et la destination est passe en DERNIER argument.
-SFTP=(sshpass -e sftp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -P "$SFTP_PORT")
+# et la destination est passee en DERNIER argument.
+#
+# ET `BatchMode=no`, sans lequel RIEN ne marche : `-b fichier` met sftp en mode batch, et le mode
+# batch fait que ssh N'ESSAIE JAMAIS le mot de passe (il n'a pas le droit de demander quoi que ce
+# soit). sshpass attend donc une invite « password: » qui ne vient pas, et le serveur repond
+# « Permission denied (password,publickey) » MOTEUR A IDENTIFIANTS CORRECTS — c'est la panne des dix
+# runs rouges consecutifs, tenue a tort pour un mauvais secret (CX File Explorer, lui, demande le
+# mot de passe interactivement, donc passe). Prouve sur OpenSSH 9.2 contre un vrai sshd, pty de
+# sshpass reproduit : `-b` seul => aucune invite, Permission denied ; `-b -o BatchMode=no` =>
+# invite, session ouverte. L'option garde au passage tout l'interet de `-b` (arret a la premiere
+# commande fausse, prefixe « - » tolerant).
+SFTP=(sshpass -e sftp -o BatchMode=no -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -P "$SFTP_PORT")
 DEST="$SFTP_USERNAME@$SFTP_HOST"
 
 # Pre-vol TCP : un port ferme, un hote inconnu et un mot de passe refuse donnaient le MEME message
@@ -249,12 +259,43 @@ if timeout 20 bash -c "cat < /dev/null > /dev/tcp/$SFTP_HOST/$SFTP_PORT" 2>/dev/
 else
   die "le serveur $SFTP_HOST:$SFTP_PORT n'est pas joignable depuis le runner GitHub (port ferme, hote inconnu, ou acces SFTP desactive). A verifier dans le panneau MCServerHost : hote exact, port, et activation de l'acces SFTP."
 fi
+SFTP_LOG="$(mktemp)"
+BATCH="$(mktemp)"
+sftp_last() {
+  # tr -d '\r' : sshpass fait tourner sftp dans un pty, dont la sortie revient en CRLF — sans ce
+  # nettoyage, chaque message d'erreur garde ses \r et la verification awk echoue a identifier un
+  # fichier qui est pourtant la (taille annoncee « absente » alors que l'envoi a reussi).
+  grep -v -i -e 'Warning: Permanently added' -e '^$' "$SFTP_LOG" | tr -d '\r' | head -c 400 | tr '\n' ' '
+}
+# Un VRAI fichier batch (`-b fichier`), pas `-b -` : c'est la forme documentee partout, et elle ne
+# depend pas de la gestion du tiret par la version d'OpenSSH du runner. Le batch n'interdit pas le
+# mot de passe tant que `-o BatchMode=no` ouvre le droit de demander (voir le tableau SFTP).
+run_sftp() {
+  printf '%s\n' "$@" "bye" > "$BATCH"
+  "${SFTP[@]}" -b "$BATCH" "$DEST" >"$SFTP_LOG" 2>&1
+}
+
 STAMP="$(date -u +%Y%m%d-%H%M%S)"
-# Le prefixe « - » de sftp signifie « ignore l'erreur » : au premier deploiement les jar ne sont pas
-# encore sur le serveur, et un `rename` qui echoue ferait AVORTER toute la session batch avant l'envoi.
-REMOTE_CMDS=(-mkdir "$PLUGINS_DIR/_sauvegarde-$STAMP")
+# Sauvegarde PILOTEE PAR LISTING, pas par le prefixe « - » : ce prefixe (« ignorer l'erreur ») casse
+# la ligne de commande sous sshpass — le pty coupe « -mkdir chemin » en « -mkdir » + chemin, et la
+# sauvegarde echoue en serie (constate en test local contre un vrai sshd). On liste d'abord
+# `plugins/`, on ne renomme que les jar REELLEMENT presents, et le dossier d'horodatage etant
+# unique au run, son mkdir ne peut pas echouer pour « existe deja ».
+PRE_LIST="$(mktemp)"
+if run_sftp "ls -l $PLUGINS_DIR"; then
+  tr -d '\r' < "$SFTP_LOG" > "$PRE_LIST"
+else
+  say "AVERTISSEMENT : listing pre-envoi impossible ($(sftp_last)) — sauvegarde ecartee, les jar en place seront ecrases."
+  : > "$PRE_LIST"
+fi
+REMOTE_CMDS=("mkdir $PLUGINS_DIR/_sauvegarde-$STAMP")
 for name in "${JAR_NAMES[@]}"; do
-  REMOTE_CMDS+=("-rename $PLUGINS_DIR/$name $PLUGINS_DIR/_sauvegarde-$STAMP/$name")
+  # $NF vaut « plugins/nom.jar » quand le dossier est liste avec son prefixe (forme de `ls -l plugins`
+  # sur le serveur) et « nom.jar » quand il est liste nu : accepter les deux, sinon la sauvegarde
+  # croit toujours qu'il n'y a rien a renommer (constate en test local : dossiers _sauvegarde vides).
+  if awk -v n="$name" '$NF == n || $NF ~ ("/" n "$")' "$PRE_LIST" | grep -q .; then
+    REMOTE_CMDS+=("rename $PLUGINS_DIR/$name $PLUGINS_DIR/_sauvegarde-$STAMP/$name")
+  fi
 done
 # Un `put` par jar : `put src1 src2 dossier/` n'est pas garanti sur toutes les versions d'OpenSSH.
 UPLOAD_CMDS=()
@@ -269,15 +310,12 @@ if [ "$DRY_RUN" = "1" ]; then
   # (identifiant/mot de passe refuses, acces SFTP desactive, restriction d'IP, dossier absent).
   # Aucune ecriture : pas de `put`, `rename` ni `mkdir` — on ne fait que `pwd` et `ls`.
   say "DRY_RUN : ouverture d'une session SFTP en LECTURE SEULE (test des identifiants)…"
-  BATCH="$(mktemp)"
-  SFTP_LOG="$(mktemp)"
-  printf 'pwd\nls -l %s\nbye\n' "$PLUGINS_DIR" > "$BATCH"
-  if "${SFTP[@]}" -b "$BATCH" "$DEST" >"$SFTP_LOG" 2>&1; then
+  if run_sftp "pwd" "ls -l $PLUGINS_DIR"; then
     say "DRY_RUN : identifiants valides — la session s'ouvre, contenu de $PLUGINS_DIR :"
-    cat "$SFTP_LOG"
+    tr -d '\r' < "$SFTP_LOG"
     exit 0
   fi
-  msg="$(grep -v -i -e 'Warning: Permanently added' -e '^$' "$SFTP_LOG" | head -c 500 | tr '\n' ' ')"
+  msg="$(grep -v -i -e 'Warning: Permanently added' -e '^$' "$SFTP_LOG" | tr -d '\r' | head -c 500 | tr '\n' ' ')"
   case "$msg" in
     *"Permission denied"*|*"Authentication failed"*|*"password"*)
       die "simulation : identifiants refuses sur ${SFTP_USERNAME:0:4}***@$SFTP_HOST:$SFTP_PORT ($msg) $(sftp_user_hint)Verifier aussi le mot de passe : sur MCServerHost c'est celui du compte PANNEAU, pas celui du site ou de la facturation. Pour en avoir le coeur net, tester d'abord les memes quatre valeurs dans FileZilla (FileZilla vert mais CI rouge = secret GitHub non mis a jour) ; puis relancer avec dry_run coche." ;;
@@ -294,18 +332,6 @@ fi
 # le run rougissait sans jamais dire pourquoi (et les journaux bruts sont inaccessibles — seules les
 # annotations se lisent). Le mot de passe ne peut pas fuir : sshpass le prend dans l'environnement, il
 # n'apparait dans aucune ligne de commande ni dans aucune sortie.
-SFTP_LOG="$(mktemp)"
-BATCH="$(mktemp)"
-sftp_last() {
-  grep -v -i -e 'Warning: Permanently added' -e '^$' "$SFTP_LOG" | head -c 400 | tr '\n' ' '
-}
-# Un VRAI fichier batch (`-b fichier`), pas `-b -` : c'est la forme documentee partout, et elle ne
-# depend pas de la gestion du tiret par la version d'OpenSSH du runner.
-run_sftp() {
-  printf '%s\n' "$@" "bye" > "$BATCH"
-  "${SFTP[@]}" -b "$BATCH" "$DEST" >"$SFTP_LOG" 2>&1
-}
-
 say "sauvegarde des jar en place dans $PLUGINS_DIR/_sauvegarde-$STAMP…"
 if run_sftp "${REMOTE_CMDS[@]}"; then
   say "sauvegarde faite : $PLUGINS_DIR/_sauvegarde-$STAMP"
@@ -323,14 +349,14 @@ run_sftp "${UPLOAD_CMDS[@]}" \
 # (`-b "ls -l plugins"`, que sftp refuse), et APRES la destination qui plus est.
 LISTING=""
 if run_sftp "ls -l $PLUGINS_DIR"; then
-  LISTING="$(cat "$SFTP_LOG")"
+  LISTING="$(tr -d '\r' < "$SFTP_LOG")"
 else
   say "AVERTISSEMENT : listing distant impossible ($(sftp_last)) — la verification de taille va donc tout signaler comme absent."
 fi
 fail=0
 for name in "${JAR_NAMES[@]}"; do
   want=$(stat -c %s "target/$name")
-  got=$(printf '%s\n' "$LISTING" | awk -v n="$name" '$NF==n {print $5}')
+  got=$(printf '%s\n' "$LISTING" | awk -v n="$name" '$NF == n || $NF ~ ("/" n "$") {print $5}')
   if [ "${got:-}" = "$want" ]; then
     say "serveur OK : $name ($got octets)"
   else
@@ -339,4 +365,5 @@ for name in "${JAR_NAMES[@]}"; do
   fi
 done
 [ "$fail" = 0 ] || die "envoi non verifie : les jar du serveur ne correspondent pas octet pour octet (rollback : restaurer $PLUGINS_DIR/_sauvegarde-$STAMP/)"
+
 say "deploiement termine et verifie. Redemarrer le serveur pour charger les nouveaux jar."
