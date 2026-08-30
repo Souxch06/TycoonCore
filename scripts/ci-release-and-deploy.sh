@@ -308,11 +308,88 @@ if [ "$DRY_RUN" = "1" ]; then
   # session, en LECTURE SEULE, pour tester les identifiants. Verte => l'admin voit le contenu de
   # `plugins/`, la preuve que SFTP_USERNAME/SFTP_PASSWORD sont bons ; rouge => l'erreur nomme la cause
   # (identifiant/mot de passe refuses, acces SFTP desactive, restriction d'IP, dossier absent).
-  # Aucune ecriture : pas de `put`, `rename` ni `mkdir` — on ne fait que `pwd` et `ls`.
+  # Aucune ecriture : pas de `put`, `rename` ni `mkdir` — on ne fait que `pwd`, `ls` et `get`
+  # (lecture des journaux, voir le bloc diagnostic ci-dessous).
   say "DRY_RUN : ouverture d'une session SFTP en LECTURE SEULE (test des identifiants)…"
   if run_sftp "pwd" "ls -l $PLUGINS_DIR"; then
     say "DRY_RUN : identifiants valides — la session s'ouvre, contenu de $PLUGINS_DIR :"
     tr -d '\r' < "$SFTP_LOG"
+
+    # ------------------------------------------------------------------ diagnostic ValoriaEconomy
+    # Symptome : /plugins montre ValoriaEconomy ROUGE alors que le jar (17 029 octets) est pose et
+    # verifie. La cause est ECRITE dans logs/latest.log du serveur (exception dans onEnable, doublon
+    # de jar, restart manquant) — mais la console du panneau et les journaux bruts des runs sont
+    # inaccessibles depuis l'agent. SFTP sait LIRE ce fichier : on le rapatrie (plus le .log.gz
+    # precedent, qui couvre le cas « le serveur n'a pas redemarre depuis le dernier depot ») et on
+    # publie l'extrait en ANNOTATIONS, seul canal vraiment lisible a distance. Toujours AUCUNE
+    # ecriture cote serveur : des `ls` et des `get` uniquement.
+    DIAG_DIR="$(mktemp -d)"
+    diag_annot() {
+      # Echappement des annotations workflow : % d'abord, puis fins de ligne en %0A (une annotation
+      # peut contenir un extrait multi-lignes ; CR rejete, il ne sert qu'a brouiller la lecture).
+      printf '::notice::%s\n' "$(printf '%s' "$1" \
+        | sed -e 's/%/%25/g' -e 's/\r$//' -e 's/\r//g' \
+        | awk 'BEGIN { ORS = "%0A" } { print }' | sed -e 's/%0A$//')"
+    }
+    # Listing de logs/ : ses dates disent QUAND le serveur a demarre (si latest.log est plus vieux que les jars
+    # du dernier depot, le ROUGE observe est peut-etre simplement celui des jars d'avant : redemarrer d'abord).
+    LOG_LISTING="$DIAG_DIR/logs-ls.txt"
+    if run_sftp "ls -l logs"; then
+      tr -d '\r' < "$SFTP_LOG" > "$LOG_LISTING"
+    else
+      : > "$LOG_LISTING"
+      say "AVERTISSEMENT : listing logs/ impossible ($(sftp_last))"
+    fi
+    run_sftp "get logs/latest.log $DIAG_DIR/latest.log" \
+      || say "AVERTISSEMENT : logs/latest.log inaccessible ($(sftp_last))"
+    PREV_GZ="$(awk '$NF ~ /\.log\.gz$/ { print $NF }' "$LOG_LISTING" | tail -1)"
+    if [ -n "$PREV_GZ" ]; then
+      run_sftp "get logs/$PREV_GZ $DIAG_DIR/prev.log.gz" \
+        || say "AVERTISSEMENT : $PREV_GZ inaccessible ($(sftp_last))"
+    fi
+    [ -s "$DIAG_DIR/prev.log.gz" ] && zcat "$DIAG_DIR/prev.log.gz" > "$DIAG_DIR/prev.log" 2>/dev/null || true
+
+    # Digest : version du serveur, lignes Valoria/Economy, erreurs et exceptions — borné en volume
+    # (le journal peut peser des megaoctets, les annotations sont limitees a ~50 par run).
+    DIGEST="$DIAG_DIR/digest.txt"
+    : > "$DIGEST"
+    for name in latest prev; do
+      f="$DIAG_DIR/$name.log"
+      [ -s "$f" ] || continue
+      {
+        echo "===== extrait de $name.log ====="
+        grep -m 2 -E "Starting minecraft server version|This server is running|Loading [0-9]+ plugin" "$f" || true
+        echo "----- lignes Valoria / Economy -----"
+        grep -n -i -m 40 "valoria\|econom" "$f" || true
+        echo "----- erreurs / exceptions -----"
+        grep -n -E -m 40 "ERROR|SEVERE|[Ee]xception|Caused by|Ambiguous|Could not load|Error occurred|NoClassDefFound|ClassNotFoundException" "$f" || true
+      } >> "$DIGEST"
+    done
+    if [ -s "$DIGEST" ]; then
+      say "DRY_RUN : diagnostic — extrait des journaux du dernier demarrage :"
+      cat "$DIGEST"
+      if [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then
+        { echo "## Diagnostic serveur (lecture seule)"; echo '```'; cat "$DIGEST"; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+      fi
+      # Les annotations ci-dessous sont le canal lu par l'agent (API check-runs) : une par fait.
+      diag_annot "DIAGNOSTIC : listing plugins/ = $(awk '$NF !~ /^_sauvegarde/ && $NF ~ /\.jar$/ { printf "%s (%s octets) ; ", $NF, $5 }' "$PRE_LIST" | head -c 600)"
+      diag_annot "DIAGNOSTIC : listing logs/ = $(grep -v '^total' "$LOG_LISTING" | tr '\n' ' ' | head -c 600)"
+      # La version vient du dernier demarrage disponible (latest.log, sinon le journal precedent) :
+      # `grep -m 1` compte par FICHIER, deux fichiers donnaient la ligne deux fois.
+      VERS="$(grep -m 1 -E "Starting minecraft server version|This server is running" "$DIAG_DIR/latest.log" 2>/dev/null || grep -m 1 -E "Starting minecraft server version|This server is running" "$DIAG_DIR/prev.log" 2>/dev/null || true)"
+      [ -n "$VERS" ] && diag_annot "DIAGNOSTIC : version serveur : $VERS"
+      # Les lignes qui nomment la panne (une annotation chacune, 40 max : la limite GitHub est ~50/run).
+      # Uniquement le DERNIER demarrage : le journal precedent reste dans le digest/summary, pas en
+      # annotations (sinon chaque fait sort deux fois et la limite part en doublons).
+      SOURCE_ANN="$DIAG_DIR/latest.log"
+      [ -s "$SOURCE_ANN" ] || SOURCE_ANN="$DIAG_DIR/prev.log"
+      grep -E -i "valoria|econom|ERROR|SEVERE|[Ee]xception|Caused by|Ambiguous|Could not load|NoClassDefFound|ClassNotFoundException|Error occurred" "$SOURCE_ANN" 2>/dev/null \
+        | head -40 | while IFS= read -r ligne; do
+          diag_annot "${ligne:0:480}"
+        done
+    else
+      diag_annot "DIAGNOSTIC : aucun journal rapatrie (logs/ vide ou inaccessible) — plugins/ = $(awk '$NF ~ /\.jar$/ { printf "%s (%s octets) ; ", $NF, $5 }' "$PRE_LIST" | head -c 600)"
+    fi
     exit 0
   fi
   msg="$(grep -v -i -e 'Warning: Permanently added' -e '^$' "$SFTP_LOG" | tr -d '\r' | head -c 500 | tr '\n' ' ')"
