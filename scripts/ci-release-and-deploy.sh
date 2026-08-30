@@ -144,7 +144,12 @@ fi
 # voyait qu'un « session SFTP en echec » sans aucune cause — panne reelle du run 33306383817.
 export SSHPASS="$SFTP_PASSWORD"
 
-SFTP=(sshpass -e sftp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -P "$SFTP_PORT" "$SFTP_USERNAME@$SFTP_HOST")
+# ATTENTION a l'ORDRE : sftp n'accepte ses options QU'AVANT la destination. « sftp -o ... user@hote
+# -b fichier » echoue sur son usage (exit 1) sans jamais ouvrir la session — panne reelle du run
+# 33307097547, longtemps prise pour un mot de passe refuse. Les options restent donc dans le tableau
+# et la destination est passe en DERNIER argument.
+SFTP=(sshpass -e sftp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -P "$SFTP_PORT")
+DEST="$SFTP_USERNAME@$SFTP_HOST"
 
 # Pre-vol TCP : un port ferme, un hote inconnu et un mot de passe refuse donnaient le MEME message
 # (« session SFTP en echec »). En joignant la prise avant, on sait tout de suite s'il faut regarder le
@@ -169,7 +174,7 @@ done
 
 if [ "$DRY_RUN" = "1" ]; then
   say "DRY_RUN : la session SFTP qui serait jouee :"
-  say "  ${SFTP[*]}"
+  say "  ${SFTP[*]} -b <fichier> $DEST"
   printf '  %s\n' "${REMOTE_CMDS[@]}" "${UPLOAD_CMDS[@]}" "ls -l $PLUGINS_DIR"
   exit 0
 fi
@@ -179,12 +184,19 @@ fi
 # annotations se lisent). Le mot de passe ne peut pas fuir : sshpass le prend dans l'environnement, il
 # n'apparait dans aucune ligne de commande ni dans aucune sortie.
 SFTP_LOG="$(mktemp)"
+BATCH="$(mktemp)"
 sftp_last() {
   grep -v -i -e 'Warning: Permanently added' -e '^$' "$SFTP_LOG" | head -c 400 | tr '\n' ' '
 }
+# Un VRAI fichier batch (`-b fichier`), pas `-b -` : c'est la forme documentee partout, et elle ne
+# depend pas de la gestion du tiret par la version d'OpenSSH du runner.
+run_sftp() {
+  printf '%s\n' "$@" "bye" > "$BATCH"
+  "${SFTP[@]}" -b "$BATCH" "$DEST" >"$SFTP_LOG" 2>&1
+}
 
 say "sauvegarde des jar en place dans $PLUGINS_DIR/_sauvegarde-$STAMP…"
-if printf '%s\n' "${REMOTE_CMDS[@]}" "bye" | "${SFTP[@]}" -b - >"$SFTP_LOG" 2>&1; then
+if run_sftp "${REMOTE_CMDS[@]}"; then
   say "sauvegarde faite : $PLUGINS_DIR/_sauvegarde-$STAMP"
 else
   # Non bloquant : un serveur vierge n'a rien a sauvegarder, et mieux vaut deployer sans filet que pas
@@ -193,12 +205,17 @@ else
 fi
 
 say "envoi des ${#JARS[@]} jar vers $PLUGINS_DIR/…"
-printf '%s\n' "${UPLOAD_CMDS[@]}" "bye" | "${SFTP[@]}" -b - >"$SFTP_LOG" 2>&1 \
+run_sftp "${UPLOAD_CMDS[@]}" \
   || die "envoi SFTP en echec vers $SFTP_USERNAME@$SFTP_HOST:$SFTP_PORT : $(sftp_last) — causes frequentes : identifiant ou mot de passe refuse, compte sans acces SFTP, ou repertoire « $PLUGINS_DIR » inexistant."
 
-# `sftp -b -` lit le batch sur l'entree standard. L'ancienne ecriture passait la COMMANDE comme si
-# c'etait un FICHIER (`-b "ls -l plugins"`), ce que sftp refuse : « No such file or directory ».
-LISTING=$(printf 'ls -l %s\n' "$PLUGINS_DIR" | "${SFTP[@]}" -b - 2>/dev/null)
+# Verification octet pour octet. L'ancienne ecriture passait la COMMANDE comme si c'etait un FICHIER
+# (`-b "ls -l plugins"`, que sftp refuse), et APRES la destination qui plus est.
+LISTING=""
+if run_sftp "ls -l $PLUGINS_DIR"; then
+  LISTING="$(cat "$SFTP_LOG")"
+else
+  say "AVERTISSEMENT : listing distant impossible ($(sftp_last)) — la verification de taille va donc tout signaler comme absent."
+fi
 fail=0
 for name in "${JAR_NAMES[@]}"; do
   want=$(stat -c %s "target/$name")
