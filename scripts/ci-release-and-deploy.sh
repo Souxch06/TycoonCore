@@ -71,6 +71,54 @@ trim_secret() {
   printf '%s' "$s"
 }
 
+# Empreinte STRUCTURELLE d'un secret : longueur, presence d'une espace / d'un point / d'un chiffre,
+# casse du premier caractere — JAMAIS la valeur, pas meme un extrait. GitHub masque de toute facon
+# les secrets dans les journaux, mais l'empreinte ne doit pas dependre de ce filet : elle ne calcule
+# que des formes, donc reste lisible meme pour un secret court ou mal masque.
+#
+# Pourquoi c'est l'outil qu'il faut ici : CX File Explorer se connecte AVEC LES MÊMES QUATRE VALEURS
+# (hote artemis.mcserverhost.com, port 2022, login « Lucas Afonso.94b412fb ») alors que la CI recoit
+# « Permission denied (password,publickey) ». Les empreintes de reference, calculables a la main :
+#   SFTP_HOST     24 caracteres, espace=non, point=oui, chiffre=non, 1er caractere minuscule
+#   SFTP_PORT      4 caracteres, espace=non, point=non, chiffre=oui, 1er caractere chiffre
+#   SFTP_USERNAME 21 caracteres, espace=oui, point=oui, chiffre=oui, 1er caractere majuscule
+# Si les lignes « empreinte … » du run ne montrent pas ces formes, le secret GitHub n'est pas la
+# valeur du panneau — ex. une espace INSECABLE collee sur mobile parait identique a l'oeil mais
+# apparait ici comme espace=non ; un login sans suffixe « .id » perd son point ; l'ancien mot de
+# passe n'a souvent ni la meme longueur ni les memes caracteres. Le secret fautif se nomme SANS
+# qu'aucune valeur ne fuie dans le journal.
+#
+# Double canal volontaire : say() pour le journal brut, PLUS une annotation notice. Les journaux
+# bruts d'un run passent par un domaine inaccessible depuis l'agent (voir die()) : l'annotation est
+# le seul canal vraiment lisible a distance, et cette empreinte est faite pour etre LUE, pas juste
+# ecrite.
+empreinte_secret() {
+  local nom="$1" val="$2" ligne premier
+  local espace=non point=non chiffre=non casse="absent (valeur vide)"
+  case "$val" in
+    *" "*) espace=oui ;;
+  esac
+  case "$val" in
+    *"."*) point=oui ;;
+  esac
+  case "$val" in
+    *[0-9]*) chiffre=oui ;;
+  esac
+  if [ -n "$val" ]; then
+    premier="${val:0:1}"
+    if   [[ "$premier" =~ [[:upper:]] ]]; then casse="une majuscule"
+    elif [[ "$premier" =~ [[:lower:]] ]]; then casse="une minuscule"
+    elif [[ "$premier" =~ [[:digit:]] ]]; then casse="un chiffre"
+    else                                    casse="un autre caractere"
+    fi
+  fi
+  # %-13s aligne les quatre lignes (SFTP_HOST/SFTP_PORT = 9 lettres, SFTP_USERNAME/SFTP_PASSWORD = 13).
+  ligne="$(printf 'empreinte %-13s : %s caracteres, espace=%s, point=%s, chiffre=%s, 1er caractere %s' \
+            "$nom" "${#val}" "$espace" "$point" "$chiffre" "$casse")"
+  say "$ligne"
+  printf '::notice::%s\n' "$ligne"
+}
+
 # ------------------------------------------------------------------ 1. les trois jars, ou rien
 JARS=("$MAIN_JAR" "$ECONOMY_JAR")
 if [ -f "$TOOLS_JAR" ]; then
@@ -165,6 +213,15 @@ SFTP_HOST=$(printf '%s' "$SFTP_HOST" | sed -e 's#^[a-zA-Z][a-zA-Z0-9+.-]*://##' 
 SFTP_PORT=$(printf '%s' "$SFTP_PORT" | tr -cd '0-9')
 [ -n "$SFTP_HOST" ] || die "SFTP_HOST est vide apres normalisation : coller l'hote nu du panneau (sans sftp:// ni chemin)."
 [ -n "$SFTP_PORT" ] || die "SFTP_PORT n'est pas un nombre (recu: ${SFTP_PORT:-vide}) : le port SFTP du panneau, en chiffres."
+
+# Empreinte APRES trimming/normalisation : elle decrit exactement les valeurs qui partent vers le
+# serveur. Comparee aux empreintes de reference (celles de CX File Explorer, voir la fonction), elle
+# nomme le secret de mauvaise forme AVANT meme que l'authentification echoue — et reste dans le
+# journal si elle echoue quand meme.
+empreinte_secret SFTP_HOST     "$SFTP_HOST"
+empreinte_secret SFTP_PORT     "$SFTP_PORT"
+empreinte_secret SFTP_USERNAME "$SFTP_USERNAME"
+empreinte_secret SFTP_PASSWORD "$SFTP_PASSWORD"
 
 if ! command -v sshpass >/dev/null 2>&1; then
   say "installation de sshpass…"
