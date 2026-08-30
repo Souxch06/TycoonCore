@@ -42,7 +42,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           # On ne prend que le script : ce workflow ne construit rien, il deplace des fichiers deja
-          # verifies. (Pas de `submodules`/`lfs` : inutiles, et c'est ce qui rend le checkout rapide.)
+          # verifies. (Pas de `submodules`/`lfs` : inutile, et c'est ce qui rend le checkout rapide.)
           sparse-checkout: |
             scripts/ci-release-and-deploy.sh
           sparse-checkout-mode: no-filter
@@ -72,15 +72,20 @@ jobs:
           python3 - <<'PY'
           import zipfile, sys
           ok = True
+          # L'interface d'economie (valoriateconomy) vit dans le jar du FOURNISSEUR
+          # (ValoriaEconomy, load: STARTUP) : charge avant le classloader de ValoriaTycoon,
+          # il ne peut pas lui emprunter ses classes — sinon « Could not load plugin »
+          # (Economy rouge, serveur du 2026-08-30). ValoriaTycoon n'embarque plus l'API.
           for path, need in (("target/ValoriaTycoon-v1.6.3.jar",
                               ("xyz/arcadiadevs/valoriatycoon/ValoriaTycoon.class",
                                "plugin.yml",
                                "xyz/arcadiadevs/valoriatycoon/hologram/HologramPool.class",
-                               "xyz/arcadiadevs/valoriateconomy/Economy.class",
                                "module-info.class")),
                              ("target/ValoriaEconomy-v1.6.3.jar",
                               ("xyz/arcadiadevs/valoriaeconomy/ValoriaEconomy.class",
-                               "plugin.yml")),
+                               "plugin.yml",
+                               "xyz/arcadiadevs/valoriateconomy/Economy.class",
+                               "xyz/arcadiadevs/valoriateconomy/EconomyResponse.class")),
                              ("target/ValoriaTools-v1.6.3.jar",
                               ("xyz/arcadiadevs/valariatools/ToolListener.class",
                                "xyz/arcadiadevs/valariatools/ToolStats.class",
@@ -131,4 +136,5 @@ jobs:
           SFTP_PORT: ${{ secrets.SFTP_PORT }}
           SFTP_USERNAME: ${{ secrets.SFTP_USERNAME }}
           SFTP_PASSWORD: ${{ secrets.SFTP_PASSWORD }}
+
         run: bash scripts/ci-release-and-deploy.sh
