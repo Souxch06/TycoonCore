@@ -1,9 +1,8 @@
 package xyz.arcadiadevs.valariatools;
 
-import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Locale;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import org.bukkit.Bukkit;
@@ -234,29 +233,27 @@ public final class ToolGuard implements Listener {
         if (!protects() || !this.plugin.toolsConfig().autoGive()) {
             return;
         }
-        // On reconstruit la liste plutôt que de retirer à l'itérateur : `getDrops()` n'est pas garanti
-        // modifiable selon les implémentations, alors que `setDrops(liste)` l'est depuis la 1.16.
-        List<ItemStack> keep = new ArrayList<ItemStack>();
+        // L'API visée n'offre pas de `setDrops(liste)` (Paper l'a retirée) : la liste de
+        // `getDrops()` est la liste vivante, c'est donc dedans qu'on retire. Le try/catch reste parce
+        // qu'un serveur pourrait la rendre immuable — dans ce cas l'outil tombe à terre, l'auto-don au
+        // respawn le rattrape, et le log le dit au lieu de laisser l'admin deviner.
         int removed = 0;
-        for (ItemStack drop : event.getDrops()) {
-            if (MultiTool.isMultiTool(drop)) {
-                removed++;
-            } else {
-                keep.add(drop);
-            }
-        }
-        if (removed <= 0) {
-            return;
-        }
         try {
-            event.setDrops(keep);
-            this.plugin.getLogger().info("multi-outil retenu à la mort de " + event.getEntity().getName()
-                    + " (tool.auto-give: il revient au respawn)");
+            Iterator<ItemStack> drops = event.getDrops().iterator();
+            while (drops.hasNext()) {
+                if (MultiTool.isMultiTool(drops.next())) {
+                    drops.remove();
+                    removed++;
+                }
+            }
         } catch (RuntimeException | LinkageError hostile) {
-            // Un serveur qui refuserait la liste laisse l'outil à terre : l'auto-don au respawn le
-            // rattrape. Le log dit pourquoi, le joueur n'est pas pollué d'un échec qu'il ne voit pas.
             this.plugin.getLogger().warning("drops de mort non filtrables (" + hostile.getClass().getSimpleName()
                     + ") : multi-outil laissé à terre, il sera rendu au respawn.");
+            return;
+        }
+        if (removed > 0) {
+            this.plugin.getLogger().info("multi-outil retenu à la mort de " + event.getEntity().getName()
+                    + " (tool.auto-give: il revient au respawn)");
         }
     }
 
