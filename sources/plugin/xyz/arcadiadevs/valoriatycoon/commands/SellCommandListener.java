@@ -14,6 +14,7 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import xyz.arcadiadevs.valoriatycoon.guis.AuctionGui;
 import xyz.arcadiadevs.valoriatycoon.guis.SellGui;
+import xyz.arcadiadevs.valoriatycoon.guis.ShopGui;
 import xyz.arcadiadevs.valoriatycoon.utils.SellUtil;
 import xyz.arcadiadevs.valoriatycoon.utils.config.Config;
 import xyz.arcadiadevs.valoriatycoon.utils.config.Permissions;
@@ -35,6 +36,7 @@ implements Listener {
     public void onPlayerQuit(PlayerQuitEvent playerQuitEvent) {
         ScoreboardService.hide(playerQuitEvent.getPlayer());
         AuctionGui.forget(playerQuitEvent.getPlayer().getUniqueId());
+        ShopGui.forget(playerQuitEvent.getPlayer().getUniqueId());
     }
 
     /** /ah sell <prix> [quantité] — la quantité par défaut est la pile tenue en main. */
@@ -156,6 +158,18 @@ implements Listener {
             }
             player.sendMessage(AuctionHouse.color("&8[&aAH&8] &f/ah&7 ouvrir · &f/ah sell <prix> [qté]&7 · "
                     + "&f/ah cancel [id]&7 · &f/ah search <motif>&7 · &f/ah own&7 · &f/ah returns&7 · &f/ah claim [all]&7 · &f/ah stats"));
+            return;
+        }
+
+        // Comptoir d'achat (/shop) : intercepté ici comme /ah, pour ne pas dépendre d'une inscription de
+        // commande dans la classe principale. `ShopGui.command` reçoit le message brut — args[0] est le
+        // libellé `/shop` lui-même, la première valeur utile est donc args[1] (même convention que /ah).
+        if (ahLabel.equals("/shop") || ahLabel.equals("/comptoir")) {
+            playerCommandPreprocessEvent.setCancelled(true);
+            String message = ShopGui.command(player, ahArgs);
+            if (message != null) {
+                player.sendMessage(message);
+            }
             return;
         }
 

@@ -75,6 +75,203 @@ interface.
   l'Economy rouge du 2026-08-30). Le consommateur résout l'interface par délégation via son
   `softdepend`, jamais il ne l'embarque.
 
+## Le comptoir (/shop) : la sortie d'argent
+
+Jusqu'ici le serveur ne faisait qu'**imprimer** de l'argent : un générateur produit un objet, `/sell` le
+paie au `sellPrice` de sa ligne, le marché entre joueurs déplace la monnaie sans en créer. Le comptoir
+fait l'autre bout — acheter la matière plus cher qu'elle ne se revend — et c'est ce qui donne un **prix de
+référence** au bloc. Le prix d'une matière de générateur n'est jamais écrit à la main : c'est
+`sellPrice × buy-multiplier` (1,75), et le rachat `buyback-ratio` (0,4) est calculé sur ce prix d'achat,
+donc acheter puis se faire racheter laisse 30 % de perte — `/sell` reste le meilleur débouché.
+
+### Le barème des générateurs et les rayons
+
+<!-- bareme-comptoir:debut -->
+> Bloc genere par `python3 scripts/verify-shop-economy.py --write`. Ne pas editer a la main : les
+> chiffres du document sont relus depuis `resources/config.yml`, pas recopies d'une tete bien faite.
+
+| palier | rayon | matière | rendu | `sellPrice` (via `/sell`) | achat comptoir | prix du générateur | amorti en |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 1 | 🌾 Agriculture | WHEAT | 1 toutes les 20 s | 10 $ | **17.5 $** (reprise 7 $) | 1 800 $ | 1.00 h |
+| 2 | 🌾 Agriculture | MELON_SLICE | 1 toutes les 20 s | 20 $ | **35 $** (reprise 14 $) | 3 800 $ | 1.06 h |
+| 3 | 💎 Minerais | COAL | 1 toutes les 20 s | 25 $ | **43.75 $** (reprise 17.5 $) | 5 000 $ | 1.11 h |
+| 4 | 💎 Minerais | COAL_BLOCK | 1 toutes les 20 s | 50 $ | **87.5 $** (reprise 35 $) | 11 000 $ | 1.22 h |
+| 5 | 💎 Minerais | IRON_INGOT | 1 toutes les 20 s | 75 $ | **131.25 $** (reprise 52.5 $) | 17 000 $ | 1.26 h |
+| 6 | 💎 Minerais | IRON_BLOCK | 1 toutes les 20 s | 100 $ | **175 $** (reprise 70 $) | 24 000 $ | 1.33 h |
+| 10 | 💎 Minerais | REDSTONE_BLOCK | 1 toutes les 20 s | 400 $ | **700 $** (reprise 280 $) | 120 000 $ | 1.67 h |
+| 14 | 💎 Minerais | DIAMOND_BLOCK | 1 toutes les 20 s | 800 $ | **1 400 $** (reprise 560 $) | 300 000 $ | 2.08 h |
+| 20 | 💎 Minerais | NETHERITE_INGOT | 1 toutes les 20 s | 1 400 $ | **2 450 $** (reprise 980 $) | 730 000 $ | 2.90 h |
+| 28 | 🎲 Divers | DRAGON_EGG | 1 toutes les 20 s | 2 200 $ | **3 850 $** (reprise 1 540 $) | 1 780 000 $ | 4.49 h |
+
+**La colonne « amorti en » n'est pas un constat, c'est la règle** : le prix d'un palier vaut de 1 h à 4,5 h de son propre rendement, en croissance geometrique, du premier au dernier palier de la table. La regle vit dans `scripts/verify-shop-economy.py` et `python3 scripts/verify-shop-economy.py --prices` la posee dans `resources/config.yml` ; le verificateur rouge des qu'un des deux bords sort de 0,75 h à 6 h, ou des qu'un prix du fichier ne vient plus de la regle.
+
+
+**Les rayons** — ce que le comptoir presente, onglet par onglet :
+
+| rayon | icône | matières listées | offres de générateur | offres écrites | total | pages |
+| --- | --- | --- | --- | --- | --- | --- |
+| 🧱 Construction | `BRICKS` | 42 | 2 | 40 | **42** | 2 |
+| 🍖 Nourriture | `COOKED_BEEF` | 26 | 0 | 26 | **26** | 1 |
+| 💎 Minerais | `DIAMOND` | 24 | 18 | 6 | **24** | 1 |
+| 🐾 Mob Drops | `BONE` | 18 | 0 | 18 | **18** | 1 |
+| 🌾 Agriculture | `WHEAT` | 21 | 2 | 19 | **21** | 1 |
+| 🔴 Redstone | `REPEATER` | 18 | 1 | 17 | **18** | 1 |
+| 🎲 Divers | `CHEST` | 22 | 5 | 17 | **22** | 1 |
+
+> « matières listées » (`shop.categories[].materials`) ne vend rien : c'est la liste des matières que le rayon **réclame**. Une ligne de `generators:` dont le `spawnItem` y figure atterrit ici toute seule ; les autres n'y sont que pour la prochaine ligne qu'un admin ajoutera. Les offres payables, ce sont les 28 lignes venues du générateur et les 143 lignes écrites à la main dans `shop.extras`.
+
+> Un rayon qui dépasse 36 offres ne disparaît pas : il se **page** — les offres se partagent 4 rangées de neuf cases, les flèches sont posées sous la ligne d'onglets. 9 rayons au plus tiennent dans cette ligne ; au-delà, le surplus n'est pas cliquable et le log du serveur le dit.
+
+- Un arrivant (3 générateurs du palier 1, cf. `on-join.generator-amount`) : **5 400 $/h** — le salaire d'une journée de jeu, pas un pactole.
+- Un tycoon de milieu de partie (20 × palier 10, plafond `limits.per-player`) : **1.44 M$/h**.
+- Un tycoon maxé (20 × palier 28) : **7.92 M$/h**.
+- Maxer **l'âme de pioche** (ses quarante-neuf paliers et ses vingt-quatre capacités) coûte 826.92 M$, soit **574 h** du tycoon de milieu de partie (bande admise : 300–900 h, contrôlée par ce script). `docs/MULTI-OUTIL.md` reprend la même division pour les quatre âmes.
+
+Le prix d'achat n'est pas une ligne libre : c'est `sellPrice × buy-multiplier`, soit +75 % sur le prix `/sell`. Un aller-retour achat puis reprise laisse donc 30 % de perte : le comptoir encaisse, il ne distribue pas.
+<!-- bareme-comptoir:fin -->
+
+### L'extrait à coller sur un serveur déjà installé
+
+Le plugin ne recopie jamais un `config.yml` existant (il écraserait le travail de l'admin) : les rayons
+s'appliquent donc à la main, en remplaçant la section `shop:` du fichier par ce bloc :
+
+```yaml
+# plugins/ValoriaTycoon/config.yml — le rayon d'application du tour « comptoir ».
+# Remplacez dans votre fichier la section `shop:` existante par ce bloc entier (ou ajoutez-le a la fin
+# s'il n'y en a pas encore). Les commentaires se perdent si le chargeur reecrit le fichier : c'est
+# normal, seul le contenu des clefs compte.
+# ---------------------------------------------------------------------------
+# Le comptoir (/shop) : la sortie d'argent.
+#
+# Le plugin ne connaissait qu'une entrée : le générateur crache un objet, /sell le paie au `sellPrice` de sa
+# ligne, et le marché entre joueurs déplace la monnaie sans en créer. Le comptoir fait l'autre bout — acheter
+# la matière plus cher qu'elle ne se revend — et c'est ce qui donne un prix de référence au bloc.
+#
+#   buy-multiplier  prix d'achat = `sellPrice` du générateur × ce facteur. 1,75 : la matière coûte 75 % de
+#                   plus que ce que /sell en rend.
+#   buyback-ratio   ce que le comptoir rachète, calculé sur SON prix d'achat (pas sur le `sellPrice`) :
+#                   0,4 × 1,75 = 0,70, donc acheter puis se faire racheter laisse 30 % de perte. La reprise
+#                   reste sous le `sellPrice` (0,7 × `sellPrice`) : /sell demeure le meilleur débouché.
+#
+# Règle vérifiée au chargement : `buy-multiplier` × `buyback-ratio` doit rester strictement sous 1. Au-dessus,
+# le cycle est gagnant et la boutique devient une machine à imprimer — ces deux lignes sont ce qui l'empêche.
+# Rien n'est persisté : le catalogue se recharge, les transactions vivent dans la monnaie et à l'inventaire.
+shop:
+  enabled: true
+  title: "&a&lComptoir de Valoria"
+  buy-multiplier: 1.75
+  buyback-enabled: true
+  buyback-ratio: 0.4
+  # 36 piles de 64 : le plus gros lot qu'un clic peut livrer. Au-delà, le lot est réduit, pas refusé.
+  max-per-transaction: 2304
+  # Tailles de lot proposées par le bouton « Taille de lot » (le joueur bascule de l'une à l'autre).
+  amounts: [1, 16, 64]
+
+  # Deux titres de repli : `generated-category` sert quand `categories` est absent (le config.yml d'un
+  # serveur qui tourne depuis avant cette option) et `extras-category` nomme le rayon `divers` qui ramasse
+  # ce qui n'est classé nulle part.
+  generated-category: "&aMatières de générateur"
+  extras-category: "&eDivers"
+
+  # ===========================================================================
+  # LES RAYONS. Une rangée = un onglet : une clef, un titre, une icône, et la liste des matières qu'elle
+  # accueille. Le prix d'une matière de générateur n'est JAMAIS écrit ici — il reste `sellPrice ×
+  # buy-multiplier` —, seul le classement est libre. Un classement figé dans le code serait un classement
+  # qu'aucun admin ne peut corriger sans recompiler.
+  #
+  # Deux bornes, contrôlées toutes deux : 9 onglets au plus (la première ligne d'un coffre de six rangées)
+  # et 36 offres par page (les quatre du milieu). Au-delà de trente-six le rayon s'étale sur une seconde
+  # page, avec des flèches sous la ligne d'onglets ; au-delà de neuf rayons, le surplus ne serait pas
+  # cliquable — et le log du serveur le dit à chaque chargement.
+  #
+  # `materials` est un ROUTAGE : ce que le comptoir range ici quand un générateur crache la matière. Une
+  # matière de générateur absente de toutes les listes n'est pas perdue — elle est rangée à part, sous
+  # `extras-category`, avec une alerte qui nomme le remède. Citer ici une matière que `shop.extras` vend
+  # sert aussi de repli : si la ligne oublie son `category`, le rayon qui la réclame la reçoit.
+  # ===========================================================================
+  categories:
+    - key: construction
+      name: "&6🧱 Construction"
+      icon: BRICKS
+      description: ["&7Tout ce dont tu as besoin pour bâtir ton île :",
+                    "&8• &7Blocs de base (pierre, bois, terre, sable…)",
+                    "&8• &7Blocs décoratifs (verre, laine, argile, béton…)",
+                    "&8• &7Matériaux de construction avancés"]
+      materials: [COBBLESTONE, STONE, DEEPSLATE, GRANITE, DIORITE, ANDESITE, SAND, SANDSTONE, GRAVEL, DIRT,
+                  GRASS_BLOCK, TERRACOTTA, GLASS, BRICKS, MOSS_BLOCK, SNOW_BLOCK, OAK_LOG, SPRUCE_LOG, BIRCH_LOG,
+                  JUNGLE_LOG, ACACIA_LOG, DARK_OAK_LOG, MANGROVE_LOG, CHERRY_LOG, CRIMSON_STEM, WARPED_STEM,
+                  OAK_PLANKS, OAK_SLAB, OAK_FENCE, WHITE_CARPET, FLOWER_POT, PAINTING, OBSIDIAN, END_STONE,
+                  CRYING_OBSIDIAN, GLOWSTONE, NETHERRACK, SOUL_SAND, SOUL_SOIL, BLACKSTONE, BASALT, MAGMA_BLOCK]
+    - key: nourriture
+      name: "&c🍖 Nourriture"
+      icon: COOKED_BEEF
+      description: ["&7Pour ne jamais manquer d'énergie :", "&8• &7Viandes cuites et crues", "&8• &7Poissons",
+                    "&8• &7Pain et autres aliments de base", "&8• &7Produits agricoles transformés"]
+      materials: [BEEF, COOKED_BEEF, PORKCHOP, COOKED_PORKCHOP, CHICKEN, COOKED_CHICKEN, MUTTON, COOKED_MUTTON,
+                  RABBIT, COOKED_RABBIT, COD, SALMON, COOKED_COD, COOKED_SALMON, TROPICAL_FISH, PUFFERFISH,
+                  BREAD, COOKIE, PUMPKIN_PIE, CAKE, MUSHROOM_STEW, RABBIT_STEW, BEETROOT_SOUP, DRIED_KELP, APPLE,
+                  EGG]
+    - key: minerais
+      name: "&b💎 Minerais"
+      icon: DIAMOND
+      description: ["&7Les ressources les plus précieuses :",
+                    "&8• &7Minerais bruts (fer, or, diamant, émeraude, netherite…)",
+                    "&8• &7Blocs de minerais compressés", "&8• &7Ressources utiles pour le craft"]
+      materials: [COAL, IRON_INGOT, GOLD_INGOT, LAPIS_LAZULI, DIAMOND, EMERALD, QUARTZ, NETHERITE_SCRAP,
+                  NETHERITE_INGOT, ANCIENT_DEBRIS, COPPER_INGOT, RAW_IRON, RAW_GOLD, RAW_COPPER, AMETHYST_SHARD,
+                  GLOWSTONE_DUST, COAL_BLOCK, IRON_BLOCK, GOLD_BLOCK, REDSTONE_BLOCK, LAPIS_BLOCK, DIAMOND_BLOCK,
+                  EMERALD_BLOCK, QUARTZ_BLOCK]
+    - key: mobdrops
+      name: "&5🐾 Mob Drops"
+      icon: BONE
+      description: ["&7Les loots obtenus sur les créatures :", "&8• &7Os, poudre à canon, perles de l'End",
+                    "&8• &7Laines, plumes, cuir", "&8• &7Loots rares de mobs spéciaux"]
+      materials: [ROTTEN_FLESH, BONE, BONE_MEAL, STRING, SPIDER_EYE, GUNPOWDER, SLIME_BALL, ENDER_PEARL,
+                  BLAZE_ROD, GHAST_TEAR, PHANTOM_MEMBRANE, LEATHER, FEATHER, INK_SAC, GLOW_INK_SAC, MAGMA_CREAM,
+                  SHULKER_SHELL, WHITE_WOOL]
+    - key: agriculture
+      name: "&a🌾 Agriculture"
+      icon: WHEAT
+      description: ["&7Tout pour développer tes champs :", "&8• &7Graines (blé, carottes, pommes de terre…)",
+                    "&8• &7Cultures spéciales (cannes à sucre, cactus, citrouilles, pastèques…)",
+                    "&8• &7Plants et pousses d'arbres"]
+      materials: [WHEAT, MELON_SLICE, CARROT, POTATO, BEETROOT, SUGAR_CANE, CACTUS, PUMPKIN, BAMBOO, COCOA_BEANS,
+                  NETHER_WART, HAY_BLOCK, SWEET_BERRIES, KELP, SEA_PICKLE, OAK_SAPLING, SPRUCE_SAPLING,
+                  BIRCH_SAPLING, JUNGLE_SAPLING, ACACIA_SAPLING, DARK_OAK_SAPLING]
+    - key: redstone
+      name: "&c🔴 Redstone"
+      icon: REPEATER
+      description: ["&7Pour les amateurs de mécanique et d'automatisation :", "&8• &7Poudre de redstone",
+                    "&8• &7Pistons, observateurs, comparateurs", "&8• &7Hoppers, droppers, répéteurs"]
+      materials: [REDSTONE, REDSTONE_TORCH, REPEATER, COMPARATOR, OBSERVER, PISTON, STICKY_PISTON, HOPPER,
+                  DROPPER, DISPENSER, SLIME_BLOCK, HONEY_BLOCK, RAIL, POWERED_RAIL, REDSTONE_LAMP,
+                  DAYLIGHT_DETECTOR, LEVER, LIGHTNING_ROD]
+    - key: divers
+      name: "&e🎲 Divers"
+      icon: CHEST
+      description: ["&7Objets variés et utilitaires :", "&8• &7Seaux (eau, lave)", "&8• &7Objets spéciaux",
+                    "&8• &7Matériaux rares ou uniques"]
+      materials: [TORCH, LADDER, SCAFFOLDING, LANTERN, CAMPFIRE, SOUL_TORCH, GLASS_BOTTLE, BUCKET, WATER_BUCKET,
+                  LAVA_BUCKET, SHEARS, RED_BED, MINECART, OAK_BOAT, BOOK, PAPER, NETHER_STAR, WITHER_ROSE,
+                  REINFORCED_DEEPSLATE, BEDROCK, DRAGON_EGG, ENDER_EYE]
+
+  # ===========================================================================
+  # LE RESTE DU MAGASIN. Une matière qui ne sort d'aucun générateur n'a pas de prix de référence : celui-ci
+  # s'écrit à la main, une offre par ligne, et `sellback` y reste l'exception (le rachat de ce que le
+  # serveur produit ailleurs reste le rôle de /sell). Quand une reprise est écrite, elle reste vers 40 %
+  # du prix d'achat : le comptoir encaisse, il ne distribue pas. `category` nomme le rayon qui reçoit
+  # l'offre — et peut être oublié si un rayon réclame déjà cette matière dans `materials:`.
+  extras:
+    # Une ligne = une offre. Le prix d'une matiere de generateur ne s'ecrit pas ici (il vient de
+    # `sellPrice × buy-multiplier`) ; celui d'une matiere qui ne sort d'aucun generateur si.
+    # Les lignes sont rangees dans l'ordre des onglets, pour relire un rayon d'un coup d'oeil.
+    # --- construction (40 offres)
+    - { material: COBBLESTONE, name: "&7Pierre", buy: 12, sellback: 4, category: construction }
+    - { material: STONE, name: "&7Pierre taillée", buy: 16, sellback: 6, category: construction }
+    - { material: DEEPSLATE, name: "&8Ardoise", buy: 16, category: construction }
+    # … et 140 autres lignes, exactement de la meme facture
+```
+
 ## Importer les soldes EssentialsX (une fois)
 
 À faire **serveur arrêté**, avec une sauvegarde des deux dossiers :

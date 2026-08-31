@@ -41,6 +41,12 @@ commands:
     usage: /selldrops
     aliases: [ sell ]
 permissions:
+  valoriatycoon.shop.use:
+    description: Ouvrir le comptoir et y acheter des matières.
+    default: true
+  valoriatycoon.shop.admin:
+    description: Recharger le catalogue du comptoir (/shop reload).
+    default: op
   valoriatycoon.ah.use:
     description: Ouvrir le marché des joueurs.
     default: true

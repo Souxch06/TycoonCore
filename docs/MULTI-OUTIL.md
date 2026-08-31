@@ -305,6 +305,23 @@ premier essai sur ce fichier (le marqueur `{type:` ne existait plus, le compteur
 10. Redémarrer le serveur : `/tools stats` et les niveaux relus depuis `tools.yml` sont intacts, y compris
     le format ancien (`pickaxe: 12`, sans bloc `abilities:`).
 
+## Combien de temps pour maxer une âme
+
+Les trois revenus de référence sont ceux du serveur, lus dans `resources/config.yml` par
+`scripts/verify-shop-economy.py` (arrivant = 3 générateurs du palier 1, tycoon de milieu de partie et
+tycoon maxé = 20 blocs du plafond `limits.per-player`). La table ci-dessous est générée par
+`python3 scripts/longevity-tools-config.py --hours 5400 1440000 7920000` :
+
+### Et en temps de jeu
+
+(le revenu dépend du serveur : une âme qui revend la pierre 1 $ le bloc, comme le livre le barème, fait `blocs minés × 1 $`)
+
+| revenu | une âme | les quatre âmes |
+| --- | --- | --- |
+| 5 400 $/h | 153 614 h | 614 455 h |
+| 1 440 000 $/h | 576 h | 2 304 h |
+| 7 920 000 $/h | 105 h | 419 h |
+
 ## Rollback
 
 `/tools reset <joueur>` remet une âme à zéro ; désinstaller = retirer `ValoriaTools-v1.6.3.jar` des
