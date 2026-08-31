@@ -144,6 +144,7 @@
                         <include>tools/xyz/arcadiadevs/valariatools/BlockMatcher.java</include>
                         <include>tools/xyz/arcadiadevs/valariatools/Abilities.java</include>
                         <include>tools/xyz/arcadiadevs/valariatools/ToolListener.java</include>
+                        <include>tools/xyz/arcadiadevs/valariatools/ToolGuard.java</include>
                         <include>tools/xyz/arcadiadevs/valariatools/MultiTool.java</include>
                         <include>tools/xyz/arcadiadevs/valariatools/ToolsGui.java</include>
                         <include>tools/xyz/arcadiadevs/valariatools/ToolsCommand.java</include>

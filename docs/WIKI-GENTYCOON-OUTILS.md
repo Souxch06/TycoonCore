@@ -15,9 +15,15 @@ documentés plus bas.
 > « Pour accéder au menu, il vous suffit de faire un clic droit avec la pioche, la houe ; sneak +
 > clic droit avec l'épée et la canne à pêche. »
 
-Implémenté dans `ToolListener#onInteract` : les âmes « mine » (pioche, hache/houe) ouvrent le menu
-au clic droit dans le vide ou sur un bloc non reconnu ; les âmes de combat/pêche ne l'ouvrent
-qu'accroupi, pour ne pas voler le lancer de ligne ni le coup d'épée.
+Implémenté dans `ToolListener#onInteract`, avec un écart assumé : **sneak + clic droit ouvre le panneau
+avec les quatre âmes** — le bloc visé ne sert plus qu'à choisir l'âme affichée, jamais à décider si le
+panneau s'ouvre. Le clic droit simple garde l'usage du wiki (âmes qui minent, dans le vide seulement), pour
+ne voler ni un coup d'épée, ni un lancer de ligne, ni un clic sur un bloc qui sert à autre chose.
+
+Le panneau lui-même reprend la **disposition** des captures tycoon (âmes en haut à gauche, palier et solde
+en haut à droite, capacités au centre, légende des états et navigation en bas, pas d'achat ×1/×10/×100)
+mais **aucun élément visuel ne vient d'un pack de textures** : items vanilla, états signalés par le signe
+du nom (`✔ ● ✖ ★`), le luisant d'enchantement pour une capacité payée, et les vitrages teintés de l'âme.
 
 ## Liste des outils (wiki, page « Les Outils »)
 

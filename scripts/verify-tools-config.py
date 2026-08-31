@@ -39,7 +39,7 @@ ASSEMBLY = ROOT / "src/assembly/tools.xml"
 
 SOURCES = [
     "ValoriaTools.java", "ToolKind.java", "ToolsConfig.java", "ToolStore.java", "ToolStats.java",
-    "EconomyService.java", "BlockMatcher.java", "Abilities.java", "ToolListener.java",
+    "EconomyService.java", "BlockMatcher.java", "Abilities.java", "ToolListener.java", "ToolGuard.java",
     "MultiTool.java", "ToolsGui.java", "ToolsCommand.java",
 ]
 BANNED = ("net.minecraft", "org.holoeasy", "org/holoeasy", "net.milkbowl", "net/milkbowl",

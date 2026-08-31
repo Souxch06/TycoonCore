@@ -44,6 +44,8 @@ public final class ValoriaTools extends JavaPlugin {
     private Abilities abilities;
     private final Map<ToolKind, Boolean> sellWarnings = new EnumMap<ToolKind, Boolean>(ToolKind.class);
     private ToolListener listener;
+    private ToolGuard guard;
+    private ToolsCommand command;
     private boolean guiRegistered;
 
     @Override
@@ -66,10 +68,15 @@ public final class ValoriaTools extends JavaPlugin {
         // L'interface a son propre listener : la separer du comportement de l'outil evite qu'un bug
         // de GUI ne desactive le minage, et inversement.
         this.guiRegistered = registerListener(new ToolsGui.Handler());
+        // La garde de l'item (un seul exemplaire, non droppable) est un listener separe : la couper ne
+        // doit pas couper le minage, et reciproquement.
+        this.guard = new ToolGuard(this);
+        registerListener(this.guard);
 
         PluginCommand command = getCommand("valariatools");
         if (command != null) {
             ToolsCommand executor = new ToolsCommand(this);
+            this.command = executor;
             command.setExecutor(executor);
             command.setTabCompleter(executor);
         } else {
@@ -81,6 +88,16 @@ public final class ValoriaTools extends JavaPlugin {
             getLogger().info("désactivé par la configuration (enabled: false) : aucun événement traité.");
             return;
         }
+        // Une fois par seconde, l'entretien de la vitesse de minage « outil en main » : posée dès que
+        // l'outil arrive en main, rafraîchie avant expiration, rendue dès qu'il en sort. Un joueur qui ne
+        // minerait pas à la chaîne ne doit pas payer un effet posé uniquement « au bloc d'après ».
+        new BukkitRunnable() {
+
+            @Override
+            public void run() {
+                listener.refreshPassives();
+            }
+        }.runTaskTimer(this, 20L, 20L);
         // L'economie peut s'enregistrer juste apres nous (ordre de chargement) : on relit apres un
         // tick plutot que de rester sur un « aucune economie trouvee » définitif.
         new BukkitRunnable() {
@@ -131,11 +148,10 @@ public final class ValoriaTools extends JavaPlugin {
         if (this.listener != null) {
             this.listener.refreshViews();
         }
+        // refreshViews() a deja redessine la vue de chaque joueur en ligne (et redemande sa vitesse de
+        // minage) : il ne reste qu'a couper les vues orphelines, celles d'un joueur parti entre les deux.
         for (ToolsGui.View view : ToolsGui.views()) {
-            Player viewer = getServer().getPlayer(view.owner());
-            if (viewer != null) {
-                ToolsGui.render(viewer);
-            } else {
+            if (getServer().getPlayer(view.owner()) == null) {
                 ToolsGui.forget(view.owner());
             }
         }
@@ -162,6 +178,43 @@ public final class ValoriaTools extends JavaPlugin {
         return this.guiRegistered;
     }
 
+    /**
+     * La garde de l'item : un seul exemplaire par joueur, qui ne quitte pas son sac. Jamais
+     * {@code null} après l'activation — {@link ToolGuard#grant(org.bukkit.entity.Player)} est le seul
+     * chemin par lequel une commande crée l'outil.
+     */
+    public ToolGuard guard() {
+        return this.guard;
+    }
+
+    /**
+     * Redemande l'entretien des effets « outil en main » (vitesse de minage). Une commande qui change un
+     * palier ou un niveau de capacité doit se voir immédiatement : attendre la prochaine tick de la
+     * tâche périodique ferait dire au joueur que le réglage n'a rien fait.
+     */
+    public void refreshPassive(Player player) {
+        if (this.listener != null) {
+            this.listener.refreshPassive(player);
+        }
+    }
+
+    /** Idem pour tout le monde (reload, <code>/tools max</code>, <code>/tools reset</code>). */
+    public void refreshPassives() {
+        if (this.listener != null) {
+            this.listener.refreshPassives();
+        }
+    }
+
+    /**
+     * L'effet de minage que l'outil tenu doit donner à ce joueur, ou {@code null} s'il ne doit rien
+     * recevoir : pas d'outil en main, monde hors liste, capacité non achetée, ou réglage coupé. C'est la
+     * réponse à la question « j'ai maxé mon outil et je ne sens rien » — {@code /tools stats} la lit ici
+     * plutôt que de dupliquer la règle.
+     */
+    public ToolsConfig.Effect passiveHaste(Player player) {
+        return this.listener == null ? null : this.listener.passiveHaste(player);
+    }
+
     // ------------------------------------------------------------------ acces
 
     public static ValoriaTools get() {
@@ -170,6 +223,15 @@ public final class ValoriaTools extends JavaPlugin {
 
     public ToolsConfig toolsConfig() {
         return this.toolsConfig;
+    }
+
+    /**
+     * L'exécuteur de <code>/valariatools</code>, conservé parce que le panneau d'amélioration a les mêmes
+     * services à rendre que la commande (vendre, établir le bilan). Deux implémentations d'une même vente
+     * finiraient par coter le même stack à deux prix différents.
+     */
+    public ToolsCommand command() {
+        return this.command;
     }
 
     public ToolStore store() {

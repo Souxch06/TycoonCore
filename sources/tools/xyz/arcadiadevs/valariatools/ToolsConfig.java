@@ -504,6 +504,16 @@ public final class ToolsConfig {
     private final List<String> itemLore = new ArrayList<String>();
     private boolean unbreakable = true;
     private boolean hideFlags = true;
+    // L'apparence suit l'usage : le matériau de l'item devient celui de l'âme avec laquelle le joueur est
+    // en train d'interagir. Réglage distinct de `tool.material`, qui reste l'apparence de départ (et de
+    // secours) quand le morphing est coupé.
+    private boolean morphByTarget = true;
+    // Combien de capacités payées la lore de l'item énumère : au-delà, la tooltip dépasse l'écran, et une
+    // information qu'on ne peut pas lire n'est plus une information.
+    private int loreMaxAbilities = 8;
+    private boolean undroppable = true;
+    private boolean singlePerPlayer = true;
+    private boolean autoGive = true;
     private boolean requireClaimed;
     private double toolPrice;
     private final List<String> allowedWorlds = new ArrayList<String>();
@@ -533,6 +543,14 @@ public final class ToolsConfig {
         this.itemLore.addAll(root.getStringList("tool.lore"));
         this.unbreakable = root.getBoolean("tool.unbreakable", true);
         this.hideFlags = root.getBoolean("tool.hide-flags", true);
+        // Le contrat de l'item (voir ToolGuard) : un seul exemplaire, qui ne quitte pas le sac. Trois
+        // reglages separes parce qu'ils ne protegent pas la meme chose : `undroppable` ferme les issues,
+        // `single-per-player` retire les doublons, `auto-give` rend l'outil a qui ne l'a plus.
+        this.morphByTarget = root.getBoolean("tool.morph-by-target", true);
+        this.loreMaxAbilities = root.getInt("tool.lore-abilities", 8);
+        this.undroppable = root.getBoolean("tool.undroppable", true);
+        this.singlePerPlayer = root.getBoolean("tool.single-per-player", true);
+        this.autoGive = root.getBoolean("tool.auto-give", true);
         this.hastePassive = root.getBoolean("tool.haste-while-held", true);
         this.requireClaimed = root.getBoolean("tools.require-claimed", false);
         this.toolPrice = Math.max(0.0D, root.getDouble("tool.price", 0.0D));
@@ -805,6 +823,36 @@ public final class ToolsConfig {
     /** Vrai si la vitesse de minage est appliquée pendant que l'outil est tenu (voir `tool.haste-while-held`). */
     public boolean hasteWhileHeld() {
         return this.hastePassive;
+    }
+
+    /** Vrai si l'outil ne peut pas sortir du sac de son joueur (clic Q, coffre, hopper, cadre, drop). */
+    /** L'item change-t-il de matériau selon le bloc (l'entité, le lancer) avec lequel on interagit ? */
+    public boolean morphByTarget() {
+        return this.morphByTarget;
+    }
+
+    /** Combien de capacités payées tiennent dans la lore de l'item. */
+    public int loreMaxAbilities() {
+        return this.loreMaxAbilities;
+    }
+
+    public boolean undroppable() {
+        return this.undroppable;
+    }
+
+    /** Vrai si le plugin force un seul exemplaire par joueur et retire les doublons. */
+    public boolean singlePerPlayer() {
+        return this.singlePerPlayer;
+    }
+
+    /**
+     * Vrai si l'outil est rendu à qui ne l'a plus (connexion, respawn, sac fermé). C'est ce qui rend
+     * <code>undroppable</code> supportable : un objet qu'on ne peut pas lâcher ne doit pas non plus se
+     * perdre. Le prix de l'outil (<code>tool.price</code>) n'est alors plus prélevé qu'une fois, à
+     * l'achat — c'est assumé, et documenté.
+     */
+    public boolean autoGive() {
+        return this.autoGive;
     }
 
     public KindConfig kind(ToolKind kind) {

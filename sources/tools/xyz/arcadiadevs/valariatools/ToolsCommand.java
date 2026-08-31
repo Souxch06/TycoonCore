@@ -147,6 +147,15 @@ public final class ToolsCommand implements CommandExecutor, TabCompleter {
             return true;
         }
         double price = this.plugin.toolsConfig().toolPrice();
+        // Payer deux fois pour le même objet serait une arnaque, et « un seul multi-outil » veut dire
+        // aussi qu'un second achat n'apporte strictement rien : on refuse avant de débiter.
+        if (this.plugin.guard() != null && this.plugin.toolsConfig().singlePerPlayer()
+                && this.plugin.guard().count(target) > 0) {
+            target.sendMessage(color("&eTu as déjà ton multi-outil &7(un seul par joueur&7)."));
+            target.sendMessage(color("&7&f/tools&7 ouvre le panneau d'amélioration, &7accroupi + clic droit"
+                    + " dans le jeu."));
+            return true;
+        }
         if (price > 0.0D && this.plugin.economy().available()) {
             if (!this.plugin.economy().canAfford(target, price)) {
                 target.sendMessage(color("&cLe multi-outil coûte &f" + this.plugin.economy().format(price)
@@ -160,15 +169,19 @@ public final class ToolsCommand implements CommandExecutor, TabCompleter {
                 return true;
             }
         }
-        ItemStack tool = MultiTool.create(this.plugin.toolsConfig(), this.plugin.store(), target.getUniqueId());
-        Map<Integer, ItemStack> overflow = target.getInventory().addItem(tool);
-        for (ItemStack left : overflow.values()) {
-            target.getWorld().dropItemNaturally(target.getLocation(), left);
+        // L'item est posé par la garde : un exemplaire, dans la main courante, jamais une seconde copie
+        // rejetée à terre (le « drop » d'un inventaire plein contredirait le non-droppable promis).
+        if (this.plugin.guard() != null) {
+            this.plugin.guard().grant(target);
+        } else {
+            target.getInventory().addItem(MultiTool.create(this.plugin.toolsConfig(), this.plugin.store(),
+                    target.getUniqueId()));
         }
+        refreshHeld(target);
         target.sendMessage(color("&a" + (price > 0.0D
                 ? "Multi-outil acheté (-" + this.plugin.economy().format(price) + ")."
                 : "Multi-outil reçu (gratuit : tool.price = 0).")
-                + " &7Il change d'âme selon le bloc que tu regardes, &f/tools&7 ouvre le menu."));
+                + " &7Il change d'âme selon le bloc regardé ; &fsneak + clic droit&7 ouvre le panneau."));
         if (!sender.equals(target)) {
             sender.sendMessage(color("&a" + target.getName() + " a reçu son multi-outil."));
         }
@@ -324,14 +337,47 @@ public final class ToolsCommand implements CommandExecutor, TabCompleter {
             sender.sendMessage(color("&8Note : le palier " + tier + " est offert (aucun débit n'est fait"
                     + " par /tools give)."));
         }
-        ItemStack tool = MultiTool.create(this.plugin.toolsConfig(), this.plugin.store(), target.getUniqueId());
-        target.getInventory().addItem(tool);
+        // Le palier annoncé doit être ÉCRIT. Avant ce correctif, `/tools give <joueur> 50` répondait
+        // « âmes au palier 50 » sans rien poser dans tools.yml : le joueur restait au palier 1, donc sans
+        // une seule capacité débloquée — une des faces du « j'ai max ma multi-tool mais rien ne s'active ».
+        if (tier > 1) {
+            for (ToolKind kind : ToolKind.values()) {
+                ToolsConfig.KindConfig kindConfig = this.plugin.toolsConfig().kind(kind);
+                if (kindConfig == null) {
+                    continue;
+                }
+                int max = this.plugin.toolsConfig().maxTier(kindConfig);
+                this.plugin.store().setTier(target, kind, Math.min(tier, max), max);
+            }
+            // Le store ne s'écrit jamais lui-même : sans ceci, le palier posé serait perdu au reload.
+            this.plugin.saveSoon();
+        }
+        // Un seul exemplaire par joueur : c'est ToolGuard qui pose l'item, give compris — un give qui
+        // ajouterait une deuxième copie rendrait la règle fausse juste là où on la croit sûre.
+        boolean alreadyHadOne = this.plugin.guard() != null && this.plugin.guard().count(target) > 0;
+        if (this.plugin.guard() != null) {
+            this.plugin.guard().grant(target);
+        } else {
+            target.getInventory().addItem(MultiTool.create(this.plugin.toolsConfig(), this.plugin.store(),
+                    target.getUniqueId()));
+        }
+        refreshHeld(target);
         target.updateInventory();
-        target.sendMessage(color("&aTon multi-outil est prêt &7(âmes au palier &f" + tier + "&7)."));
+        target.sendMessage(color("&aTon multi-outil est prêt &7(âmes au palier &f" + tier + "&7)"
+                + (alreadyHadOne ? "&8— un exemplaire suffisait : aucune copie ajoutée&7."
+                        : "&7, il ne se lâche pas.")));
         if (!sender.equals(target)) {
             sender.sendMessage(color("&aDonné à &f" + target.getName() + "&a."));
         }
         return true;
+    }
+
+    /**
+     * Vente déclenchée depuis une case du panneau : le menu passe par la commande, il ne reduplique pas la
+     * grille de prix ni le remboursement en cas de dépôt refusé.
+     */
+    public void sellFromGui(Player player) {
+        sell(player, new String[]{"sell", "all"});
     }
 
     private boolean sell(CommandSender sender, String[] args) {
@@ -429,10 +475,7 @@ public final class ToolsCommand implements CommandExecutor, TabCompleter {
             sender.sendMessage(color("&8Palier ramené à " + applied + " (le max configuré est " + max + ")."));
         }
         this.plugin.store().setTier(target, kind, applied, max);
-        ItemStack held = target.getInventory().getItemInMainHand();
-        if (MultiTool.isMultiTool(held)) {
-            MultiTool.refresh(held, this.plugin.toolsConfig(), this.plugin.store(), target.getUniqueId());
-        }
+        refreshHeld(target);
         target.sendMessage(color("&a" + MultiTool.capitalize(kind.label()) + "&7 → palier &f" + applied
                 + (sender.equals(target) ? "&7." : "&7 (décision de &f" + sender.getName() + "&7)")));
         if (!sender.equals(target)) {
@@ -657,13 +700,16 @@ public final class ToolsCommand implements CommandExecutor, TabCompleter {
                 + " capacité(s)" + (locked > 0 ? ", &e" + locked + " sous verrou de palier" : "") + "&7."));
     }
 
-    /** Rafraîchit la lore de l'outil tenu, si c'en est un : les niveaux y sont résumés. */
+    /**
+     * Rafraîchit la lore de l'outil tenu, si c'en est un : les niveaux y sont résumés. C'est aussitôt
+     * l'occasion de redemander les effets « outil en main » — un palier ou un niveau changé ici doit se
+     * voir au bloc suivant, pas à la prochaine tick de la tâche périodique.
+     */
     private void refreshHeld(Player target) {
-        ItemStack held = target.getInventory().getItemInMainHand();
-        if (MultiTool.isMultiTool(held)) {
-            MultiTool.refresh(held, this.plugin.toolsConfig(), this.plugin.store(), target.getUniqueId());
-            target.updateInventory();
-        }
+        // MultiTool.refreshHeld ecrit dans la main : refresh() sur la copie rendue par getInventory() ne
+        // mettait à jour que cette copie, et le joueur ne voyait son outil changer qu'au bloc suivant.
+        MultiTool.refreshHeld(target, this.plugin.toolsConfig(), this.plugin.store());
+        this.plugin.refreshPassive(target);
     }
 
     private void usageAbility(CommandSender sender) {
@@ -775,13 +821,11 @@ public final class ToolsCommand implements CommandExecutor, TabCompleter {
         for (ToolKind kind : kinds) {
             this.plugin.store().reset(target, kind);
         }
-        ItemStack held = target.getInventory().getItemInMainHand();
-        if (MultiTool.isMultiTool(held)) {
-            MultiTool.refresh(held, this.plugin.toolsConfig(), this.plugin.store(), target.getUniqueId());
-        }
+        refreshHeld(target);
         sender.sendMessage(color("&a" + target.getName() + " &7: âmes remises au palier 1 &7("
                 + kinds.size() + " âme(s), capacités effacées)."));
-        target.sendMessage(color("&eToutes tes capacités d'outil ont été remises à zéro par l'administration."));
+        target.sendMessage(color("&e" + kinds.size() + " âme(s) remise(s) au palier 1 par l'administration"
+                + " : capacités effacées."));
         this.plugin.saveSoon();
         return true;
     }
@@ -822,6 +866,32 @@ public final class ToolsCommand implements CommandExecutor, TabCompleter {
         sender.sendMessage(color("&7  capacités vues : &f"
                 + String.join(", ", Abilities.known())));
         sender.sendMessage(color("&7  interface      : &f" + (this.plugin.guiLive() ? "active" : "&chéchouée")));
+        // Le diagnostic qui répond à « mes capacités ne s'activent pas » : est-ce que les âmes reconnaissent
+        // les blocs, est-ce que la garde tient, et quel effet l'outil en main donne vraiment.
+        for (String line : this.plugin.matcher().diagnose().split("\n")) {
+            sender.sendMessage(color("  &8» &r") + line);
+        }
+        ToolGuard guard = this.plugin.guard();
+        if (guard != null) {
+            sender.sendMessage(color("  &8» &rgarde de l'item : &f" + guard.describe()));
+        }
+        if (sender instanceof Player) {
+            Player player = (Player) sender;
+            ToolsConfig.Effect haste = this.plugin.passiveHaste(player);
+            if (haste == null || !haste.active()) {
+                sender.sendMessage(color("  &8» &rvitesse de minage : &crien n'est dû &7(pas d'outil en main,"
+                        + " capacité non achetée, monde hors liste, ou &ftool.haste-while-held: false&7)."));
+            } else {
+                sender.sendMessage(color("  &8» &rvitesse de minage : &fHaste " + Abilities.grade(haste)
+                        + " &7(&f" + haste.level() + " &7niveau(x) sur &f" + haste.sources()
+                        + " capacité(s)) &8— posée tant que l'outil est en main&7."));
+            }
+            if (guard != null) {
+                int copies = guard.count(player);
+                sender.sendMessage(color("  &8» &rmulti-outils dans son sac : &f" + copies
+                        + (copies == 1 ? " &7(le bon compte)" : " &c(incohérent)")));
+            }
+        }
         return true;
     }
 

@@ -332,9 +332,9 @@ const CONTRACTS = [
                   'getMethod(setter, boolean.class)', 'setDisabledSlots', 'setItemInHand'],
     mustNotContain: ['net.minecraft', 'comphenix', 'printStackTrace', 'md_5'],
   },
-  // ── ValoriaTools (multi-outil) : 11 fichiers, tous écrits ici, donc sous contrat — la règle du dépôt
-  // est « tout fichier dans <includes> du pom a un contrat ». Sans contrat, une methode renommee dans
-  // un fichier recompille ne serait vue que par javac (et par le serveur, en jeu).
+  // ── ValoriaTools (multi-outil) : les fichiers de sources/tools/, tous écrits ici, donc sous contrat.
+  // La règle du dépôt est « tout fichier dans <includes> du pom a un contrat » : sans contrat, une méthode
+  // renommée dans un fichier recompilé ne serait vue que par javac (et par le serveur, en jeu).
   {
     file: 'sources/tools/xyz/arcadiadevs/valariatools/ValoriaTools.java',
     why: "plugin : enregistre UN SEUL exemplaire de chaque listener, relit l'economie apres l'activation",
@@ -346,7 +346,11 @@ const CONTRACTS = [
     ],
     mustContain: ['this.listener = new ToolListener(this)', 'registerListener(this.listener)',
                   'this.guiRegistered = registerListener(new ToolsGui.Handler())',
-                  'private boolean registerListener(Listener candidate)', 'runTaskLater(this, 20L)'],
+                  'private boolean registerListener(Listener candidate)', 'runTaskLater(this, 20L)',
+                  // la garde de l'item et l'entretien de la vitesse sont enregistres ICI, pas ailleurs :
+                  // un listener oublie = regle promue et non appliquee, et rien ne le dit au demarrage
+                  'this.guard = new ToolGuard(this)', 'public ToolGuard guard()',
+                  'listener.refreshPassives()'],
     mustNotContain: ['net.minecraft', 'milkbowl/', 'holoeasy/', 'System.out', 'printStackTrace'],
     forbidImports: ['net.milkbowl', 'org.holoeasy'],
   },
@@ -370,6 +374,9 @@ const CONTRACTS = [
       { name: 'sellPriceOf', returns: 'double', arity: 2, static: false },
     ],
     mustContain: ['class Ability', 'class KindConfig', 'class Effect', 'fromTier', 'treasure.items',
+                  // les trois cles de la garde sont lues ici, une seule fois, avec un defaut sur
+                  'tool.undroppable', 'tool.single-per-player', 'tool.auto-give',
+                  'tool.morph-by-target', 'tool.lore-abilities',
                   'Math.max(0, this.maxTier - 1)', 'CHANCE_CEILING', 'PROC_BOOSTER', 'priceAt',
                   'ability-price.base'],
     mustNotContain: ['net.minecraft', 'milkbowl/', 'System.out'],
@@ -427,7 +434,9 @@ const CONTRACTS = [
       { name: 'fallbackKind', returns: 'ToolKind', arity: 0, static: false },
       { name: 'configured', returns: 'boolean', arity: 0, static: false },
     ],
-    mustContain: ['isTagged', 'NONE', 'getNamespace', 'NamespacedKey.fromString', 'configured()'],
+    mustContain: ['isTagged', 'NONE', 'getNamespace', 'NamespacedKey.fromString', 'configured()',
+                  // le regard du joueur se lit ici (API renommée une fois), et nulle part ailleurs
+                  'targetedKind(Player player)', 'getTargetBlockExact'],
     mustNotContain: ['net.minecraft', 'craftbukkit'],
   },
   {
@@ -445,7 +454,10 @@ const CONTRACTS = [
       { name: 'remove', returns: 'void', arity: 1, static: false },
     ],
     mustContain: ['this.budget', 'visited.add', 'getRecipesFor', 'FurnaceRecipe', "block.setType(Material.AIR, false)",
-                  'MAX_BLOCKS_PER_GESTURE', 'harvestable', 'MAX_RADIUS'],
+                  'MAX_BLOCKS_PER_GESTURE', 'harvestable', 'MAX_RADIUS',
+                  // le passif de minage doit pouvoir etre RETIRE : on ne rend que l'amplificateur pose
+                  // par nous, jamais celui d'un autre plugin
+                  'static int grade', 'clearHaste'],
     mustNotContain: ['net.minecraft', 'getNMSClass', 'dropItemNaturally'],
   },
   {
@@ -462,7 +474,13 @@ const CONTRACTS = [
     ],
     mustContain: ['event.setCancelled(true)', 'this.handling = true', 'this.handling = false',
                   'giveOrDrop(player, world, drop)', 'applyGesture', 'selectTargets',
-                  'Abilities.proc(', 'containsBlock(targets, block)'],
+                  'Abilities.proc(', 'containsBlock(targets, block)',
+                  // la vitesse de minage est un effet ENTRETENU (changement de main + tache periodique),
+                  // plus une re-pose « au bloc d'apres » : c'est la correction du « rien ne s'active »
+                  'PlayerItemHeldEvent', 'refreshPassive(Player player)', 'holdingPassiveHaste(player)',
+                  // l'item matérialise l'âme qui sert (matériau + lore des capacités payées) : la
+                  // partie visible du changement d'âme, sans quoi le joueur ne sait pas ce qui va payer
+                  'showKind(player, kind)', 'targetedKind(player)', 'morphByTarget'],
     mustNotContain: ['net.minecraft', 'craftbukkit', 'getTargetBlock', 'printStackTrace'],
   },
   {
@@ -473,14 +491,24 @@ const CONTRACTS = [
       { name: 'isMultiTool', returns: 'boolean', arity: 1, static: true },
       { name: 'refresh', returns: 'void', arity: 4, static: true },
       { name: 'color', returns: 'String', arity: 1, static: true },
+      { name: 'applySoul', returns: 'boolean', arity: 5, static: true },
+      { name: 'refreshHeld', returns: 'void', arity: 3, static: true },
+      { name: 'soulOf', returns: 'ToolKind', arity: 2, static: true },
+      { name: 'held', returns: 'ItemStack', arity: 1, static: true },
     ],
     mustContain: ['new NamespacedKey("valariatools", "multi")', 'PersistentDataType.STRING',
-                  'translateAlternateColorCodes'],
+                  'translateAlternateColorCodes',
+                  // l'âme affichée est une marque, pas un matériau deviné : deux âmes peuvent partager
+                  // un matériau, et un serveur sans morphing doit quand même savoir quoi lister
+                  'new NamespacedKey("valariatools", "soul")', 'applySoul(',
+                  // `refresh` sur la copie rendue par le sac ne mettait à jour que la copie : la lore
+                  // d'un joueur restait périmée après /tools max. C'est `refreshHeld` qui écrit.
+                  'writeHeld(player, tool)', 'setItemInMainHand'],
     mustNotContain: ['net.minecraft', 'md_5', 'printStackTrace'],
   },
   {
     file: 'sources/tools/xyz/arcadiadevs/valariatools/ToolsGui.java',
-    why: "une case = une intention ; vue suivie par UUID, clic reporte d'un tick, items traces",
+    why: "une case = une intention ; vue suivie par UUID, clic reporte d'un tick, items traces ; etat lisible sans pack de textures",
     methods: [
       { name: 'open', returns: 'void', arity: 1, static: true },
       { name: 'render', returns: 'void', arity: 1, static: true },
@@ -488,8 +516,11 @@ const CONTRACTS = [
       { name: 'views', returns: 'java.util.Collection', arity: 0, static: true },
     ],
     mustContain: ['implements InventoryHolder', 'class Handler implements Listener', 'setCancelled(true)',
-                  'Bukkit.getScheduler().runTask(', 'view.track(', 'SLOT_SELL_ALL',
-                  'SLOT_ABILITY_FIRST', 'buyLevel(player, shown', 'isShiftClick()'],
+                  'Bukkit.getScheduler().runTask(', 'view.track(', 'SLOT_SELL', 'SLOT_MODE', 'SLOT_HELP',
+                  'SLOT_ABILITY_FIRST', 'buyLevel(player, shown', 'isShiftClick()',
+                  // le panneau doit rester lisible en vanilla : pas de modele 3D, un materiau resolu avec
+                  // repli, et un mode d'achat qui paie plusieurs niveaux a la fois
+                  'Material.matchMaterial', 'nextMode()', 'MODES', 'priceAt'],
     mustNotContain: ['net.minecraft', 'printStackTrace'],
   },
   {
@@ -500,9 +531,39 @@ const CONTRACTS = [
       { name: 'onTabComplete', returns: 'List', arity: 4, static: false },
     ],
     mustContain: ['hasPermission("valoria.tools.use")', 'hasPermission("valoria.tools.admin")',
-                  'getPlayerExact', "case \"give\"", "case \"sell\""],
+                  'getPlayerExact', "case \"give\"", "case \"sell\"",
+                  // give et buy passent par la garde (un give qui double l'objet rend la regle fausse) et
+                  // la vente du menu est deleguee, pour qu'il n'existe qu'une grille de prix
+                  'guard().grant(target)', 'sellFromGui', 'matcher().diagnose()'],
     mustNotContain: ['net.minecraft', 'System.out'],
   },
+  {
+    file: 'sources/tools/xyz/arcadiadevs/valariatools/ToolGuard.java',
+    why: "un seul exemplaire par joueur et il ne sort pas du sac : toute voie de sortie est fermee, y "
+         + "compris celles qui ne déclenchent PAS PlayerDropItemEvent",
+    methods: [
+      { name: 'ensure', returns: 'boolean', arity: 1, static: false },
+      { name: 'ensureSoon', returns: 'void', arity: 1, static: false },
+      { name: 'grant', returns: 'ItemStack', arity: 1, static: false },
+      { name: 'first', returns: 'ItemStack', arity: 1, static: false },
+      { name: 'count', returns: 'int', arity: 1, static: false },
+      { name: 'describe', returns: 'String', arity: 0, static: false },
+      { name: 'onDrop', returns: 'void', arity: 1, static: false },
+      { name: 'onClick', returns: 'void', arity: 1, static: false },
+      { name: 'onDeath', returns: 'void', arity: 1, static: false },
+    ],
+    mustContain: [
+      // les deux gestes qui RATENT PlayerDropItemEvent depuis un inventaire ouvert : sans eux, la garde
+      // est décorative et l'admin croit le multi-outil protégé
+      'ClickType.DROP', 'ClickType.CONTROL_DROP', 'movesOut(ClickType click)',
+      'InventoryMoveItemEvent',            // les entonnoirs, dans les deux sens
+      'getStorageContents()',              // 41 cases : armure et main secondaire comprises
+      'event.getDrops().iterator()',       // la mort, sans toucher au keepInventory du serveur
+      'instanceof ToolsGui.View',          // le menu annule déjà ses propres clics
+    ],
+    mustNotContain: ['net.minecraft', 'craftbukkit', 'System.out', 'printStackTrace'],
+  },
+
   {
     file: 'sources/plugin/xyz/arcadiadevs/valoriatycoon/utils/ServerVersion.java',
     why: 'les appelants existants (events/, guis/, utils/) et les logs d\'admin utilisent ces membres',

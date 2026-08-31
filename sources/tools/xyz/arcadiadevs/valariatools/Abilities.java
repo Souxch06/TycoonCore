@@ -541,11 +541,39 @@ public final class Abilities {
      * combat contre l'anti-cheat.
      */
     public void haste(Player player, ToolsConfig.Effect effect) {
-        int grade = Math.max(1, Math.min(5, effect.value("amplifier", 1)));
+        int grade = grade(effect);
         if (hasHaste(player, grade - 1)) {
             return;   // deja au bon niveau : pas de paquet inutile a chaque bloc casse
         }
         duration(player, "fast_digging", "FAST_DIGGING", grade - 1, effect.value("duration", 60));
+    }
+
+    /**
+     * L'amplificateur que la config donne pour cet agrégat de capacités, borné à 5. Exposé parce que
+     * l'entretien « outil en main » (voir {@link ToolListener#refreshPassive(Player)}) doit savoir
+     * <em>lequel</em> il a posé pour ne retirer que le sien.
+     */
+    public static int grade(ToolsConfig.Effect effect) {
+        return Math.max(1, Math.min(5, effect == null ? 1 : effect.value("amplifier", 1)));
+    }
+
+    /**
+     * Retire la vitesse de minage que <b>nous</b> avons posée, et elle seule : un plugin voisin qui aurait
+     * donné sa propre Haste la garde (le comparant est l'amplificateur que nous avions appliqué).
+     */
+    public void clearHaste(Player player, int amplifier) {
+        PotionEffectType type = effectType("fast_digging", "FAST_DIGGING");
+        if (type == null || player == null) {
+            return;
+        }
+        try {
+            PotionEffect active = player.getPotionEffect(type);
+            if (active != null && active.getAmplifier() == amplifier) {
+                player.removePotionEffect(type);
+            }
+        } catch (RuntimeException | LinkageError refused) {
+            // l'effet a ete retire entre-temps par un autre plugin : il n'y a rien a rendre
+        }
     }
 
     /** Vitesse de déplacement (le « Speed » de l'épée, sous forme de rafale après un coup). */
