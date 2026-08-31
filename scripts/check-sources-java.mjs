@@ -164,10 +164,39 @@ const CONTRACTS = [
   },
   {
     file: 'sources/plugin/xyz/arcadiadevs/valoriatycoon/commands/SellCommandListener.java',
-    why: "point d'entrée /ah (interception de commande, comme /sell)",
+    why: "point d'entrée /ah et /shop (interception de commande, comme /sell)",
     methods: [{ name: 'onPlayerCommandPreprocess', returns: 'void', arity: 1, static: false }],
     mustContain: ['"/ah"', '"returns"', '"claim"', 'AuctionGui.open', 'AuctionGui.openReturns',
-                  'notifyReturns', 'AuctionGui.forget', 'setCancelled'],
+                  'notifyReturns', 'AuctionGui.forget', 'setCancelled',
+                  // le comptoir est intercepté au même endroit, sans commande déclarée dans plugin.yml
+                  '"/shop"', 'ShopGui.command(player, ahArgs)', 'ShopGui.forget'],
+    mustNotContain: ['net.minecraft'],
+  },
+  {
+    file: 'sources/plugin/xyz/arcadiadevs/valoriatycoon/guis/ShopGui.java',
+    why: "le comptoir (/shop) : la sortie d'argent — catalogue relu de generators: et shop:, achat = sellPrice × buy-multiplier",
+    methods: [
+      { name: 'open', returns: 'void', arity: 1, static: true },
+      { name: 'open', returns: 'void', arity: 2, static: true },
+      { name: 'forget', returns: 'void', arity: 1, static: true },
+      { name: 'isEnabled', returns: 'boolean', arity: 0, static: true },
+      { name: 'offerCount', returns: 'int', arity: 0, static: true },
+      { name: 'usage', returns: 'String', arity: 0, static: true },
+      { name: 'reload', returns: 'String', arity: 1, static: true },
+      { name: 'command', returns: 'String', arity: 2, static: true },
+    ],
+    mustContain: [
+      // la disposition est relue par verify-shop-economy.py : ces constantes ne doivent pas bouger
+      'ROWS = 6', 'MAX_TABS = 9', 'OFFER_ROWS = ROWS - 2', 'OFFERS_PER_PAGE = OFFER_ROWS * 9',
+      // la description d'un onglet et l'info-bulle qui la porte
+      'descriptionOf(', 'hint(',
+      // le plancher de marge (contrôlé aussi par verify-shop-economy.py) et la reprise
+      'Math.max(1.0D, config.getDouble("shop.buy-multiplier"', 'buyback-ratio',
+      // un `divers` déclaré EST le panier de secours : pas de second onglet jumeau
+      'byKey.get("divers")', '!shelves.contains(other)',
+      // le rechargement relit le disque (l'admin n'a pas de terminal)
+      'plugin.reloadConfig()',
+    ],
     mustNotContain: ['net.minecraft'],
   },
   {

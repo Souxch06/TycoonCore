@@ -59,7 +59,7 @@ limits:
   # Limites de générateurs par joueur
   per-player:
     # Si enabled vaut false, la limite ne sera pas vérifiée.
-    enabled: false
+    enabled: true
 
     # Faut-il utiliser les permissions pour la limite de générateurs ?
     # Si true, vous pourrez définir des limites spécifiques
@@ -435,7 +435,7 @@ default-hologram-lines:
 generators:
   - name: "&e&lGénérateur de blé"
     tier: 1
-    price: 1000.0
+    price: 1800.0
     sellPrice: 10.0
     speed: 20
     spawnItem: "WHEAT"
@@ -451,7 +451,7 @@ generators:
     instantBreak: false
   - name: "&a&lGénérateur de melon"
     tier: 2
-    price: 2000.0
+    price: 3800.0
     sellPrice: 20.0
     speed: 20
     spawnItem: "MELON_SLICE"
@@ -467,7 +467,7 @@ generators:
     instantBreak: false
   - name: "&8&lGénérateur de charbon"
     tier: 3
-    price: 3000.0
+    price: 5000.0
     sellPrice: 25.0
     speed: 20
     spawnItem: "COAL"
@@ -483,7 +483,7 @@ generators:
     instantBreak: false
   - name: "&8&lGénérateur de bloc de charbon"
     tier: 4
-    price: 4000.0
+    price: 11000.0
     sellPrice: 50.0
     speed: 20
     spawnItem: "COAL_BLOCK"
@@ -499,7 +499,7 @@ generators:
     instantBreak: false
   - name: "&7&lGénérateur de fer"
     tier: 5
-    price: 5000.0
+    price: 17000.0
     sellPrice: 75.0
     speed: 20
     spawnItem: "IRON_INGOT"
@@ -515,7 +515,7 @@ generators:
     instantBreak: false
   - name: "&7&lGénérateur de bloc de fer"
     tier: 6
-    price: 6000.0
+    price: 24000.0
     sellPrice: 100.0
     speed: 20
     spawnItem: "IRON_BLOCK"
@@ -531,7 +531,7 @@ generators:
     instantBreak: false
   - name: "&6&lGénérateur d'or"
     tier: 7
-    price: 7000.0
+    price: 38000.0
     sellPrice: 150.0
     speed: 20
     spawnItem: "GOLD_INGOT"
@@ -547,7 +547,7 @@ generators:
     instantBreak: false
   - name: "&6&lGénérateur de bloc d'or"
     tier: 8
-    price: 8000.0
+    price: 53000.0
     sellPrice: 200.0
     speed: 20
     spawnItem: "GOLD_BLOCK"
@@ -563,7 +563,7 @@ generators:
     instantBreak: false
   - name: "&4&lGénérateur de redstone"
     tier: 9
-    price: 9000.0
+    price: 84000.0
     sellPrice: 300.0
     speed: 20
     spawnItem: "REDSTONE"
@@ -579,7 +579,7 @@ generators:
     instantBreak: false
   - name: "&4&lGénérateur de bloc de redstone"
     tier: 10
-    price: 10000.0
+    price: 120000.0
     sellPrice: 400.0
     speed: 20
     spawnItem: "REDSTONE_BLOCK"
@@ -595,7 +595,7 @@ generators:
     instantBreak: false
   - name: "&b&lGénérateur de lapis"
     tier: 11
-    price: 11000.0
+    price: 160000.0
     sellPrice: 500.0
     speed: 20
     spawnItem: "LAPIS_LAZULI"
@@ -611,7 +611,7 @@ generators:
     instantBreak: false
   - name: "&b&lGénérateur de bloc de lapis"
     tier: 12
-    price: 12000.0
+    price: 200000.0
     sellPrice: 600.0
     speed: 20
     spawnItem: "LAPIS_BLOCK"
@@ -627,7 +627,7 @@ generators:
     instantBreak: false
   - name: "&3&lGénérateur de diamant"
     tier: 13
-    price: 13000.0
+    price: 250000.0
     sellPrice: 700.0
     speed: 20
     spawnItem: "DIAMOND"
@@ -643,7 +643,7 @@ generators:
     instantBreak: false
   - name: "&3&lGénérateur de bloc de diamant"
     tier: 14
-    price: 14000.0
+    price: 300000.0
     sellPrice: 800.0
     speed: 20
     spawnItem: "DIAMOND_BLOCK"
@@ -659,7 +659,7 @@ generators:
     instantBreak: false
   - name: "&a&lGénérateur d'émeraude"
     tier: 15
-    price: 15000.0
+    price: 350000.0
     sellPrice: 900.0
     speed: 20
     spawnItem: "EMERALD"
@@ -675,7 +675,7 @@ generators:
     instantBreak: false
   - name: "&a&lGénérateur de bloc d'émeraude"
     tier: 16
-    price: 16000.0
+    price: 420000.0
     sellPrice: 1000.0
     speed: 20
     spawnItem: "EMERALD_BLOCK"
@@ -691,7 +691,7 @@ generators:
     instantBreak: false
   - name: "&d&lGénérateur de quartz"
     tier: 17
-    price: 17000.0
+    price: 480000.0
     sellPrice: 1100.0
     speed: 20
     spawnItem: "QUARTZ"
@@ -707,7 +707,7 @@ generators:
     instantBreak: false
   - name: "&d&lGénérateur de bloc de quartz"
     tier: 18
-    price: 18000.0
+    price: 560000.0
     sellPrice: 1200.0
     speed: 20
     spawnItem: "QUARTZ_BLOCK"
@@ -723,7 +723,7 @@ generators:
     instantBreak: false
   - name: "&f&lGénérateur de fragment de Netherite"
     tier: 19
-    price: 19000.0
+    price: 640000.0
     sellPrice: 1300.0
     speed: 20
     spawnItem: "NETHERITE_SCRAP"
@@ -739,7 +739,7 @@ generators:
     instantBreak: false
   - name: "&f&lGénérateur de lingot de Netherite"
     tier: 20
-    price: 20000.0
+    price: 730000.0
     sellPrice: 1400.0
     speed: 20
     spawnItem: "NETHERITE_INGOT"
@@ -755,7 +755,7 @@ generators:
     instantBreak: false
   - name: "&5&lGénérateur de débris antiques"
     tier: 21
-    price: 21000.0
+    price: 820000.0
     sellPrice: 1500.0
     speed: 20
     spawnItem: "ANCIENT_DEBRIS"
@@ -771,7 +771,7 @@ generators:
     instantBreak: false
   - name: "&5&lGénérateur d'étoile du Nether"
     tier: 22
-    price: 22000.0
+    price: 930000.0
     sellPrice: 1600.0
     speed: 20
     spawnItem: "NETHER_STAR"
@@ -787,7 +787,7 @@ generators:
     instantBreak: false
   - name: "&c&lGénérateur d'obsidienne pleureuse"
     tier: 23
-    price: 23000.0
+    price: 1040000.0
     sellPrice: 1700.0
     speed: 20
     spawnItem: "CRYING_OBSIDIAN"
@@ -803,7 +803,7 @@ generators:
     instantBreak: false
   - name: "&4&lGénérateur de rose d'obsidienne"
     tier: 24
-    price: 24000.0
+    price: 1170000.0
     sellPrice: 1800.0
     speed: 20
     spawnItem: "WITHER_ROSE"
@@ -819,7 +819,7 @@ generators:
     instantBreak: false
   - name: "&8&lGénérateur d'ardoise des abîmes renforcée"
     tier: 25
-    price: 25000.0
+    price: 1300000.0
     sellPrice: 1900.0
     speed: 20
     spawnItem: "REINFORCED_DEEPSLATE"
@@ -835,7 +835,7 @@ generators:
     instantBreak: false
   - name: "&6&lGénérateur de bloc de magma"
     tier: 26
-    price: 26000.0
+    price: 1450000.0
     sellPrice: 2000.0
     speed: 20
     spawnItem: "MAGMA_BLOCK"
@@ -851,7 +851,7 @@ generators:
     instantBreak: false
   - name: "&4&lGénérateur de bedrock"
     tier: 27
-    price: 27000.0
+    price: 1610000.0
     sellPrice: 2100.0
     speed: 20
     spawnItem: "BEDROCK"
@@ -867,7 +867,7 @@ generators:
     instantBreak: true
   - name: "&e&lGénérateur d'œuf de dragon"
     tier: 28
-    price: 28000.0
+    price: 1780000.0
     sellPrice: 2200.0
     speed: 20
     spawnItem: "DRAGON_EGG"
@@ -892,9 +892,9 @@ auction-house:
   title: "&aMarché des joueurs"
   # Frais de mise en vente, en proportion du total de l'annonce (0 = gratuit). Ils découragent
   # le spam d'annonces ; ils ne sont PAS remboursés si l'annonce expire.
-  listing-fee: 0.0
-  # Taxe prélevée sur le vendeur à chaque vente effective (0.02 = 2 %).
-  sales-tax: 0.02
+  listing-fee: 0.01
+  # Taxe prélevée sur le vendeur à chaque vente effective (0.05 = 5 %).
+  sales-tax: 0.05
   # Prix unitaire accepté, par pièce (le marché affiche des prix à l'unité, pas au lot).
   min-price: 0.5
   max-price: 10000000.0
@@ -934,3 +934,283 @@ scoreboard:
     - "&7Joueur : &f%player%"
     - "&7Solde : &a%money%"
     - "&7Connectés : &f%server%"
+
+# plugins/ValoriaTycoon/config.yml — le rayon d'application du tour « comptoir ».
+# Remplacez dans votre fichier la section `shop:` existante par ce bloc entier (ou ajoutez-le a la fin
+# s'il n'y en a pas encore). Les commentaires se perdent si le chargeur reecrit le fichier : c'est
+# normal, seul le contenu des clefs compte.
+# ---------------------------------------------------------------------------
+# Le comptoir (/shop) : la sortie d'argent.
+#
+# Le plugin ne connaissait qu'une entrée : le générateur crache un objet, /sell le paie au `sellPrice` de sa
+# ligne, et le marché entre joueurs déplace la monnaie sans en créer. Le comptoir fait l'autre bout — acheter
+# la matière plus cher qu'elle ne se revend — et c'est ce qui donne un prix de référence au bloc.
+#
+#   buy-multiplier  prix d'achat = `sellPrice` du générateur × ce facteur. 1,75 : la matière coûte 75 % de
+#                   plus que ce que /sell en rend.
+#   buyback-ratio   ce que le comptoir rachète, calculé sur SON prix d'achat (pas sur le `sellPrice`) :
+#                   0,4 × 1,75 = 0,70, donc acheter puis se faire racheter laisse 30 % de perte. La reprise
+#                   reste sous le `sellPrice` (0,7 × `sellPrice`) : /sell demeure le meilleur débouché.
+#
+# Règle vérifiée au chargement : `buy-multiplier` × `buyback-ratio` doit rester strictement sous 1. Au-dessus,
+# le cycle est gagnant et la boutique devient une machine à imprimer — ces deux lignes sont ce qui l'empêche.
+# Rien n'est persisté : le catalogue se recharge, les transactions vivent dans la monnaie et à l'inventaire.
+shop:
+  enabled: true
+  title: "&a&lComptoir de Valoria"
+  buy-multiplier: 1.75
+  buyback-enabled: true
+  buyback-ratio: 0.4
+  # 36 piles de 64 : le plus gros lot qu'un clic peut livrer. Au-delà, le lot est réduit, pas refusé.
+  max-per-transaction: 2304
+  # Tailles de lot proposées par le bouton « Taille de lot » (le joueur bascule de l'une à l'autre).
+  amounts: [1, 16, 64]
+
+  # Deux titres de repli : `generated-category` sert quand `categories` est absent (le config.yml d'un
+  # serveur qui tourne depuis avant cette option) et `extras-category` nomme le rayon `divers` qui ramasse
+  # ce qui n'est classé nulle part.
+  generated-category: "&aMatières de générateur"
+  extras-category: "&eDivers"
+
+  # ===========================================================================
+  # LES RAYONS. Une rangée = un onglet : une clef, un titre, une icône, et la liste des matières qu'elle
+  # accueille. Le prix d'une matière de générateur n'est JAMAIS écrit ici — il reste `sellPrice ×
+  # buy-multiplier` —, seul le classement est libre. Un classement figé dans le code serait un classement
+  # qu'aucun admin ne peut corriger sans recompiler.
+  #
+  # Deux bornes, contrôlées toutes deux : 9 onglets au plus (la première ligne d'un coffre de six rangées)
+  # et 36 offres par page (les quatre du milieu). Au-delà de trente-six le rayon s'étale sur une seconde
+  # page, avec des flèches sous la ligne d'onglets ; au-delà de neuf rayons, le surplus ne serait pas
+  # cliquable — et le log du serveur le dit à chaque chargement.
+  #
+  # `materials` est un ROUTAGE : ce que le comptoir range ici quand un générateur crache la matière. Une
+  # matière de générateur absente de toutes les listes n'est pas perdue — elle est rangée à part, sous
+  # `extras-category`, avec une alerte qui nomme le remède. Citer ici une matière que `shop.extras` vend
+  # sert aussi de repli : si la ligne oublie son `category`, le rayon qui la réclame la reçoit.
+  # ===========================================================================
+  categories:
+    - key: construction
+      name: "&6🧱 Construction"
+      icon: BRICKS
+      description: ["&7Tout ce dont tu as besoin pour bâtir ton île :",
+                    "&8• &7Blocs de base (pierre, bois, terre, sable…)",
+                    "&8• &7Blocs décoratifs (verre, laine, argile, béton…)",
+                    "&8• &7Matériaux de construction avancés"]
+      materials: [COBBLESTONE, STONE, DEEPSLATE, GRANITE, DIORITE, ANDESITE, SAND, SANDSTONE, GRAVEL, DIRT,
+                  GRASS_BLOCK, TERRACOTTA, GLASS, BRICKS, MOSS_BLOCK, SNOW_BLOCK, OAK_LOG, SPRUCE_LOG, BIRCH_LOG,
+                  JUNGLE_LOG, ACACIA_LOG, DARK_OAK_LOG, MANGROVE_LOG, CHERRY_LOG, CRIMSON_STEM, WARPED_STEM,
+                  OAK_PLANKS, OAK_SLAB, OAK_FENCE, WHITE_CARPET, FLOWER_POT, PAINTING, OBSIDIAN, END_STONE,
+                  CRYING_OBSIDIAN, GLOWSTONE, NETHERRACK, SOUL_SAND, SOUL_SOIL, BLACKSTONE, BASALT, MAGMA_BLOCK]
+    - key: nourriture
+      name: "&c🍖 Nourriture"
+      icon: COOKED_BEEF
+      description: ["&7Pour ne jamais manquer d'énergie :", "&8• &7Viandes cuites et crues", "&8• &7Poissons",
+                    "&8• &7Pain et autres aliments de base", "&8• &7Produits agricoles transformés"]
+      materials: [BEEF, COOKED_BEEF, PORKCHOP, COOKED_PORKCHOP, CHICKEN, COOKED_CHICKEN, MUTTON, COOKED_MUTTON,
+                  RABBIT, COOKED_RABBIT, COD, SALMON, COOKED_COD, COOKED_SALMON, TROPICAL_FISH, PUFFERFISH,
+                  BREAD, COOKIE, PUMPKIN_PIE, CAKE, MUSHROOM_STEW, RABBIT_STEW, BEETROOT_SOUP, DRIED_KELP, APPLE,
+                  EGG]
+    - key: minerais
+      name: "&b💎 Minerais"
+      icon: DIAMOND
+      description: ["&7Les ressources les plus précieuses :",
+                    "&8• &7Minerais bruts (fer, or, diamant, émeraude, netherite…)",
+                    "&8• &7Blocs de minerais compressés", "&8• &7Ressources utiles pour le craft"]
+      materials: [COAL, IRON_INGOT, GOLD_INGOT, LAPIS_LAZULI, DIAMOND, EMERALD, QUARTZ, NETHERITE_SCRAP,
+                  NETHERITE_INGOT, ANCIENT_DEBRIS, COPPER_INGOT, RAW_IRON, RAW_GOLD, RAW_COPPER, AMETHYST_SHARD,
+                  GLOWSTONE_DUST, COAL_BLOCK, IRON_BLOCK, GOLD_BLOCK, REDSTONE_BLOCK, LAPIS_BLOCK, DIAMOND_BLOCK,
+                  EMERALD_BLOCK, QUARTZ_BLOCK]
+    - key: mobdrops
+      name: "&5🐾 Mob Drops"
+      icon: BONE
+      description: ["&7Les loots obtenus sur les créatures :", "&8• &7Os, poudre à canon, perles de l'End",
+                    "&8• &7Laines, plumes, cuir", "&8• &7Loots rares de mobs spéciaux"]
+      materials: [ROTTEN_FLESH, BONE, BONE_MEAL, STRING, SPIDER_EYE, GUNPOWDER, SLIME_BALL, ENDER_PEARL,
+                  BLAZE_ROD, GHAST_TEAR, PHANTOM_MEMBRANE, LEATHER, FEATHER, INK_SAC, GLOW_INK_SAC, MAGMA_CREAM,
+                  SHULKER_SHELL, WHITE_WOOL]
+    - key: agriculture
+      name: "&a🌾 Agriculture"
+      icon: WHEAT
+      description: ["&7Tout pour développer tes champs :", "&8• &7Graines (blé, carottes, pommes de terre…)",
+                    "&8• &7Cultures spéciales (cannes à sucre, cactus, citrouilles, pastèques…)",
+                    "&8• &7Plants et pousses d'arbres"]
+      materials: [WHEAT, MELON_SLICE, CARROT, POTATO, BEETROOT, SUGAR_CANE, CACTUS, PUMPKIN, BAMBOO, COCOA_BEANS,
+                  NETHER_WART, HAY_BLOCK, SWEET_BERRIES, KELP, SEA_PICKLE, OAK_SAPLING, SPRUCE_SAPLING,
+                  BIRCH_SAPLING, JUNGLE_SAPLING, ACACIA_SAPLING, DARK_OAK_SAPLING]
+    - key: redstone
+      name: "&c🔴 Redstone"
+      icon: REPEATER
+      description: ["&7Pour les amateurs de mécanique et d'automatisation :", "&8• &7Poudre de redstone",
+                    "&8• &7Pistons, observateurs, comparateurs", "&8• &7Hoppers, droppers, répéteurs"]
+      materials: [REDSTONE, REDSTONE_TORCH, REPEATER, COMPARATOR, OBSERVER, PISTON, STICKY_PISTON, HOPPER,
+                  DROPPER, DISPENSER, SLIME_BLOCK, HONEY_BLOCK, RAIL, POWERED_RAIL, REDSTONE_LAMP,
+                  DAYLIGHT_DETECTOR, LEVER, LIGHTNING_ROD]
+    - key: divers
+      name: "&e🎲 Divers"
+      icon: CHEST
+      description: ["&7Objets variés et utilitaires :", "&8• &7Seaux (eau, lave)", "&8• &7Objets spéciaux",
+                    "&8• &7Matériaux rares ou uniques"]
+      materials: [TORCH, LADDER, SCAFFOLDING, LANTERN, CAMPFIRE, SOUL_TORCH, GLASS_BOTTLE, BUCKET, WATER_BUCKET,
+                  LAVA_BUCKET, SHEARS, RED_BED, MINECART, OAK_BOAT, BOOK, PAPER, NETHER_STAR, WITHER_ROSE,
+                  REINFORCED_DEEPSLATE, BEDROCK, DRAGON_EGG, ENDER_EYE]
+
+  # ===========================================================================
+  # LE RESTE DU MAGASIN. Une matière qui ne sort d'aucun générateur n'a pas de prix de référence : celui-ci
+  # s'écrit à la main, une offre par ligne, et `sellback` y reste l'exception (le rachat de ce que le
+  # serveur produit ailleurs reste le rôle de /sell). Quand une reprise est écrite, elle reste vers 40 %
+  # du prix d'achat : le comptoir encaisse, il ne distribue pas. `category` nomme le rayon qui reçoit
+  # l'offre — et peut être oublié si un rayon réclame déjà cette matière dans `materials:`.
+  extras:
+    # Une ligne = une offre. Le prix d'une matiere de generateur ne s'ecrit pas ici (il vient de
+    # `sellPrice × buy-multiplier`) ; celui d'une matiere qui ne sort d'aucun generateur si.
+    # Les lignes sont rangees dans l'ordre des onglets, pour relire un rayon d'un coup d'oeil.
+    # --- construction (40 offres)
+    - { material: COBBLESTONE, name: "&7Pierre", buy: 12, sellback: 4, category: construction }
+    - { material: STONE, name: "&7Pierre taillée", buy: 16, sellback: 6, category: construction }
+    - { material: DEEPSLATE, name: "&8Ardoise", buy: 16, category: construction }
+    - { material: GRANITE, name: "&eGranit", buy: 10, category: construction }
+    - { material: DIORITE, name: "&fDiorite", buy: 10, category: construction }
+    - { material: ANDESITE, name: "&7Andésite", buy: 10, category: construction }
+    - { material: SAND, name: "&eSable", buy: 18, category: construction }
+    - { material: SANDSTONE, name: "&6Grès", buy: 24, category: construction }
+    - { material: GRAVEL, name: "&7Gravier", buy: 12, category: construction }
+    - { material: DIRT, name: "&cTerre", buy: 8, category: construction }
+    - { material: GRASS_BLOCK, name: "&aBloc d'herbe", buy: 25, category: construction }
+    - { material: TERRACOTTA, name: "&6Terre cuite", buy: 20, category: construction }
+    - { material: GLASS, name: "&bVerre", buy: 30, category: construction }
+    - { material: BRICKS, name: "&cBriques", buy: 45, category: construction }
+    - { material: MOSS_BLOCK, name: "&2Bloc de mousse", buy: 35, category: construction }
+    - { material: OAK_LOG, name: "&6Chêne", buy: 35, category: construction }
+    - { material: SPRUCE_LOG, name: "&3Sapin", buy: 35, category: construction }
+    - { material: BIRCH_LOG, name: "&eBouleau", buy: 35, category: construction }
+    - { material: JUNGLE_LOG, name: "&2Acajou", buy: 40, category: construction }
+    - { material: ACACIA_LOG, name: "&6Acacia", buy: 40, category: construction }
+    - { material: DARK_OAK_LOG, name: "&8Chêne noir", buy: 40, category: construction }
+    - { material: MANGROVE_LOG, name: "&4Mangrove", buy: 45, category: construction }
+    - { material: CHERRY_LOG, name: "&dCerisier", buy: 50, category: construction }
+    - { material: CRIMSON_STEM, name: "&4Tige carmie", buy: 45, category: construction }
+    - { material: WARPED_STEM, name: "&aTige distordue", buy: 45, category: construction }
+    - { material: OAK_PLANKS, name: "&ePlanches de chêne", buy: 12, category: construction }
+    - { material: OAK_SLAB, name: "&eDalle de chêne", buy: 8, category: construction }
+    - { material: OAK_FENCE, name: "&6Barrière de chêne", buy: 15, category: construction }
+    - { material: OBSIDIAN, name: "&8Obsidienne", buy: 300, category: construction }
+    - { material: END_STONE, name: "&ePierre de l'End", buy: 120, category: construction }
+    - { material: GLOWSTONE, name: "&ePierre lumineuse", buy: 180, category: construction }
+    - { material: NETHERRACK, name: "&4Roche du Nether", buy: 8, category: construction }
+    - { material: SOUL_SAND, name: "&6Sable des âmes", buy: 40, category: construction }
+    - { material: BLACKSTONE, name: "&8Pierre noire", buy: 30, category: construction }
+    - { material: BASALT, name: "&7Basalte", buy: 30, category: construction }
+    - { material: WHITE_CARPET, name: "&fTapis blanc", buy: 30, category: construction }
+    - { material: FLOWER_POT, name: "&6Pot de fleur", buy: 40, category: construction }
+    - { material: SNOW_BLOCK, name: "&fBloc de neige", buy: 15, category: construction }
+    - { material: SOUL_SOIL, name: "&6Terre des âmes", buy: 12, category: construction }
+    - { material: PAINTING, name: "&6Tableau", buy: 60, category: construction }
+    # --- nourriture (26 offres)
+    - { material: APPLE, name: "&cPomme", buy: 40, category: nourriture }
+    - { material: EGG, name: "&fŒuf", buy: 12, category: nourriture }
+    - { material: BEEF, name: "&cBœuf cru", buy: 30, category: nourriture }
+    - { material: COOKED_BEEF, name: "&6Steak", buy: 40, category: nourriture }
+    - { material: PORKCHOP, name: "&dPorc cru", buy: 28, category: nourriture }
+    - { material: COOKED_PORKCHOP, name: "&6Porc cuit", buy: 38, category: nourriture }
+    - { material: CHICKEN, name: "&ePoulet cru", buy: 22, category: nourriture }
+    - { material: COOKED_CHICKEN, name: "&6Poulet cuit", buy: 30, category: nourriture }
+    - { material: MUTTON, name: "&fMouton cru", buy: 24, category: nourriture }
+    - { material: COOKED_MUTTON, name: "&6Mouton cuit", buy: 34, category: nourriture }
+    - { material: RABBIT, name: "&6Lapin cru", buy: 20, category: nourriture }
+    - { material: COOKED_RABBIT, name: "&6Lapin cuit", buy: 28, category: nourriture }
+    - { material: COD, name: "&bMorue", buy: 18, category: nourriture }
+    - { material: SALMON, name: "&6Saumon", buy: 22, category: nourriture }
+    - { material: COOKED_COD, name: "&bMorue cuite", buy: 26, category: nourriture }
+    - { material: COOKED_SALMON, name: "&6Saumon cuit", buy: 30, category: nourriture }
+    - { material: TROPICAL_FISH, name: "&ePoisson tropical", buy: 30, category: nourriture }
+    - { material: PUFFERFISH, name: "&6Poisson-globe", buy: 45, category: nourriture }
+    - { material: BREAD, name: "&6Pain", buy: 20, category: nourriture }
+    - { material: COOKIE, name: "&6Cookie", buy: 8, category: nourriture }
+    - { material: PUMPKIN_PIE, name: "&6Tarte à la citrouille", buy: 75, category: nourriture }
+    - { material: CAKE, name: "&dGâteau", buy: 120, category: nourriture }
+    - { material: MUSHROOM_STEW, name: "&eSoupe de champignons", buy: 35, category: nourriture }
+    - { material: RABBIT_STEW, name: "&6Ragoût de lapin", buy: 60, category: nourriture }
+    - { material: BEETROOT_SOUP, name: "&dSoupe de betterave", buy: 45, category: nourriture }
+    - { material: DRIED_KELP, name: "&2Algues séchées", buy: 12, category: nourriture }
+    # --- minerais (6 offres)
+    - { material: COPPER_INGOT, name: "&6Cuivre", buy: 25, sellback: 10, category: minerais }
+    - { material: RAW_IRON, name: "&7Fer brut", buy: 60, sellback: 24, category: minerais }
+    - { material: RAW_GOLD, name: "&eOr brut", buy: 70, sellback: 28, category: minerais }
+    - { material: RAW_COPPER, name: "&6Cuivre brut", buy: 30, sellback: 12, category: minerais }
+    - { material: AMETHYST_SHARD, name: "&dÉclat d'améthyste", buy: 55, category: minerais }
+    - { material: GLOWSTONE_DUST, name: "&ePoudre luminescente", buy: 40, category: minerais }
+    # --- mobdrops (18 offres)
+    - { material: ROTTEN_FLESH, name: "&8Chair putride", buy: 8, category: mobdrops }
+    - { material: BONE, name: "&fOs", buy: 15, sellback: 6, category: mobdrops }
+    - { material: BONE_MEAL, name: "&fPoudre d'os", buy: 12, category: mobdrops }
+    - { material: STRING, name: "&7Fil", buy: 20, category: mobdrops }
+    - { material: SPIDER_EYE, name: "&5Œil d'araignée", buy: 25, category: mobdrops }
+    - { material: GUNPOWDER, name: "&7Poudre à canon", buy: 35, category: mobdrops }
+    - { material: SLIME_BALL, name: "&aBoule de slime", buy: 60, category: mobdrops }
+    - { material: ENDER_PEARL, name: "&5Perle de l'End", buy: 150, category: mobdrops }
+    - { material: BLAZE_ROD, name: "&6Bâton de blaze", buy: 200, category: mobdrops }
+    - { material: GHAST_TEAR, name: "&7Larme de ghast", buy: 400, category: mobdrops }
+    - { material: PHANTOM_MEMBRANE, name: "&5Membrane de fantôme", buy: 120, category: mobdrops }
+    - { material: LEATHER, name: "&6Cuir", buy: 45, category: mobdrops }
+    - { material: FEATHER, name: "&fPlume", buy: 12, category: mobdrops }
+    - { material: MAGMA_CREAM, name: "&eCrème de magma", buy: 90, category: mobdrops }
+    - { material: SHULKER_SHELL, name: "&dCarapace de shulker", buy: 6000, category: mobdrops }
+    - { material: WHITE_WOOL, name: "&fLaine blanche", buy: 45, category: mobdrops }
+    - { material: INK_SAC, name: "&8Poche d'encre", buy: 25, category: mobdrops }
+    - { material: GLOW_INK_SAC, name: "&ePoche d'encre lumineuse", buy: 45, category: mobdrops }
+    # --- agriculture (19 offres)
+    - { material: CARROT, name: "&eCarotte", buy: 14, category: agriculture }
+    - { material: POTATO, name: "&6Pomme de terre", buy: 14, category: agriculture }
+    - { material: BEETROOT, name: "&dBetterave", buy: 16, category: agriculture }
+    - { material: SUGAR_CANE, name: "&aCanne à sucre", buy: 20, category: agriculture }
+    - { material: CACTUS, name: "&2Cactus", buy: 22, category: agriculture }
+    - { material: PUMPKIN, name: "&6Citrouille", buy: 60, category: agriculture }
+    - { material: BAMBOO, name: "&aBambou", buy: 8, category: agriculture }
+    - { material: HAY_BLOCK, name: "&eBloc de foin", buy: 90, category: agriculture }
+    - { material: COCOA_BEANS, name: "&6Graines de cacao", buy: 30, category: agriculture }
+    - { material: NETHER_WART, name: "&4Verrue du Nether", buy: 45, category: agriculture }
+    - { material: OAK_SAPLING, name: "&aPousse de chêne", buy: 10, category: agriculture }
+    - { material: SPRUCE_SAPLING, name: "&2Pousse de sapin", buy: 10, category: agriculture }
+    - { material: BIRCH_SAPLING, name: "&aPousse de bouleau", buy: 10, category: agriculture }
+    - { material: JUNGLE_SAPLING, name: "&2Pousse d'acajou", buy: 15, category: agriculture }
+    - { material: ACACIA_SAPLING, name: "&6Pousse d'acacia", buy: 15, category: agriculture }
+    - { material: DARK_OAK_SAPLING, name: "&8Pousse de chêne noir", buy: 15, category: agriculture }
+    - { material: SWEET_BERRIES, name: "&dBaies sucrées", buy: 12, category: agriculture }
+    - { material: KELP, name: "&2Algues", buy: 8, category: agriculture }
+    - { material: SEA_PICKLE, name: "&aCornichon de mer", buy: 25, category: agriculture }
+    # --- redstone (17 offres)
+    - { material: REDSTONE_TORCH, name: "&cTorche de redstone", buy: 40, category: redstone }
+    - { material: REPEATER, name: "&cRépéteur", buy: 120, category: redstone }
+    - { material: COMPARATOR, name: "&cComparateur", buy: 150, category: redstone }
+    - { material: OBSERVER, name: "&8Observeur", buy: 280, category: redstone }
+    - { material: PISTON, name: "&6Piston", buy: 250, category: redstone }
+    - { material: STICKY_PISTON, name: "&aPiston collant", buy: 320, category: redstone }
+    - { material: HOPPER, name: "&7Trémie", buy: 400, category: redstone }
+    - { material: DROPPER, name: "&8Dropper", buy: 120, category: redstone }
+    - { material: DISPENSER, name: "&cDispenseur", buy: 180, category: redstone }
+    - { material: SLIME_BLOCK, name: "&aBloc de slime", buy: 600, category: redstone }
+    - { material: HONEY_BLOCK, name: "&6Bloc de miel", buy: 650, category: redstone }
+    - { material: RAIL, name: "&7Rail", buy: 60, category: redstone }
+    - { material: POWERED_RAIL, name: "&6Rail accéléré", buy: 260, category: redstone }
+    - { material: REDSTONE_LAMP, name: "&eLampe à redstone", buy: 220, category: redstone }
+    - { material: DAYLIGHT_DETECTOR, name: "&eCapteur de lumière", buy: 240, category: redstone }
+    - { material: LEVER, name: "&7Levier", buy: 25, category: redstone }
+    - { material: LIGHTNING_ROD, name: "&eParatonnerre", buy: 350, category: redstone }
+    # --- divers (17 offres)
+    - { material: ENDER_EYE, name: "&5Œil de l'End", buy: 350, category: divers }
+    - { material: TORCH, name: "&6Torche", buy: 6, category: divers }
+    - { material: LADDER, name: "&6Échelle", buy: 8, category: divers }
+    - { material: SCAFFOLDING, name: "&eÉchafaudage", buy: 12, category: divers }
+    - { material: LANTERN, name: "&6Lanterne", buy: 180, category: divers }
+    - { material: CAMPFIRE, name: "&eFeu de camp", buy: 90, category: divers }
+    - { material: SOUL_TORCH, name: "&bTorche des âmes", buy: 20, category: divers }
+    - { material: GLASS_BOTTLE, name: "&bFiole", buy: 20, category: divers }
+    - { material: BUCKET, name: "&7Seau", buy: 90, category: divers }
+    - { material: WATER_BUCKET, name: "&9Seau d'eau", buy: 110, category: divers }
+    - { material: SHEARS, name: "&7Cisailles", buy: 120, category: divers }
+    - { material: RED_BED, name: "&cLit rouge", buy: 150, category: divers }
+    - { material: MINECART, name: "&7Wagonnet", buy: 200, category: divers }
+    - { material: OAK_BOAT, name: "&6Bateau", buy: 250, category: divers }
+    - { material: BOOK, name: "&eLivre", buy: 40, category: divers }
+    - { material: PAPER, name: "&fPapier", buy: 15, category: divers }
+    - { material: LAVA_BUCKET, name: "&cSeau de lave", buy: 110, category: divers }
