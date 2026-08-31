@@ -963,8 +963,8 @@ shop:
   buyback-ratio: 0.4
   # 36 piles de 64 : le plus gros lot qu'un clic peut livrer. Au-delà, le lot est réduit, pas refusé.
   max-per-transaction: 2304
-  # Tailles de lot proposées par le bouton « Taille de lot » (le joueur bascule de l'une à l'autre).
-  amounts: [1, 16, 64]
+  # Tailles de lot proposées par le panneau de quantité (un clic gauche ouvre ce choix).
+  amounts: [1, 16, 32, 64]
 
   # Deux titres de repli : `generated-category` sert quand `categories` est absent (le config.yml d'un
   # serveur qui tourne depuis avant cette option) et `extras-category` nomme le rayon `divers` qui ramasse
@@ -1064,153 +1064,154 @@ shop:
     # Une ligne = une offre. Le prix d'une matiere de generateur ne s'ecrit pas ici (il vient de
     # `sellPrice × buy-multiplier`) ; celui d'une matiere qui ne sort d'aucun generateur si.
     # Les lignes sont rangees dans l'ordre des onglets, pour relire un rayon d'un coup d'oeil.
-    # --- construction (40 offres)
+    # --- construction (41 offres)
     - { material: COBBLESTONE, name: "&7Pierre", buy: 12, sellback: 4, category: construction }
     - { material: STONE, name: "&7Pierre taillée", buy: 16, sellback: 6, category: construction }
-    - { material: DEEPSLATE, name: "&8Ardoise", buy: 16, category: construction }
-    - { material: GRANITE, name: "&eGranit", buy: 10, category: construction }
-    - { material: DIORITE, name: "&fDiorite", buy: 10, category: construction }
-    - { material: ANDESITE, name: "&7Andésite", buy: 10, category: construction }
-    - { material: SAND, name: "&eSable", buy: 18, category: construction }
-    - { material: SANDSTONE, name: "&6Grès", buy: 24, category: construction }
-    - { material: GRAVEL, name: "&7Gravier", buy: 12, category: construction }
-    - { material: DIRT, name: "&cTerre", buy: 8, category: construction }
-    - { material: GRASS_BLOCK, name: "&aBloc d'herbe", buy: 25, category: construction }
-    - { material: TERRACOTTA, name: "&6Terre cuite", buy: 20, category: construction }
-    - { material: GLASS, name: "&bVerre", buy: 30, category: construction }
-    - { material: BRICKS, name: "&cBriques", buy: 45, category: construction }
-    - { material: MOSS_BLOCK, name: "&2Bloc de mousse", buy: 35, category: construction }
-    - { material: OAK_LOG, name: "&6Chêne", buy: 35, category: construction }
-    - { material: SPRUCE_LOG, name: "&3Sapin", buy: 35, category: construction }
-    - { material: BIRCH_LOG, name: "&eBouleau", buy: 35, category: construction }
-    - { material: JUNGLE_LOG, name: "&2Acajou", buy: 40, category: construction }
-    - { material: ACACIA_LOG, name: "&6Acacia", buy: 40, category: construction }
-    - { material: DARK_OAK_LOG, name: "&8Chêne noir", buy: 40, category: construction }
-    - { material: MANGROVE_LOG, name: "&4Mangrove", buy: 45, category: construction }
-    - { material: CHERRY_LOG, name: "&dCerisier", buy: 50, category: construction }
-    - { material: CRIMSON_STEM, name: "&4Tige carmie", buy: 45, category: construction }
-    - { material: WARPED_STEM, name: "&aTige distordue", buy: 45, category: construction }
-    - { material: OAK_PLANKS, name: "&ePlanches de chêne", buy: 12, category: construction }
-    - { material: OAK_SLAB, name: "&eDalle de chêne", buy: 8, category: construction }
-    - { material: OAK_FENCE, name: "&6Barrière de chêne", buy: 15, category: construction }
-    - { material: OBSIDIAN, name: "&8Obsidienne", buy: 300, category: construction }
-    - { material: END_STONE, name: "&ePierre de l'End", buy: 120, category: construction }
-    - { material: GLOWSTONE, name: "&ePierre lumineuse", buy: 180, category: construction }
-    - { material: NETHERRACK, name: "&4Roche du Nether", buy: 8, category: construction }
-    - { material: SOUL_SAND, name: "&6Sable des âmes", buy: 40, category: construction }
-    - { material: BLACKSTONE, name: "&8Pierre noire", buy: 30, category: construction }
-    - { material: BASALT, name: "&7Basalte", buy: 30, category: construction }
-    - { material: WHITE_CARPET, name: "&fTapis blanc", buy: 30, category: construction }
-    - { material: FLOWER_POT, name: "&6Pot de fleur", buy: 40, category: construction }
-    - { material: SNOW_BLOCK, name: "&fBloc de neige", buy: 15, category: construction }
-    - { material: SOUL_SOIL, name: "&6Terre des âmes", buy: 12, category: construction }
-    - { material: PAINTING, name: "&6Tableau", buy: 60, category: construction }
+    - { material: DEEPSLATE, name: "&8Ardoise", buy: 16, sellback: 6, category: construction }
+    - { material: GRANITE, name: "&eGranit", buy: 10, sellback: 4, category: construction }
+    - { material: DIORITE, name: "&fDiorite", buy: 10, sellback: 4, category: construction }
+    - { material: ANDESITE, name: "&7Andésite", buy: 10, sellback: 4, category: construction }
+    - { material: SAND, name: "&eSable", buy: 18, sellback: 7, category: construction }
+    - { material: SANDSTONE, name: "&6Grès", buy: 24, sellback: 10, category: construction }
+    - { material: GRAVEL, name: "&7Gravier", buy: 12, sellback: 5, category: construction }
+    - { material: DIRT, name: "&cTerre", buy: 8, sellback: 3, category: construction }
+    - { material: GRASS_BLOCK, name: "&aBloc d'herbe", buy: 25, sellback: 10, category: construction }
+    - { material: TERRACOTTA, name: "&6Terre cuite", buy: 20, sellback: 8, category: construction }
+    - { material: GLASS, name: "&bVerre", buy: 30, sellback: 12, category: construction }
+    - { material: BRICKS, name: "&cBriques", buy: 45, sellback: 18, category: construction }
+    - { material: MOSS_BLOCK, name: "&2Bloc de mousse", buy: 35, sellback: 14, category: construction }
+    - { material: OAK_LOG, name: "&6Chêne", buy: 35, sellback: 14, category: construction }
+    - { material: SPRUCE_LOG, name: "&3Sapin", buy: 35, sellback: 14, category: construction }
+    - { material: BIRCH_LOG, name: "&eBouleau", buy: 35, sellback: 14, category: construction }
+    - { material: JUNGLE_LOG, name: "&2Acajou", buy: 40, sellback: 16, category: construction }
+    - { material: ACACIA_LOG, name: "&6Acacia", buy: 40, sellback: 16, category: construction }
+    - { material: DARK_OAK_LOG, name: "&8Chêne noir", buy: 40, sellback: 16, category: construction }
+    - { material: MANGROVE_LOG, name: "&4Mangrove", buy: 45, sellback: 18, category: construction }
+    - { material: CHERRY_LOG, name: "&dCerisier", buy: 50, sellback: 20, category: construction }
+    - { material: CRIMSON_STEM, name: "&4Tige carmie", buy: 45, sellback: 18, category: construction }
+    - { material: WARPED_STEM, name: "&aTige distordue", buy: 45, sellback: 18, category: construction }
+    - { material: OAK_PLANKS, name: "&ePlanches de chêne", buy: 12, sellback: 5, category: construction }
+    - { material: OAK_SLAB, name: "&eDalle de chêne", buy: 8, sellback: 3, category: construction }
+    - { material: OAK_FENCE, name: "&6Barrière de chêne", buy: 15, sellback: 6, category: construction }
+    - { material: OBSIDIAN, name: "&8Obsidienne", buy: 300, sellback: 120, category: construction }
+    - { material: END_STONE, name: "&ePierre de l'End", buy: 120, sellback: 48, category: construction }
+    - { material: GLOWSTONE, name: "&ePierre lumineuse", buy: 180, sellback: 72, category: construction }
+    - { material: NETHERRACK, name: "&4Roche du Nether", buy: 8, sellback: 3, category: construction }
+    - { material: SOUL_SAND, name: "&6Sable des âmes", buy: 40, sellback: 16, category: construction }
+    - { material: BLACKSTONE, name: "&8Pierre noire", buy: 30, sellback: 12, category: construction }
+    - { material: BASALT, name: "&7Basalte", buy: 30, sellback: 12, category: construction }
+    - { material: WHITE_CARPET, name: "&fTapis blanc", buy: 30, sellback: 12, category: construction }
+    - { material: FLOWER_POT, name: "&6Pot de fleur", buy: 40, sellback: 16, category: construction }
+    - { material: SNOW_BLOCK, name: "&fBloc de neige", buy: 15, sellback: 6, category: construction }
+    - { material: SOUL_SOIL, name: "&6Terre des âmes", buy: 12, sellback: 5, category: construction }
+    - { material: PAINTING, name: "&6Tableau", buy: 60, sellback: 24, category: construction }
+    - { material: BONE_BLOCK, name: "&eBloc d'os", buy: 108, sellback: 43, category: construction }
     # --- nourriture (26 offres)
-    - { material: APPLE, name: "&cPomme", buy: 40, category: nourriture }
-    - { material: EGG, name: "&fŒuf", buy: 12, category: nourriture }
-    - { material: BEEF, name: "&cBœuf cru", buy: 30, category: nourriture }
-    - { material: COOKED_BEEF, name: "&6Steak", buy: 40, category: nourriture }
-    - { material: PORKCHOP, name: "&dPorc cru", buy: 28, category: nourriture }
-    - { material: COOKED_PORKCHOP, name: "&6Porc cuit", buy: 38, category: nourriture }
-    - { material: CHICKEN, name: "&ePoulet cru", buy: 22, category: nourriture }
-    - { material: COOKED_CHICKEN, name: "&6Poulet cuit", buy: 30, category: nourriture }
-    - { material: MUTTON, name: "&fMouton cru", buy: 24, category: nourriture }
-    - { material: COOKED_MUTTON, name: "&6Mouton cuit", buy: 34, category: nourriture }
-    - { material: RABBIT, name: "&6Lapin cru", buy: 20, category: nourriture }
-    - { material: COOKED_RABBIT, name: "&6Lapin cuit", buy: 28, category: nourriture }
-    - { material: COD, name: "&bMorue", buy: 18, category: nourriture }
-    - { material: SALMON, name: "&6Saumon", buy: 22, category: nourriture }
-    - { material: COOKED_COD, name: "&bMorue cuite", buy: 26, category: nourriture }
-    - { material: COOKED_SALMON, name: "&6Saumon cuit", buy: 30, category: nourriture }
-    - { material: TROPICAL_FISH, name: "&ePoisson tropical", buy: 30, category: nourriture }
-    - { material: PUFFERFISH, name: "&6Poisson-globe", buy: 45, category: nourriture }
-    - { material: BREAD, name: "&6Pain", buy: 20, category: nourriture }
-    - { material: COOKIE, name: "&6Cookie", buy: 8, category: nourriture }
-    - { material: PUMPKIN_PIE, name: "&6Tarte à la citrouille", buy: 75, category: nourriture }
-    - { material: CAKE, name: "&dGâteau", buy: 120, category: nourriture }
-    - { material: MUSHROOM_STEW, name: "&eSoupe de champignons", buy: 35, category: nourriture }
-    - { material: RABBIT_STEW, name: "&6Ragoût de lapin", buy: 60, category: nourriture }
-    - { material: BEETROOT_SOUP, name: "&dSoupe de betterave", buy: 45, category: nourriture }
-    - { material: DRIED_KELP, name: "&2Algues séchées", buy: 12, category: nourriture }
+    - { material: APPLE, name: "&cPomme", buy: 40, sellback: 16, category: nourriture }
+    - { material: EGG, name: "&fŒuf", buy: 12, sellback: 5, category: nourriture }
+    - { material: BEEF, name: "&cBœuf cru", buy: 30, sellback: 12, category: nourriture }
+    - { material: COOKED_BEEF, name: "&6Steak", buy: 40, sellback: 16, category: nourriture }
+    - { material: PORKCHOP, name: "&dPorc cru", buy: 28, sellback: 11, category: nourriture }
+    - { material: COOKED_PORKCHOP, name: "&6Porc cuit", buy: 38, sellback: 15, category: nourriture }
+    - { material: CHICKEN, name: "&ePoulet cru", buy: 22, sellback: 9, category: nourriture }
+    - { material: COOKED_CHICKEN, name: "&6Poulet cuit", buy: 30, sellback: 12, category: nourriture }
+    - { material: MUTTON, name: "&fMouton cru", buy: 24, sellback: 10, category: nourriture }
+    - { material: COOKED_MUTTON, name: "&6Mouton cuit", buy: 34, sellback: 14, category: nourriture }
+    - { material: RABBIT, name: "&6Lapin cru", buy: 20, sellback: 8, category: nourriture }
+    - { material: COOKED_RABBIT, name: "&6Lapin cuit", buy: 28, sellback: 11, category: nourriture }
+    - { material: COD, name: "&bMorue", buy: 18, sellback: 7, category: nourriture }
+    - { material: SALMON, name: "&6Saumon", buy: 22, sellback: 9, category: nourriture }
+    - { material: COOKED_COD, name: "&bMorue cuite", buy: 26, sellback: 10, category: nourriture }
+    - { material: COOKED_SALMON, name: "&6Saumon cuit", buy: 30, sellback: 12, category: nourriture }
+    - { material: TROPICAL_FISH, name: "&ePoisson tropical", buy: 30, sellback: 12, category: nourriture }
+    - { material: PUFFERFISH, name: "&6Poisson-globe", buy: 45, sellback: 18, category: nourriture }
+    - { material: BREAD, name: "&6Pain", buy: 20, sellback: 8, category: nourriture }
+    - { material: COOKIE, name: "&6Cookie", buy: 8, sellback: 3, category: nourriture }
+    - { material: PUMPKIN_PIE, name: "&6Tarte à la citrouille", buy: 75, sellback: 30, category: nourriture }
+    - { material: CAKE, name: "&dGâteau", buy: 120, sellback: 48, category: nourriture }
+    - { material: MUSHROOM_STEW, name: "&eSoupe de champignons", buy: 35, sellback: 14, category: nourriture }
+    - { material: RABBIT_STEW, name: "&6Ragoût de lapin", buy: 60, sellback: 24, category: nourriture }
+    - { material: BEETROOT_SOUP, name: "&dSoupe de betterave", buy: 45, sellback: 18, category: nourriture }
+    - { material: DRIED_KELP, name: "&2Algues séchées", buy: 12, sellback: 5, category: nourriture }
     # --- minerais (6 offres)
     - { material: COPPER_INGOT, name: "&6Cuivre", buy: 25, sellback: 10, category: minerais }
     - { material: RAW_IRON, name: "&7Fer brut", buy: 60, sellback: 24, category: minerais }
     - { material: RAW_GOLD, name: "&eOr brut", buy: 70, sellback: 28, category: minerais }
     - { material: RAW_COPPER, name: "&6Cuivre brut", buy: 30, sellback: 12, category: minerais }
-    - { material: AMETHYST_SHARD, name: "&dÉclat d'améthyste", buy: 55, category: minerais }
-    - { material: GLOWSTONE_DUST, name: "&ePoudre luminescente", buy: 40, category: minerais }
+    - { material: AMETHYST_SHARD, name: "&dÉclat d'améthyste", buy: 55, sellback: 22, category: minerais }
+    - { material: GLOWSTONE_DUST, name: "&ePoudre luminescente", buy: 40, sellback: 16, category: minerais }
     # --- mobdrops (18 offres)
-    - { material: ROTTEN_FLESH, name: "&8Chair putride", buy: 8, category: mobdrops }
+    - { material: ROTTEN_FLESH, name: "&8Chair putride", buy: 8, sellback: 3, category: mobdrops }
     - { material: BONE, name: "&fOs", buy: 15, sellback: 6, category: mobdrops }
-    - { material: BONE_MEAL, name: "&fPoudre d'os", buy: 12, category: mobdrops }
-    - { material: STRING, name: "&7Fil", buy: 20, category: mobdrops }
-    - { material: SPIDER_EYE, name: "&5Œil d'araignée", buy: 25, category: mobdrops }
-    - { material: GUNPOWDER, name: "&7Poudre à canon", buy: 35, category: mobdrops }
-    - { material: SLIME_BALL, name: "&aBoule de slime", buy: 60, category: mobdrops }
-    - { material: ENDER_PEARL, name: "&5Perle de l'End", buy: 150, category: mobdrops }
-    - { material: BLAZE_ROD, name: "&6Bâton de blaze", buy: 200, category: mobdrops }
-    - { material: GHAST_TEAR, name: "&7Larme de ghast", buy: 400, category: mobdrops }
-    - { material: PHANTOM_MEMBRANE, name: "&5Membrane de fantôme", buy: 120, category: mobdrops }
-    - { material: LEATHER, name: "&6Cuir", buy: 45, category: mobdrops }
-    - { material: FEATHER, name: "&fPlume", buy: 12, category: mobdrops }
-    - { material: MAGMA_CREAM, name: "&eCrème de magma", buy: 90, category: mobdrops }
-    - { material: SHULKER_SHELL, name: "&dCarapace de shulker", buy: 6000, category: mobdrops }
-    - { material: WHITE_WOOL, name: "&fLaine blanche", buy: 45, category: mobdrops }
-    - { material: INK_SAC, name: "&8Poche d'encre", buy: 25, category: mobdrops }
-    - { material: GLOW_INK_SAC, name: "&ePoche d'encre lumineuse", buy: 45, category: mobdrops }
+    - { material: BONE_MEAL, name: "&fPoudre d'os", buy: 12, sellback: 5, category: mobdrops }
+    - { material: STRING, name: "&7Fil", buy: 20, sellback: 8, category: mobdrops }
+    - { material: SPIDER_EYE, name: "&5Œil d'araignée", buy: 25, sellback: 10, category: mobdrops }
+    - { material: GUNPOWDER, name: "&7Poudre à canon", buy: 35, sellback: 14, category: mobdrops }
+    - { material: SLIME_BALL, name: "&aBoule de slime", buy: 60, sellback: 24, category: mobdrops }
+    - { material: ENDER_PEARL, name: "&5Perle de l'End", buy: 150, sellback: 60, category: mobdrops }
+    - { material: BLAZE_ROD, name: "&6Bâton de blaze", buy: 200, sellback: 80, category: mobdrops }
+    - { material: GHAST_TEAR, name: "&7Larme de ghast", buy: 400, sellback: 160, category: mobdrops }
+    - { material: PHANTOM_MEMBRANE, name: "&5Membrane de fantôme", buy: 120, sellback: 48, category: mobdrops }
+    - { material: LEATHER, name: "&6Cuir", buy: 45, sellback: 18, category: mobdrops }
+    - { material: FEATHER, name: "&fPlume", buy: 12, sellback: 5, category: mobdrops }
+    - { material: MAGMA_CREAM, name: "&eCrème de magma", buy: 90, sellback: 36, category: mobdrops }
+    - { material: SHULKER_SHELL, name: "&dCarapace de shulker", buy: 6000, sellback: 2400, category: mobdrops }
+    - { material: WHITE_WOOL, name: "&fLaine blanche", buy: 45, sellback: 18, category: mobdrops }
+    - { material: INK_SAC, name: "&8Poche d'encre", buy: 25, sellback: 10, category: mobdrops }
+    - { material: GLOW_INK_SAC, name: "&ePoche d'encre lumineuse", buy: 45, sellback: 18, category: mobdrops }
     # --- agriculture (19 offres)
-    - { material: CARROT, name: "&eCarotte", buy: 14, category: agriculture }
-    - { material: POTATO, name: "&6Pomme de terre", buy: 14, category: agriculture }
-    - { material: BEETROOT, name: "&dBetterave", buy: 16, category: agriculture }
-    - { material: SUGAR_CANE, name: "&aCanne à sucre", buy: 20, category: agriculture }
-    - { material: CACTUS, name: "&2Cactus", buy: 22, category: agriculture }
-    - { material: PUMPKIN, name: "&6Citrouille", buy: 60, category: agriculture }
-    - { material: BAMBOO, name: "&aBambou", buy: 8, category: agriculture }
-    - { material: HAY_BLOCK, name: "&eBloc de foin", buy: 90, category: agriculture }
-    - { material: COCOA_BEANS, name: "&6Graines de cacao", buy: 30, category: agriculture }
-    - { material: NETHER_WART, name: "&4Verrue du Nether", buy: 45, category: agriculture }
-    - { material: OAK_SAPLING, name: "&aPousse de chêne", buy: 10, category: agriculture }
-    - { material: SPRUCE_SAPLING, name: "&2Pousse de sapin", buy: 10, category: agriculture }
-    - { material: BIRCH_SAPLING, name: "&aPousse de bouleau", buy: 10, category: agriculture }
-    - { material: JUNGLE_SAPLING, name: "&2Pousse d'acajou", buy: 15, category: agriculture }
-    - { material: ACACIA_SAPLING, name: "&6Pousse d'acacia", buy: 15, category: agriculture }
-    - { material: DARK_OAK_SAPLING, name: "&8Pousse de chêne noir", buy: 15, category: agriculture }
-    - { material: SWEET_BERRIES, name: "&dBaies sucrées", buy: 12, category: agriculture }
-    - { material: KELP, name: "&2Algues", buy: 8, category: agriculture }
-    - { material: SEA_PICKLE, name: "&aCornichon de mer", buy: 25, category: agriculture }
+    - { material: CARROT, name: "&eCarotte", buy: 14, sellback: 6, category: agriculture }
+    - { material: POTATO, name: "&6Pomme de terre", buy: 14, sellback: 6, category: agriculture }
+    - { material: BEETROOT, name: "&dBetterave", buy: 16, sellback: 6, category: agriculture }
+    - { material: SUGAR_CANE, name: "&aCanne à sucre", buy: 20, sellback: 8, category: agriculture }
+    - { material: CACTUS, name: "&2Cactus", buy: 22, sellback: 9, category: agriculture }
+    - { material: PUMPKIN, name: "&6Citrouille", buy: 60, sellback: 24, category: agriculture }
+    - { material: BAMBOO, name: "&aBambou", buy: 8, sellback: 3, category: agriculture }
+    - { material: HAY_BLOCK, name: "&eBloc de foin", buy: 157.5, sellback: 63, category: agriculture }
+    - { material: COCOA_BEANS, name: "&6Graines de cacao", buy: 30, sellback: 12, category: agriculture }
+    - { material: NETHER_WART, name: "&4Verrue du Nether", buy: 45, sellback: 18, category: agriculture }
+    - { material: OAK_SAPLING, name: "&aPousse de chêne", buy: 10, sellback: 4, category: agriculture }
+    - { material: SPRUCE_SAPLING, name: "&2Pousse de sapin", buy: 10, sellback: 4, category: agriculture }
+    - { material: BIRCH_SAPLING, name: "&aPousse de bouleau", buy: 10, sellback: 4, category: agriculture }
+    - { material: JUNGLE_SAPLING, name: "&2Pousse d'acajou", buy: 15, sellback: 6, category: agriculture }
+    - { material: ACACIA_SAPLING, name: "&6Pousse d'acacia", buy: 15, sellback: 6, category: agriculture }
+    - { material: DARK_OAK_SAPLING, name: "&8Pousse de chêne noir", buy: 15, sellback: 6, category: agriculture }
+    - { material: SWEET_BERRIES, name: "&dBaies sucrées", buy: 12, sellback: 5, category: agriculture }
+    - { material: KELP, name: "&2Algues", buy: 8, sellback: 3, category: agriculture }
+    - { material: SEA_PICKLE, name: "&aCornichon de mer", buy: 25, sellback: 10, category: agriculture }
     # --- redstone (17 offres)
-    - { material: REDSTONE_TORCH, name: "&cTorche de redstone", buy: 40, category: redstone }
-    - { material: REPEATER, name: "&cRépéteur", buy: 120, category: redstone }
-    - { material: COMPARATOR, name: "&cComparateur", buy: 150, category: redstone }
-    - { material: OBSERVER, name: "&8Observeur", buy: 280, category: redstone }
-    - { material: PISTON, name: "&6Piston", buy: 250, category: redstone }
-    - { material: STICKY_PISTON, name: "&aPiston collant", buy: 320, category: redstone }
-    - { material: HOPPER, name: "&7Trémie", buy: 400, category: redstone }
-    - { material: DROPPER, name: "&8Dropper", buy: 120, category: redstone }
-    - { material: DISPENSER, name: "&cDispenseur", buy: 180, category: redstone }
-    - { material: SLIME_BLOCK, name: "&aBloc de slime", buy: 600, category: redstone }
-    - { material: HONEY_BLOCK, name: "&6Bloc de miel", buy: 650, category: redstone }
-    - { material: RAIL, name: "&7Rail", buy: 60, category: redstone }
-    - { material: POWERED_RAIL, name: "&6Rail accéléré", buy: 260, category: redstone }
-    - { material: REDSTONE_LAMP, name: "&eLampe à redstone", buy: 220, category: redstone }
-    - { material: DAYLIGHT_DETECTOR, name: "&eCapteur de lumière", buy: 240, category: redstone }
-    - { material: LEVER, name: "&7Levier", buy: 25, category: redstone }
-    - { material: LIGHTNING_ROD, name: "&eParatonnerre", buy: 350, category: redstone }
+    - { material: REDSTONE_TORCH, name: "&cTorche de redstone", buy: 40, sellback: 16, category: redstone }
+    - { material: REPEATER, name: "&cRépéteur", buy: 120, sellback: 48, category: redstone }
+    - { material: COMPARATOR, name: "&cComparateur", buy: 150, sellback: 60, category: redstone }
+    - { material: OBSERVER, name: "&8Observeur", buy: 280, sellback: 112, category: redstone }
+    - { material: PISTON, name: "&6Piston", buy: 250, sellback: 100, category: redstone }
+    - { material: STICKY_PISTON, name: "&aPiston collant", buy: 320, sellback: 128, category: redstone }
+    - { material: HOPPER, name: "&7Trémie", buy: 400, sellback: 160, category: redstone }
+    - { material: DROPPER, name: "&8Dropper", buy: 120, sellback: 48, category: redstone }
+    - { material: DISPENSER, name: "&cDispenseur", buy: 180, sellback: 72, category: redstone }
+    - { material: SLIME_BLOCK, name: "&aBloc de slime", buy: 600, sellback: 240, category: redstone }
+    - { material: HONEY_BLOCK, name: "&6Bloc de miel", buy: 650, sellback: 260, category: redstone }
+    - { material: RAIL, name: "&7Rail", buy: 60, sellback: 24, category: redstone }
+    - { material: POWERED_RAIL, name: "&6Rail accéléré", buy: 260, sellback: 104, category: redstone }
+    - { material: REDSTONE_LAMP, name: "&eLampe à redstone", buy: 220, sellback: 88, category: redstone }
+    - { material: DAYLIGHT_DETECTOR, name: "&eCapteur de lumière", buy: 240, sellback: 96, category: redstone }
+    - { material: LEVER, name: "&7Levier", buy: 25, sellback: 10, category: redstone }
+    - { material: LIGHTNING_ROD, name: "&eParatonnerre", buy: 350, sellback: 140, category: redstone }
     # --- divers (17 offres)
-    - { material: ENDER_EYE, name: "&5Œil de l'End", buy: 350, category: divers }
-    - { material: TORCH, name: "&6Torche", buy: 6, category: divers }
-    - { material: LADDER, name: "&6Échelle", buy: 8, category: divers }
-    - { material: SCAFFOLDING, name: "&eÉchafaudage", buy: 12, category: divers }
-    - { material: LANTERN, name: "&6Lanterne", buy: 180, category: divers }
-    - { material: CAMPFIRE, name: "&eFeu de camp", buy: 90, category: divers }
-    - { material: SOUL_TORCH, name: "&bTorche des âmes", buy: 20, category: divers }
-    - { material: GLASS_BOTTLE, name: "&bFiole", buy: 20, category: divers }
-    - { material: BUCKET, name: "&7Seau", buy: 90, category: divers }
-    - { material: WATER_BUCKET, name: "&9Seau d'eau", buy: 110, category: divers }
-    - { material: SHEARS, name: "&7Cisailles", buy: 120, category: divers }
-    - { material: RED_BED, name: "&cLit rouge", buy: 150, category: divers }
-    - { material: MINECART, name: "&7Wagonnet", buy: 200, category: divers }
-    - { material: OAK_BOAT, name: "&6Bateau", buy: 250, category: divers }
-    - { material: BOOK, name: "&eLivre", buy: 40, category: divers }
-    - { material: PAPER, name: "&fPapier", buy: 15, category: divers }
-    - { material: LAVA_BUCKET, name: "&cSeau de lave", buy: 110, category: divers }
+    - { material: ENDER_EYE, name: "&5Œil de l'End", buy: 350, sellback: 140, category: divers }
+    - { material: TORCH, name: "&6Torche", buy: 6, sellback: 2, category: divers }
+    - { material: LADDER, name: "&6Échelle", buy: 8, sellback: 3, category: divers }
+    - { material: SCAFFOLDING, name: "&eÉchafaudage", buy: 12, sellback: 5, category: divers }
+    - { material: LANTERN, name: "&6Lanterne", buy: 180, sellback: 72, category: divers }
+    - { material: CAMPFIRE, name: "&eFeu de camp", buy: 90, sellback: 36, category: divers }
+    - { material: SOUL_TORCH, name: "&bTorche des âmes", buy: 20, sellback: 8, category: divers }
+    - { material: GLASS_BOTTLE, name: "&bFiole", buy: 20, sellback: 8, category: divers }
+    - { material: BUCKET, name: "&7Seau", buy: 90, sellback: 36, category: divers }
+    - { material: WATER_BUCKET, name: "&9Seau d'eau", buy: 110, sellback: 44, category: divers }
+    - { material: SHEARS, name: "&7Cisailles", buy: 120, sellback: 48, category: divers }
+    - { material: RED_BED, name: "&cLit rouge", buy: 150, sellback: 60, category: divers }
+    - { material: MINECART, name: "&7Wagonnet", buy: 200, sellback: 80, category: divers }
+    - { material: OAK_BOAT, name: "&6Bateau", buy: 250, sellback: 100, category: divers }
+    - { material: BOOK, name: "&eLivre", buy: 40, sellback: 16, category: divers }
+    - { material: PAPER, name: "&fPapier", buy: 15, sellback: 6, category: divers }
+    - { material: LAVA_BUCKET, name: "&cSeau de lave", buy: 110, sellback: 44, category: divers }

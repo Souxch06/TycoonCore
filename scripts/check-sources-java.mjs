@@ -164,12 +164,25 @@ const CONTRACTS = [
   },
   {
     file: 'sources/plugin/xyz/arcadiadevs/valoriatycoon/commands/SellCommandListener.java',
-    why: "point d'entrée /ah et /shop (interception de commande, comme /sell)",
+    why: "point d'entrée /ah (interception) et enregistrement de /shop comme vraie commande déclarée",
     methods: [{ name: 'onPlayerCommandPreprocess', returns: 'void', arity: 1, static: false }],
     mustContain: ['"/ah"', '"returns"', '"claim"', 'AuctionGui.open', 'AuctionGui.openReturns',
                   'notifyReturns', 'AuctionGui.forget', 'setCancelled',
-                  // le comptoir est intercepté au même endroit, sans commande déclarée dans plugin.yml
-                  '"/shop"', 'ShopGui.command(player, ahArgs)', 'ShopGui.forget'],
+                  // le comptoir n'est plus intercepté : il est enregistré comme commande, depuis la
+                  // construction du listener (ValoriaTycoon.java n'est pas recompilé par la CI)
+                  'ValoriaTycoon.getInstance()', 'plugin.getCommand(\"shop\")',
+                  'new ShopCommand()', 'setTabCompleter(executor)', 'ShopGui.forget'],
+    mustNotContain: ['net.minecraft'],
+  },
+  {
+    file: 'sources/plugin/xyz/arcadiadevs/valoriatycoon/commands/ShopCommand.java',
+    why: "/shop : CommandExecutor + TabCompleter déclarés — c'est ce qui donne les suggestions Tab",
+    methods: [
+      { name: 'onCommand', returns: 'boolean', arity: 4, static: false },
+      { name: 'onTabComplete', returns: 'List', arity: 4, static: false },
+    ],
+    mustContain: ['implements CommandExecutor, TabCompleter', 'ShopGui.command((Player) sender,',
+                  '"reload"', '"acheter"', '"vendre"', 'materialNames()'],
     mustNotContain: ['net.minecraft'],
   },
   {

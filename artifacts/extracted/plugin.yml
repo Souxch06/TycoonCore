@@ -40,6 +40,10 @@ commands:
     description: Vend les drops présents dans l'inventaire
     usage: /selldrops
     aliases: [ sell ]
+  shop:
+    description: Ouvre le comptoir et y achète les matières
+    usage: /shop [acheter|vendre <matière> [quantité]] | /shop <matière>
+    aliases: [ comptoir ]
 permissions:
   valoriatycoon.shop.use:
     description: Ouvrir le comptoir et y acheter des matières.
