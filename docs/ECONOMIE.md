@@ -110,7 +110,7 @@ donc acheter puis se faire racheter laisse 30 % de perte — `/sell` reste le me
 
 | rayon | icône | matières listées | offres de générateur | offres écrites | total | pages |
 | --- | --- | --- | --- | --- | --- | --- |
-| 🧱 Construction | `BRICKS` | 42 | 2 | 40 | **42** | 2 |
+| 🧱 Construction | `BRICKS` | 42 | 2 | 41 | **43** | 2 |
 | 🍖 Nourriture | `COOKED_BEEF` | 26 | 0 | 26 | **26** | 1 |
 | 💎 Minerais | `DIAMOND` | 24 | 18 | 6 | **24** | 1 |
 | 🐾 Mob Drops | `BONE` | 18 | 0 | 18 | **18** | 1 |
@@ -118,7 +118,7 @@ donc acheter puis se faire racheter laisse 30 % de perte — `/sell` reste le me
 | 🔴 Redstone | `REPEATER` | 18 | 1 | 17 | **18** | 1 |
 | 🎲 Divers | `CHEST` | 22 | 5 | 17 | **22** | 1 |
 
-> « matières listées » (`shop.categories[].materials`) ne vend rien : c'est la liste des matières que le rayon **réclame**. Une ligne de `generators:` dont le `spawnItem` y figure atterrit ici toute seule ; les autres n'y sont que pour la prochaine ligne qu'un admin ajoutera. Les offres payables, ce sont les 28 lignes venues du générateur et les 143 lignes écrites à la main dans `shop.extras`.
+> « matières listées » (`shop.categories[].materials`) ne vend rien : c'est la liste des matières que le rayon **réclame**. Une ligne de `generators:` dont le `spawnItem` y figure atterrit ici toute seule ; les autres n'y sont que pour la prochaine ligne qu'un admin ajoutera. Les offres payables, ce sont les 28 lignes venues du générateur et les 144 lignes écrites à la main dans `shop.extras`.
 
 > Un rayon qui dépasse 36 offres ne disparaît pas : il se **page** — les offres se partagent 4 rangées de neuf cases, les flèches sont posées sous la ligne d'onglets. 9 rayons au plus tiennent dans cette ligne ; au-delà, le surplus n'est pas cliquable et le log du serveur le dit.
 
@@ -164,8 +164,8 @@ shop:
   buyback-ratio: 0.4
   # 36 piles de 64 : le plus gros lot qu'un clic peut livrer. Au-delà, le lot est réduit, pas refusé.
   max-per-transaction: 2304
-  # Tailles de lot proposées par le bouton « Taille de lot » (le joueur bascule de l'une à l'autre).
-  amounts: [1, 16, 64]
+  # Tailles de lot proposées par le panneau de quantité (un clic gauche ouvre ce choix).
+  amounts: [1, 16, 32, 64]
 
   # Deux titres de repli : `generated-category` sert quand `categories` est absent (le config.yml d'un
   # serveur qui tourne depuis avant cette option) et `extras-category` nomme le rayon `divers` qui ramasse
@@ -265,11 +265,11 @@ shop:
     # Une ligne = une offre. Le prix d'une matiere de generateur ne s'ecrit pas ici (il vient de
     # `sellPrice × buy-multiplier`) ; celui d'une matiere qui ne sort d'aucun generateur si.
     # Les lignes sont rangees dans l'ordre des onglets, pour relire un rayon d'un coup d'oeil.
-    # --- construction (40 offres)
+    # --- construction (41 offres)
     - { material: COBBLESTONE, name: "&7Pierre", buy: 12, sellback: 4, category: construction }
     - { material: STONE, name: "&7Pierre taillée", buy: 16, sellback: 6, category: construction }
-    - { material: DEEPSLATE, name: "&8Ardoise", buy: 16, category: construction }
-    # … et 140 autres lignes, exactement de la meme facture
+    - { material: DEEPSLATE, name: "&8Ardoise", buy: 16, sellback: 6, category: construction }
+    # … et 141 autres lignes, exactement de la meme facture
 ```
 
 ## Importer les soldes EssentialsX (une fois)

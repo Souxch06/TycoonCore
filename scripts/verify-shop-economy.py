@@ -52,6 +52,8 @@ SHOP_SOURCE = os.path.join(ROOT, "sources", "plugin", "xyz", "arcadiadevs", "val
                            "guis", "ShopGui.java")
 HOOK_SOURCE = os.path.join(ROOT, "sources", "plugin", "xyz", "arcadiadevs", "valoriatycoon",
                            "commands", "SellCommandListener.java")
+SHOP_COMMAND_SOURCE = os.path.join(ROOT, "sources", "plugin", "xyz", "arcadiadevs", "valoriatycoon",
+                                   "commands", "ShopCommand.java")
 ECONOMIE_DOC = os.path.join(ROOT, "docs", "ECONOMIE.md")
 TOOLS_DOC = os.path.join(ROOT, "docs", "MULTI-OUTIL.md")
 # L'info-bulle d'un onglet grandit, elle ne se coupe pas : le client replie ce qui depasse. Ces deux bornes
@@ -1041,16 +1043,24 @@ def check_all(generators, shop, categories, extras, hours, settings):
     check("ShopGui.java est dans les <includes> du pom", "ShopGui.java</include>" in read_text(POM),
           "hors de cette liste la classe n'est pas compilee : elle ne fait rien sur le serveur")
     hook = read_text(HOOK_SOURCE)
-    check("le hook /shop est branche dans SellCommandListener", '"/shop"' in hook
-          and "ShopGui.command(player, ahArgs)" in hook, "la commande n'est declaree nulle part, c'est "
-          "normal ; l'interception ne l'est pas")
+    check("le comptoir est enregistre comme commande reelle dans SellCommandListener",
+          "getCommand(\"shop\")" in hook and "new ShopCommand()" in hook
+          and "setTabCompleter(executor)" in hook,
+          "sans declaration + TabCompleter, /shop ne propose aucune suggestion")
     check("la vue du comptoir est liberee au depart du joueur", "ShopGui.forget" in hook,
           "un `Gui` GuiLib enregistre un auditeur a la construction et ne le desinscrit jamais")
     plugin = read_text(PLUGIN_YML)
     check("les permissions du comptoir sont declarees", "valoriatycoon.shop.use:" in plugin
           and "valoriatycoon.shop.admin:" in plugin, "sans declaration, `default: true` n'existe pas")
-    check("/shop n'est PAS declare comme commande", not re.search(r"^  (shop|comptoir):\s*$", plugin, re.M),
-          "une declaration concurrence l'interception du listener")
+    check("/shop EST declare comme commande (avec l'alias comptoir)",
+          re.search(r"^  shop:\s*$", plugin, re.M) is not None
+          and re.search(r"aliases:\s*\[\s*comptoir\s*\]", plugin, re.M) is not None,
+          "une vraie commande + alias est ce qui donne les suggestions Tab")
+    check("la commande declaree porte un Executor et un TabCompleter",
+          "class ShopCommand" in read_text(SHOP_COMMAND_SOURCE)
+          and "implements CommandExecutor" in read_text(SHOP_COMMAND_SOURCE)
+          and "TabCompleter" in read_text(SHOP_COMMAND_SOURCE),
+          "la surface /shop est livree par le CommandExecutor + TabCompleter declares")
     check("le rechargement relit le disque", "plugin.reloadConfig();" in read_text(SHOP_SOURCE),
           "sinon `/shop reload` rend la copie en memoire et l'admin qui a edite le fichier ne voit rien")
     check("la disposition de l'inventaire est lue la ou elle vit", layout["offers-per-page"] > 0

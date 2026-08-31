@@ -2,6 +2,7 @@ package xyz.arcadiadevs.valoriatycoon.commands;
 
 import java.util.ArrayList;
 import org.bukkit.command.CommandSender;
+import org.bukkit.command.PluginCommand;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -12,6 +13,7 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import xyz.arcadiadevs.valoriatycoon.utils.ScoreboardService;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
+import xyz.arcadiadevs.valoriatycoon.ValoriaTycoon;
 import xyz.arcadiadevs.valoriatycoon.guis.AuctionGui;
 import xyz.arcadiadevs.valoriatycoon.guis.SellGui;
 import xyz.arcadiadevs.valoriatycoon.guis.ShopGui;
@@ -22,6 +24,24 @@ import xyz.arcadiadevs.valoriatycoon.utils.config.message.Messages;
 
 public class SellCommandListener
 implements Listener {
+    /**
+     * Enregistre {@code /shop} comme vraie commande (déclarée dans plugin.yml) avec son TabCompleter.
+     * `registerCommands()` vit dans ValoriaTycoon.java, qui n'est PAS recompilé par la CI : le branchement
+     * du comptoir se fait donc ici, à la construction, le jour où le listener est posé. La commande existe
+     * dès que plugin.yml est lu, donc `getCommand("shop")` est non nul dès cet instant.
+     */
+    public SellCommandListener() {
+        ValoriaTycoon plugin = ValoriaTycoon.getInstance();
+        if (plugin != null) {
+            PluginCommand shop = plugin.getCommand("shop");
+            if (shop != null) {
+                ShopCommand executor = new ShopCommand();
+                shop.setExecutor(executor);
+                shop.setTabCompleter(executor);
+            }
+        }
+    }
+
     /** Tableau de bord : même point d'ancrage que /sell, pour ne pas dépendre de la classe principale. */
     @EventHandler(priority=EventPriority.MONITOR)
     public void onPlayerJoin(PlayerJoinEvent playerJoinEvent) {
@@ -160,19 +180,6 @@ implements Listener {
                     + "&f/ah cancel [id]&7 · &f/ah search <motif>&7 · &f/ah own&7 · &f/ah returns&7 · &f/ah claim [all]&7 · &f/ah stats"));
             return;
         }
-
-        // Comptoir d'achat (/shop) : intercepté ici comme /ah, pour ne pas dépendre d'une inscription de
-        // commande dans la classe principale. `ShopGui.command` reçoit le message brut — args[0] est le
-        // libellé `/shop` lui-même, la première valeur utile est donc args[1] (même convention que /ah).
-        if (ahLabel.equals("/shop") || ahLabel.equals("/comptoir")) {
-            playerCommandPreprocessEvent.setCancelled(true);
-            String message = ShopGui.command(player, ahArgs);
-            if (message != null) {
-                player.sendMessage(message);
-            }
-            return;
-        }
-
 
         String[] stringArray = playerCommandPreprocessEvent.getMessage().split(" ");
         stringArray[0] = stringArray[0].toLowerCase();
