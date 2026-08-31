@@ -717,7 +717,7 @@ public final class ShopGui {
             Map<String, Shelf> byMaterial, Map<String, Shelf> byKey) {
         List<Map<String, Object>> rows;
         try {
-            rows = config.getMapList("shop.categories");
+            rows = (List<Map<String, Object>>) (List<?>) config.getMapList("shop.categories");
         }
         catch (RuntimeException runtimeException) {
             plugin.getLogger().warning("[shop] `shop.categories` illisible : " + runtimeException
@@ -838,7 +838,7 @@ public final class ShopGui {
             Map<String, Shelf> byKey, Map<String, Shelf> byMaterial) {
         List<Map<String, Object>> rows;
         try {
-            rows = config.getMapList("shop.extras");
+            rows = (List<Map<String, Object>>) (List<?>) config.getMapList("shop.extras");
         }
         catch (RuntimeException runtimeException) {
             plugin.getLogger().warning("[shop] `shop.extras` illisible : " + runtimeException);
