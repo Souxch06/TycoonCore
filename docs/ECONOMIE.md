@@ -125,8 +125,8 @@ donc acheter puis se faire racheter laisse 30 % de perte — `/sell` reste le me
 - Un arrivant (3 générateurs du palier 1, cf. `on-join.generator-amount`) : **5 400 $/h** — le salaire d'une journée de jeu, pas un pactole.
 - Un tycoon de milieu de partie (20 × palier 10, plafond `limits.per-player`) : **1.44 M$/h**.
 - Un tycoon maxé (20 × palier 28) : **7.92 M$/h**.
-- Maxer **le multi-outil entier** (ses quatre âmes, leurs paliers et leurs 88 capacités) coûte 816.08 M$, soit **567 h** du tycoon de milieu de partie (bande admise : 400–1200 h, contrôlée par ce script). C'est l'objectif de fin de jeu, pas une étape.
-- Maxer **une seule âme** (la pioche : ses quarante-neuf paliers et ses vingt-quatre capacités) coûte 210.63 M$, soit **146 h** au même revenu (bande admise : 80–400 h). `docs/MULTI-OUTIL.md` reprend la même division pour les quatre âmes.
+- Maxer **le multi-outil entier** (ses quatre âmes, leurs paliers et leurs 88 capacités) coûte 838.50 M$, soit **582 h** du tycoon de milieu de partie (bande admise : 400–1200 h, contrôlée par ce script). C'est l'objectif de fin de jeu, pas une étape.
+- Maxer **une seule âme** (la pioche : ses quarante-neuf paliers et ses vingt-quatre capacités) coûte 227.59 M$, soit **158 h** au même revenu (bande admise : 80–400 h). `docs/MULTI-OUTIL.md` reprend la même division pour les quatre âmes.
 
 Le prix d'achat n'est pas une ligne libre : c'est `sellPrice × buy-multiplier`, soit +75 % sur le prix `/sell`. Un aller-retour achat puis reprise laisse donc 30 % de perte : le comptoir encaisse, il ne distribue pas.
 <!-- bareme-comptoir:fin -->

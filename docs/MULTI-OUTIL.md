@@ -318,9 +318,9 @@ tycoon maxé = 20 blocs du plafond `limits.per-player`). La table ci-dessous est
 
 | revenu | une âme | les quatre âmes |
 | --- | --- | --- |
-| 5 400 $/h | 37 782 h | 151 126 h |
-| 1 440 000 $/h | 142 h | 567 h |
-| 7 920 000 $/h | 26 h | 103 h |
+| 5 400 $/h | 38 819 h | 155 278 h |
+| 1 440 000 $/h | 146 h | 582 h |
+| 7 920 000 $/h | 26 h | 106 h |
 
 ## Rollback
 

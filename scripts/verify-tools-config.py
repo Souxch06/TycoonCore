@@ -301,7 +301,14 @@ def wiki_rows():
         if not numbers:
             continue
         rows.append({"soul": soul, "label": cells[0], "kernel": kernel.group(1),
-                     "max-level": numbers[-1], "unlock": max(numbers[:-1]) if len(numbers) > 1 else 0})
+                     "max-level": numbers[-1], "unlock": max(numbers[:-1]) if len(numbers) > 1 else 0,
+                     # Une ligne du wiki FUSIONNEE dans une autre : le document doit dire laquelle, et le
+                     # controle verifie alors que la capacite d'accueil existe — pas que la ligne du wiki
+                     # a son propre bloc. Sans ce marqueur, retirer un doublon rendrait le controle rouge
+                     # et la tentation serait de baisser le controle plutot que de documenter le choix.
+                     "merged-into": (m.group(1).strip()
+                                     if (m := re.search(r"fusionn[ée]e? dans \*\*(.+?)\*\*", cells[1]))
+                                     else None)})
     return rows
 
 
@@ -630,6 +637,15 @@ def check_all() -> None:
                     match = ability
                     break
             if match is None:
+                host = row.get("merged-into")
+                if host:
+                    # Doublon assume : la capacite d'accueil doit exister, sinon la fusion a fait
+                    # disparaitre l'effet au lieu de le regrouper.
+                    kept = any(normalise_label(a.get("label")) == normalise_label(host)
+                               for a in data["abilities"])
+                    if not kept:
+                        missing.append(f"{row['soul']}/{row['label']}→{host} (accueil absent)")
+                    continue
                 missing.append(f"{row['soul']}/{row['label']}")
                 continue
             if number(match.get("max-level")) != row["max-level"]:

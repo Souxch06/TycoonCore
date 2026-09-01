@@ -51,25 +51,25 @@ Colonnes du wiki : *Enchantement*, *Description*, *Prestige minimum*, *Level min
 | Onde sismique | Chance de provoquer un séisme qui casse tous les minerais à proximité | | 40 | 300 | `AREA_BREAK` (minerais seulement) |
 | Efficacité | Augmente l'efficacité de la pioche, casse les minerais plus rapidement | | | 10 | `HASTE` |
 | Fortune | Augmente la quantité de minerais récupérée | | 10 | 10 | `FORTUNE` |
-| Speed | Boost de vitesse en cassant des minerais | | | 5 | `HASTE` |
-| Célérité | Augmente la vitesse de minage | | | 5 | `HASTE` |
+| Speed | Boost de vitesse en cassant des minerais — *fusionnée dans **Efficacité*** (même noyau, même effet) |  |  | 5 | `HASTE` |
+| Célérité | Augmente la vitesse de minage — *fusionnée dans **Efficacité*** (même noyau, même effet) |  |  | 5 | `HASTE` |
 | Chercheur d'xp | Chance de trouver une quantité d'XP de pioche | | | 1000 | `XP_FLAT` |
 | Trouvaille | Chance de trouver une clé boost | | 15 | 1000 | `TREASURE` (objets configurables) |
 | Double gain | Chance de doubler l'argent gagné par la vente automatique | | 25 | 1000 | `MONEY_DOUBLE` |
 | Money Pouch | Chance de trouver une grande quantité d'argent | | 20 | 2000 | `MONEY_POUCH` |
-| MineCoins Pouch | Chance de trouver une grande quantité de MineCoins | | 20 | 2000 | `MONEY_POUCH` |
-| Chercheur de spawner | Chance de trouver des spawners | 2 | | 1000 | `TREASURE` |
+| MineCoins Pouch | Chance de trouver une grande quantité de MineCoins — *fusionnée dans **Money Pouch*** (même noyau, même effet) |  | 20 | 2000 | `MONEY_POUCH` |
+| Chercheur de spawner | Chance de trouver des spawners — *fusionnée dans **Trouvaille*** (même noyau, même effet) | 2 |  | 1000 | `TREASURE` |
 | Booster d'xp | Augmente l'expérience gagnée sur la pioche | | | 1000 | `XP_MULT` |
 | Proc booster | Augmente le taux de déclenchement des enchantements | | 40 | 500 | `PROC_BOOSTER` |
-| Main dorée | Augmente les MineCoins gagnés en cassant | | | 2000 | `MONEY_MULT` |
+| Main dorée | Augmente les MineCoins gagnés en cassant — *fusionnée dans **Braquage*** (même noyau, même effet) |  |  | 2000 | `MONEY_MULT` |
 | Braquage | Augmente l'argent gagné en cassant | | | 1000 | `MONEY_MULT` |
 | Charognard | Chance de trouver un enchantement aléatoire pour la pioche | | 5 | 500 | `RANDOM_ENCHANT` |
-| Explosive | Chance de créer une explosion qui casse les minerais en 3×3 | | 25 | 10 | `AREA_BREAK` |
+| Explosive | Chance de créer une explosion qui casse les minerais en 3×3 — *fusionnée dans **Onde sismique*** (même noyau, même effet) |  | 25 | 10 | `AREA_BREAK` |
 | Seconde main | Chance de casser un minerai supplémentaire | | 20 | 100 | `EXTRA_BLOCK` |
 | Briseur | Chance de casser tout le filon | | 30 | 300 | `VEIN` |
 | Pioche fantomatique | Chance de faire apparaître des pioches fantômes qui minent seules | | 35 | 300 | `GHOST_MINES` |
-| Surcharge | Chance d'envoyer une onde de choc cassant les minerais sur ton passage | | 45 | 300 | `AREA_BREAK` (grande portée) |
-| Chercheur de crédits | Chance de trouver des crédits | | 45 | 1000 | `MONEY_POUCH` |
+| Surcharge | Chance d'envoyer une onde de choc cassant les minerais sur ton passage — *fusionnée dans **Onde sismique*** (même noyau, même effet) |  | 45 | 300 | `AREA_BREAK` (grande portée) |
+| Chercheur de crédits | Chance de trouver des crédits — *fusionnée dans **Money Pouch*** (même noyau, même effet) |  | 45 | 1000 | `MONEY_POUCH` |
 
 Fonctionnalités de tête de page, reprises aussi : *auto-smelt* → `AUTO_SMELT`, *bonus de rendement
 et d'XP* → `FORTUNE` + `XP_MULT`, *minage rapide et fluide* → `HASTE`.
@@ -81,24 +81,24 @@ de colonne « Level minimum » : seul le prestige verrouille.
 
 | Enchantement | Description | Prestige min | Max | Noyau ValoriaTools |
 |---|---|---|---|---|
-| Main de Gaïa | Chance de casser les cultures en 3×3 | 3 | 300 | `AREA_BREAK` (cultures seules) + `CROP_HARVEST` |
-| Speed | Boost de vitesse en cassant des cultures | 0 | 5 | `HASTE` |
+| Main de Gaïa | Chance de casser les cultures en 3×3 — *fusionnée dans **Jugement divin*** (même noyau, même effet) | 3 | 300 | `AREA_BREAK` (cultures seules) + `CROP_HARVEST` |
+| Speed | Boost de vitesse en cassant des cultures — *fusionnée dans **Célérité*** (même noyau, même effet) | 0 | 5 | `HASTE` |
 | Célérité | Augmente la vitesse de frappe de la houe | 0 | 5 | `HASTE` |
-| Main dorée | Augmente les FarmCoins gagnés | 0 | 2000 | `MONEY_MULT` |
+| Main dorée | Augmente les FarmCoins gagnés — *fusionnée dans **Braquage*** (même noyau, même effet) | 0 | 2000 | `MONEY_MULT` |
 | Trouvaille | Chance de trouver une clé farm | 0 | 1000 | `TREASURE` |
 | Boost XP | Augmente l'expérience gagnée sur la houe | 0 | 1000 | `XP_MULT` |
 | Braquage | Augmente l'argent gagné en cassant des cultures | 0 | 1000 | `MONEY_MULT` |
-| Casino | Chance de trouver des FarmGen | 0 | 100 | `TREASURE` |
-| Farmcoins Pouch | Chance de gagner beaucoup de FarmCoins | 0 | 2000 | `MONEY_POUCH` |
+| Casino | Chance de trouver des FarmGen — *fusionnée dans **Trouvaille*** (même noyau, même effet) | 0 | 100 | `TREASURE` |
+| Farmcoins Pouch | Chance de gagner beaucoup de FarmCoins — *fusionnée dans **Money Pouch*** (même noyau, même effet) | 0 | 2000 | `MONEY_POUCH` |
 | Money Pouch | Chance de gagner beaucoup d'argent | 0 | 2000 | `MONEY_POUCH` |
 | Double gain | Chance de doubler l'argent de la vente automatique | 0 | 1000 | `MONEY_DOUBLE` |
 | Furie | Chance d'activer un mode Furie (gains augmentés) | 1 | 50 | `FURY` |
 | Proc Booster | Augmente le taux de déclenchement des enchantements | 15 | 500 | `PROC_BOOSTER` |
 | Vitesse des âmes | Marcher plus vite sur le sable des âmes | 5 | 3 | `SOUL_SPEED` |
-| Chercheur de spawner | Chance de trouver des spawners | 2 | 1000 | `TREASURE` |
+| Chercheur de spawner | Chance de trouver des spawners — *fusionnée dans **Trouvaille*** (même noyau, même effet) | 2 | 1000 | `TREASURE` |
 | Jugement divin | Chance d'activer le jugement divin | 10 | 1000 | `AREA_BREAK` (portée maximale) |
-| Chercheur de bonbon | Chance de trouver des bonbons d'XP de pets | 5 | 1000 | `TREASURE` |
-| Chercheur de crédits | Chance de trouver des crédits | 20 | 1000 | `MONEY_POUCH` |
+| Chercheur de bonbon | Chance de trouver des bonbons d'XP de pets — *fusionnée dans **Trouvaille*** (même noyau, même effet) | 5 | 1000 | `TREASURE` |
+| Chercheur de crédits | Chance de trouver des crédits — *fusionnée dans **Money Pouch*** (même noyau, même effet) | 20 | 1000 | `MONEY_POUCH` |
 
 Fonctionnalités de tête de page : *récolte automatique* → `CROP_HARVEST`, *replantation
 instantanée* → l'option `harvest.replant`, *bonus de rendement* → `DOUBLE_DROP`.
@@ -108,20 +108,20 @@ instantanée* → l'option `harvest.replant`, *bonus de rendement* → `DOUBLE_D
 | Enchantement | Description | Prestige min | Level min | Max | Noyau ValoriaTools |
 |---|---|---|---|---|---|
 | Booster d'xp | Augmente l'XP gagnée en tuant des monstres | | | 1000 | `XP_MULT` |
-| Booster MobCoins | Augmente les MobCoins gagnés | | | 2000 | `MONEY_MULT` |
+| Booster MobCoins | Augmente les MobCoins gagnés — *fusionnée dans **Braquage*** (même noyau, même effet) |  |  | 2000 | `MONEY_MULT` |
 | Trouvaille | Chance de trouver une clé commune | | 10 | 1000 | `TREASURE` |
-| Casino | Chance de trouver un générateur | 8 | | 100 | `TREASURE` |
+| Casino | Chance de trouver un générateur — *fusionnée dans **Trouvaille*** (même noyau, même effet) | 8 |  | 100 | `TREASURE` |
 | Briseur de monstres | Chance de tuer beaucoup de monstres d'un coup | 10 | | 20 | `MULTI_KILL` |
 | Speed | Boost de vitesse en tuant des monstres | | | 5 | `SWIFT` |
 | Célérité | Augmente la vitesse de frappe | | | 5 | `HASTE` |
 | Chercheur d'xp | Chance de trouver une quantité d'XP | | | 500 | `XP_FLAT` |
-| Chercheur de spawner | Chance de trouver des spawners | 2 | | 1000 | `TREASURE` |
+| Chercheur de spawner | Chance de trouver des spawners — *fusionnée dans **Trouvaille*** (même noyau, même effet) | 2 |  | 1000 | `TREASURE` |
 | Proc booster | Augmente le taux de déclenchement | 8 | | 500 | `PROC_BOOSTER` |
 | Tranchant | Augmente les dégâts de l'épée | | | 5 | `DAMAGE_MULT` |
-| Chercheur de bonbons | Chance de trouver des bonbons de pets | 5 | | 1000 | `TREASURE` |
+| Chercheur de bonbons | Chance de trouver des bonbons de pets — *fusionnée dans **Trouvaille*** (même noyau, même effet) | 5 |  | 1000 | `TREASURE` |
 | Money Pouch | Chance de trouver beaucoup d'argent | | 20 | 2000 | `MONEY_POUCH` |
 | Pillage | Chance d'augmenter le butin obtenu | 2 | | 8 | `DOUBLE_DROP` |
-| MobCoins Pouch | Chance de trouver beaucoup de MobCoins | | 5 | 2000 | `MONEY_POUCH` |
+| MobCoins Pouch | Chance de trouver beaucoup de MobCoins — *fusionnée dans **Money Pouch*** (même noyau, même effet) |  | 5 | 2000 | `MONEY_POUCH` |
 | Autoclicker | Permet de tuer des monstres automatiquement | 10 | | 500 | `AUTO_SWING` |
 | Force | Chance d'obtenir l'effet Force | | | 3 | `POTION_APPLY` |
 | Braquage | Augmente l'argent gagné en tuant | | | 1000 | `MONEY_MULT` |
@@ -131,19 +131,19 @@ instantanée* → l'option `harvest.replant`, *bonus de rendement* → `DOUBLE_D
 | Enchantement | Description | Prestige min | Level min | Max | Noyau ValoriaTools |
 |---|---|---|---|---|---|
 | Boost d'xp | Augmente l'XP gagnée en pêchant | | | 1000 | `XP_MULT` |
-| Main dorée | Augmente les FishCoins gagnés | | 10 | 2000 | `MONEY_MULT` |
+| Main dorée | Augmente les FishCoins gagnés — *fusionnée dans **Braquage*** (même noyau, même effet) |  | 10 | 2000 | `MONEY_MULT` |
 | Braquage | Augmente l'argent gagné en pêchant | | | 1000 | `MONEY_MULT` |
-| Chercheur de spawner | Chance de trouver des spawners | | 25 | 1000 | `TREASURE` |
+| Chercheur de spawner | Chance de trouver des spawners — *fusionnée dans **Trouvaille*** (même noyau, même effet) |  | 25 | 1000 | `TREASURE` |
 | Trouvaille | Chance de trouver une clé boost, farm ou commune | | 20 | 1000 | `TREASURE` |
 | Angler | Réduit le temps de pêche | | | 10 | `FAST_REEL` |
-| Chercheur de bonbons | Chance de trouver des bonbons de pets | | | 1000 | `TREASURE` |
+| Chercheur de bonbons | Chance de trouver des bonbons de pets — *fusionnée dans **Trouvaille*** (même noyau, même effet) |  |  | 1000 | `TREASURE` |
 | Proc booster | Augmente le taux de déclenchement | | 15 | 500 | `PROC_BOOSTER` |
 | Money Pouch | Chance de trouver beaucoup d'argent | | | 2000 | `MONEY_POUCH` |
-| Casino | Chance de trouver un générateur | | | 100 | `TREASURE` |
+| Casino | Chance de trouver un générateur — *fusionnée dans **Trouvaille*** (même noyau, même effet) |  |  | 100 | `TREASURE` |
 | Chercheur d'xp | Augmente le gain d'XP vanilla | | 3 | 500 | `XP_FLAT` |
 | Tsunami | Chance d'invoquer un tsunami | | 10 | 1000 | `MULTI_CATCH` |
-| FishCoins Pouch | Chance de trouver beaucoup de FishCoins | | | 2000 | `MONEY_POUCH` |
-| Chercheur de crédits | Chance de trouver des crédits | | 30 | 1000 | `MONEY_POUCH` |
+| FishCoins Pouch | Chance de trouver beaucoup de FishCoins — *fusionnée dans **Money Pouch*** (même noyau, même effet) |  |  | 2000 | `MONEY_POUCH` |
+| Chercheur de crédits | Chance de trouver des crédits — *fusionnée dans **Money Pouch*** (même noyau, même effet) |  | 30 | 1000 | `MONEY_POUCH` |
 
 Fonctionnalités de tête de page : *pêche plus rapide* → `AUTO_REEL` (la prise va directement dans
 l'inventaire, sans mouliner), *chances de trésors* → `LUCK` + `TREASURE`.
