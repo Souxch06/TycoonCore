@@ -305,7 +305,7 @@ premier essai sur ce fichier (le marqueur `{type:` ne existait plus, le compteur
 10. Redémarrer le serveur : `/tools stats` et les niveaux relus depuis `tools.yml` sont intacts, y compris
     le format ancien (`pickaxe: 12`, sans bloc `abilities:`).
 
-## Combien de temps pour maxer une âme
+## Combien de temps pour maxer le multi-outil
 
 Les trois revenus de référence sont ceux du serveur, lus dans `resources/config.yml` par
 `scripts/verify-shop-economy.py` (arrivant = 3 générateurs du palier 1, tycoon de milieu de partie et
@@ -318,9 +318,9 @@ tycoon maxé = 20 blocs du plafond `limits.per-player`). La table ci-dessous est
 
 | revenu | une âme | les quatre âmes |
 | --- | --- | --- |
-| 5 400 $/h | 153 614 h | 614 455 h |
-| 1 440 000 $/h | 576 h | 2 304 h |
-| 7 920 000 $/h | 105 h | 419 h |
+| 5 400 $/h | 38 819 h | 155 278 h |
+| 1 440 000 $/h | 146 h | 582 h |
+| 7 920 000 $/h | 26 h | 106 h |
 
 ## Rollback
 

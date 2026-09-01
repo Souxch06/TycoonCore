@@ -12,6 +12,7 @@ la source, pas le dépôt.
 """
 from __future__ import annotations
 
+import math
 from pathlib import Path
 
 OUT = Path("resources-tools/config.yml")
@@ -63,6 +64,31 @@ KERNELS = {
     "LUCK": [("treasure-chance", 0.02, 0.001, 0.5)],
 }
 
+# Les cles qui sont des PROBABILITES. Leur pas n'est pas un reglage fixe : il se deduit de la plage de la
+# capacite (voir `spread_step`), pour que le plafond tombe pile au dernier niveau.
+CHANCE_KEYS = ("chance", "bite-chance", "pouch-chance", "treasure-chance", "enchant-chance")
+
+
+def spread_step(name, base, step, cap, max_level):
+    """Le pas d'une cle, etale sur toute la plage quand c'est une probabilite.
+
+    Le pas ecrit dans `KERNELS` est une constante, la meme pour une capacite a 5 niveaux et pour une
+    capacite a 2000. Sur les chances, cette constante produisait deux defauts opposes et egalement
+    absurdes : soit le plafond etait atteint bien avant la fin (« Bonus de rendement » plafonnait a 60 %
+    des le niveau 30 sur 200, donc 170 niveaux payes de plus en plus cher ne changeaient plus rien), soit
+    il n'etait jamais atteint (« Explosive » finissait a 2,54 % au niveau 10, la capacite ne servait a
+    rien). Le pas est donc RECALCULE : `(plafond - base) / (max_level - 1)`, de sorte que le dernier
+    niveau vaut exactement le plafond, et chaque niveau intermediaire vaut un cran utile.
+
+    Les autres cles (portee, blocs, duree, montants) gardent le pas ecrit : elles ont leurs propres
+    plafonds de securite, et une portee qui atteindrait 5 au dernier niveau d'une capacite a 2000 crans
+    n'aurait aucun sens de progression.
+    """
+    if name not in CHANCE_KEYS or not cap or max_level <= 1:
+        return step
+    return (cap - base) / (max_level - 1)
+
+
 # capacites particulieres : drapeaux fixes du noyau
 FLAGS = {
     "AREA_BREAK_PIOCHE": [("ores-only", "true")],
@@ -81,53 +107,37 @@ FLAGS = {
 # palier d'âme joue les deux rôles (voir docs/WIKI-GENTYCOON-OUTILS.md).
 PICKAXE = [
     ("efficacite", "HASTE", "Efficacité", "Augmente l'efficacité de la pioche permettant ainsi de casser les minerais plus rapidement", 1, 10),
-    ("speed", "HASTE", "Speed", "Donne un boost de vitesse en cassant des minerais", 1, 5),
-    ("celerite", "HASTE", "Célérité", "Augmente la vitesse de minage de la pioche en cassant des minerais", 1, 5),
     ("charognard", "RANDOM_ENCHANT", "Charognard", "Donne une chance de trouver des enchantements aléatoires pour votre pioche", 5, 500),
     ("fortune", "FORTUNE", "Fortune", "Augmente la quantité de minerais récupérée en minant", 10, 10),
     ("auto-smelt", "AUTO_SMELT", "Auto-smelt", "Fonte automatique des minerais (fonctionnalité annoncée en tête de page Pioche)", 15, 1),
     ("seconde-main", "EXTRA_BLOCK", "Seconde main", "Donne une chance de casser un minerai supplémentaire", 20, 100),
     ("money-pouch", "MONEY_POUCH", "Money Pouch", "Donne une chance de trouver une grande quantité d'argent en cassant des minerais", 20, 2000),
-    ("minecoins-pouch", "MONEY_POUCH", "MineCoins Pouch", "Donne une chance de trouver une grande quantité de MineCoins en cassant des minerais", 20, 2000),
     ("trouvaille", "TREASURE", "Trouvaille", "Donne une chance de trouver une clé boost en cassant des minerais", 15, 1000),
-    ("explosive", "AREA_BREAK", "Explosive", "Donne une chance de créer une explosion cassant les minerais dans une zone de 3x3", 25, 10),
     ("double-gain", "MONEY_DOUBLE", "Double gain", "Donne une chance de doubler l'argent gagné grâce à la vente automatique", 25, 1000),
     ("briseur", "VEIN", "Briseur", "Donne une chance de casser tous le filon de minerais", 30, 300),
     ("onde-sismique", "AREA_BREAK", "Onde sismique", "Donne une chance de provoquer un tremblement de terre qui casse tous les minerais à proximité", 40, 300),
     ("pioche-fantomatique", "GHOST_MINES", "Pioche fantomatique", "Donne une chance de faire apparaître des pioches fantômes qui cassent les minerais automatiquement", 35, 300),
-    ("surcharge", "AREA_BREAK", "Surcharge", "Donne une chance d'envoyer une puissante onde de choc cassant tous les minerais sur ton passage", 45, 300),
-    ("chercheur-credits", "MONEY_POUCH", "Chercheur de crédits", "Donne une chance de trouver des crédits en cassant des minerais", 45, 1000),
     ("proc-booster", "PROC_BOOSTER", "Proc booster", "Augmente le taux de déclenchement des enchantements", 40, 500),
-    ("main-doree", "MONEY_MULT", "Main dorée", "Augmente les MineCoins gagnés en cassant des minerais", 1, 2000),
     ("braquage", "MONEY_MULT", "Braquage", "Augmente l'argent gagné en cassant des minerais", 1, 1000),
     ("booster-xp", "XP_MULT", "Booster d'xp", "Augmente l'expérience gagnée sur ta pioche en cassant des minerais", 1, 1000),
     ("chercheur-xp", "XP_FLAT", "Chercheur d'xp", "Donne une chance de trouver une plus ou moins grande quantité d'xp de pioche en minant", 1, 1000),
-    ("chercheur-spawner", "TREASURE", "Chercheur de spawner", "Donne une chance de trouver des spawners en cassant des minerais", 2, 1000),
     ("vente-auto", "SELL_ON_BREAK", "Vente à la casse", "Vend sur-le-champ ce qui est cassé, aux prix de la grille — l'équivalent Valoria de la vente automatique du wiki", 1, 1),
 ]
 
 HOE = [
-    ("speed", "HASTE", "Speed", "Donne un boost de vitesse lorsque tu casses des cultures", 1, 5),
     ("celerite", "HASTE", "Célérité", "Augmente la vitesse de frappe de ta houe", 1, 5),
     ("recolte-auto", "CROP_HARVEST", "Récolte automatique", "Casse la culture visée et ses voisines mûres, puis replante (fonctionnalité de tête de page Houe)", 1, 200),
-    ("main-de-gaia", "AREA_BREAK", "Main de Gaïa", "Donne une chance de casser les cultures en 3x3", 3, 300),
     ("tree-fell", "TREE_FELL", "Arbre abattu", "Emporte le tronc et la canopée d'un seul coup — propre à l'âme hache, le wiki ne décrit que la houe", 1, 300),
-    ("main-doree", "MONEY_MULT", "Main dorée", "Augmente les FarmCoins gagnés en cassant des cultures", 1, 2000),
     ("boost-xp", "XP_MULT", "Boost XP", "Augmente l'expérience gagnée sur ta houe en cassant des cultures", 1, 1000),
     ("braquage", "MONEY_MULT", "Braquage", "Augmente l'argent gagné en cassant des cultures", 1, 1000),
     ("rendement", "DOUBLE_DROP", "Bonus de rendement", "Donne une chance de doubler la récolte (fonctionnalité de tête de page Houe)", 1, 200),
     ("trouvaille", "TREASURE", "Trouvaille", "Donne une chance de trouver une clé farm en cassant des cultures", 1, 1000),
-    ("casino", "TREASURE", "Casino", "Donne une chance de trouver des FarmGen en cassant des cultures", 1, 100),
     ("furie", "FURY", "Furie", "Chance d'activer le mode Furie qui augmente tes gains d'argent et de FarmCoins", 1, 50),
-    ("chercheur-spawner", "TREASURE", "Chercheur de spawner", "Donne une chance de trouver des spawners en cassant des cultures", 2, 1000),
-    ("chercheur-bonbon", "TREASURE", "Chercheur de bonbon", "Donne une chance de trouver des bonbons d'xp de pets en cassant des cultures", 5, 1000),
     ("vitesse-ames", "SOUL_SPEED", "Vitesse des âmes", "Permet de marcher plus rapidement sur le sable des âmes", 5, 3),
     ("jugement-divin", "AREA_BREAK", "Jugement divin", "Donne une chance d'activer le jugement divin, qui moissonne une grande étendue autour du bloc", 10, 1000),
-    ("farmcoins-pouch", "MONEY_POUCH", "Farmcoins Pouch", "Donne une chance de gagner une grande quantité de FarmCoins en cassant des cultures", 1, 2000),
     ("money-pouch", "MONEY_POUCH", "Money Pouch", "Donne une chance de gagner une grande quantité d'argent en cassant des cultures", 1, 2000),
     ("double-gain", "MONEY_DOUBLE", "Double gain", "Donne une chance de doubler l'argent gagné grâce à la vente automatique", 1, 1000),
     ("proc-booster", "PROC_BOOSTER", "Proc Booster", "Augmente le taux de déclenchement des enchantements", 15, 500),
-    ("chercheur-credits", "MONEY_POUCH", "Chercheur de crédits", "Donne une chance de trouver des crédits en cassant des cultures", 20, 1000),
     ("chercheur-xp", "XP_FLAT", "Chercheur d'xp", "Donne une chance de trouver une quantité d'xp en cassant des cultures", 1, 500),
     ("vente-auto", "SELL_ON_BREAK", "Vente à la casse", "Vend sur-le-champ ce qui est récolté, aux prix de la grille", 1, 1),
 ]
@@ -135,19 +145,14 @@ HOE = [
 SWORD = [
     ("tranchant", "DAMAGE_MULT", "Tranchant", "Augmente les dégâts de ton épée", 1, 5),
     ("booster-xp", "XP_MULT", "Booster d'xp", "Augmente l'expérience gagnée sur ton épée en tuant des monstres", 1, 1000),
-    ("mobcoins-booster", "MONEY_MULT", "Booster MobCoins", "Augmente les MobCoins gagnés en tuant des monstres", 1, 2000),
     ("speed", "SWIFT", "Speed", "Donne un boost de vitesse en tuant des monstres", 1, 5),
     ("celerite", "HASTE", "Célérité", "Augmente la vitesse de frappe en tuant des monstres", 1, 5),
     ("force", "POTION_APPLY", "Force", "Donne une chance d'obtenir l'effet de force en tuant des monstres", 1, 3),
     ("chercheur-xp", "XP_FLAT", "Chercheur d'xp", "Donne une chance de trouver une plus ou moins grande quantité d'xp en tuant des monstres", 1, 500),
     ("pillage", "DOUBLE_DROP", "Pillage", "Donne une chance d'augmenter le butin obtenu en tuant des monstres", 2, 8),
-    ("chercheur-spawner", "TREASURE", "Chercheur de spawner", "Donne une chance de trouver des spawners en tuant des monstres", 2, 1000),
-    ("chercheur-bonbons", "TREASURE", "Chercheur de bonbons", "Donne une chance de trouver des bonbons de pets en tuant des monstres", 5, 1000),
     ("trouvaille", "TREASURE", "Trouvaille", "Donne une chance de trouver une clé commune en tuant des monstres", 10, 1000),
-    ("mobcoins-pouch", "MONEY_POUCH", "MobCoins Pouch", "Donne une chance de trouver une grande quantité de MobCoins en tuant des monstres", 5, 2000),
     ("money-pouch", "MONEY_POUCH", "Money Pouch", "Donne une chance de trouver une grande quantité d'argent en tuant des monstres", 20, 2000),
     ("proc-booster", "PROC_BOOSTER", "Proc booster", "Augmente le taux de déclenchement des enchantements", 8, 500),
-    ("casino", "TREASURE", "Casino", "Donne une chance de trouver un générateur en tuant des monstres", 8, 100),
     ("autoclicker", "AUTO_SWING", "Autoclicker", "Permet de tuer des monstres automatiquement", 10, 500),
     ("briseur-monstres", "MULTI_KILL", "Briseur de monstres", "Donne une chance de tuer une grande quantité de monstres en une fois", 10, 20),
     ("braquage", "MONEY_MULT", "Braquage", "Augmente l'argent gagné en tuant des monstres", 1, 1000),
@@ -164,16 +169,10 @@ ROD = [
     ("boost-xp", "XP_MULT", "Boost d'xp", "Augmente l'expérience gagnée sur ta canne à pêche en pêchant", 1, 1000),
     ("chercheur-xp", "XP_FLAT", "Chercheur d'xp", "Augmente le gain d'expérience vanilla en pêchant", 3, 500),
     ("peche-chanceuse", "LUCK", "Pêche chanceuse", "Augmente les chances d'obtenir des trésors (fonctionnalité de tête de page)", 1, 20),
-    ("main-doree", "MONEY_MULT", "Main dorée", "Augmente les FishCoins gagnés en pêchant", 10, 2000),
     ("tsunami", "MULTI_CATCH", "Tsunami", "Donne une chance d'invoquer un tsunami qui ramène plusieurs prises d'un coup", 10, 1000),
     ("trouvaille", "TREASURE", "Trouvaille", "Donne une chance de trouver une clé boost, une clé farm ou une clé commune en pêchant", 20, 1000),
-    ("chercheur-bonbons", "TREASURE", "Chercheur de bonbons", "Donne une chance de trouver des bonbons de pets en pêchant", 1, 1000),
     ("money-pouch", "MONEY_POUCH", "Money Pouch", "Donne une chance de trouver une grande quantité d'argent en pêchant", 1, 2000),
-    ("fishcoins-pouch", "MONEY_POUCH", "FishCoins Pouch", "Donne une chance de trouver une grande quantité de FishCoins en pêchant", 1, 2000),
     ("braquage", "MONEY_MULT", "Braquage", "Augmente l'argent gagné en pêchant", 1, 1000),
-    ("casino", "TREASURE", "Casino", "Donne une chance de trouver un générateur en pêchant", 1, 100),
-    ("chercheur-spawner", "TREASURE", "Chercheur de spawner", "Donne une chance de trouver des spawners en pêchant", 25, 1000),
-    ("chercheur-credits", "MONEY_POUCH", "Chercheur de crédits", "Donne une chance de trouver des crédits en pêchant", 30, 1000),
     ("proc-booster", "PROC_BOOSTER", "Proc booster", "Augmente le taux de déclenchement des enchantements", 15, 500),
     ("double-gain", "MONEY_DOUBLE", "Double gain", "Donne une chance de doubler l'argent gagné grâce à la vente automatique", 25, 1000),
     ("vente-peche", "SELL_ON_BREAK", "Vente de la pêche", "Vend sur-le-champ ce qui est pêché, aux prix de la grille", 5, 1),
@@ -456,8 +455,12 @@ def flow(entry, soul):
         parts.append("free: true")
     for name, base, step, cap in KERNELS.get(kernel, []):
         parts.append("%s: %s" % (name, fmt(base)))
+        step = spread_step(name, base, step, cap, max_level)
         if step:
-            parts.append("%s-step: %s" % (name, fmt(step)))
+            # Les pas de chance sont ecrits en pleine precision : `fmt` tronque a quatre decimales, et
+            # sur une capacite a 2000 crans cette troncature suffit a manquer le plafond de plusieurs
+            # dizaines de niveaux — soit exactement les niveaux morts que `spread_step` supprime.
+            parts.append("%s-step: %s" % (name, fmt_step(step) if name in CHANCE_KEYS else fmt(step)))
         if cap:
             parts.append("%s-cap: %s" % (name, fmt(cap)))
     for flag, value in FLAGS.get(kernel, []):
@@ -472,23 +475,57 @@ def flow(entry, soul):
         items = TREASURE_ITEMS.get(ability_id)
         if items:
             parts.append("items: [" + ", ".join(items) + "]")
-    # Un niveau 1 sur 5 coute moins cher qu'un niveau 1 sur 2000 : le prix suit le plafond du wiki.
-    parts.append("price: %d" % price_for(max_level))
-    if max_level >= 500:
-        parts.append("price-step: %d" % (90 if max_level >= 1500 else 70))
+    # Le prix d'un niveau est GEOMETRIQUE : `price × price-ratio^(niveau-1)`, borne par `price-cap`.
+    base, ratio, cap = price_curve(max_level)
+    parts.append("price: %d" % base)
+    if ratio > 1.0:
+        parts.append("price-ratio: %s" % ("%.6f" % ratio).rstrip("0").rstrip("."))
+    parts.append("price-cap: %d" % cap)
     return "      - {" + ", ".join(parts) + "}"
 
 
-def price_for(max_level):
-    if max_level <= 1:
-        return 5000
-    if max_level <= 10:
-        return 2000
-    if max_level <= 100:
-        return 1200
-    if max_level <= 500:
-        return 600
-    return 250
+# --------------------------------------------------------------------------- courbe de prix
+# Le prix du niveau 1 de la capacite, par plage de `max-level`. Une capacite courte est CHERE au niveau 1 :
+# elle n'a que trois ou cinq crans pour valoir sa place, et un « Tranchant 5 » a 250 $ le cran etait la
+# capacite la plus forte du jeu offerte au prix d'une pile de pierre. Une capacite a 2000 crans part bas :
+# c'est la somme de ses deux mille niveaux qui fait la depense, pas son premier.
+PRICE_BASE = {1: 250000, 3: 100000, 5: 66000, 8: 40000, 10: 33000, 20: 17000, 50: 8400,
+              100: 5000, 200: 2500, 300: 1700, 500: 1200, 1000: 670, 2000: 420}
+
+# Combien de fois le DERNIER niveau coute le premier. C'est ce facteur, et non le prix de depart, qui
+# fait qu'une capacite se termine plus cher qu'elle ne commence : x8 sur trois crans (la marche est
+# brutale, c'est voulu), x200 sur deux mille (chaque cran est a peine plus cher que le precedent, mais
+# le dernier vaut deux cents fois le premier). Le ratio par niveau s'en deduit : span^(1/(n-1)).
+# Le span est borne par le moteur : `ToolsConfig.ratio()` refuse un `price-ratio` au-dessus de 2, donc un
+# span de x8 sur trois crans (ratio 2,83) serait ecrit dans le fichier et ignore a la lecture. Les plages
+# courtes montent donc par leur PRIX DE DEPART plutot que par leur pente, ce qui revient au meme pour le
+# joueur et garde le fichier et le moteur d'accord.
+PRICE_SPAN = {1: 1, 3: 3.5, 5: 13, 8: 24, 10: 30, 20: 40, 50: 60,
+              100: 80, 200: 100, 300: 120, 500: 140, 1000: 160, 2000: 200}
+
+# Ce que `ToolsConfig.ratio()` accepte au maximum. Depasser = un fichier que le moteur relit autrement.
+MAX_RATIO = 2.0
+
+# Plafond dur d'un niveau, quelle que soit la courbe. Aligne sur `ToolsConfig.Ability.PRICE_CEILING` :
+# le fichier ne doit pas pouvoir ecrire un prix que le moteur refuserait ensuite en silence.
+PRICE_CAP = 100000000
+
+
+def price_curve(max_level):
+    """(prix du niveau 1, ratio par niveau, plafond) pour une capacite de `max_level` crans."""
+    bucket = next((k for k in sorted(PRICE_BASE) if max_level <= k), 2000)
+    base = PRICE_BASE[bucket]
+    span = PRICE_SPAN[bucket]
+    if max_level <= 1 or span <= 1:
+        return base, 1.0, PRICE_CAP
+    # `span` fois plus cher au dernier cran qu'au premier : le ratio est la racine (n-1)-ieme du span.
+    ratio = span ** (1.0 / (max_level - 1))
+    if ratio > MAX_RATIO:
+        raise SystemExit(
+            "ERREUR: max-level %d demande un price-ratio de %.3f, or `ToolsConfig.ratio()` plafonne a "
+            "%.1f : le fichier ecrirait une courbe que le moteur ne relirait pas. Baisse PRICE_SPAN[%d] "
+            "ou monte PRICE_BASE[%d]." % (max_level, ratio, MAX_RATIO, max_level, max_level))
+    return base, ratio, PRICE_CAP
 
 
 def fmt(value):
@@ -496,6 +533,18 @@ def fmt(value):
         text = ("%.4f" % value).rstrip("0").rstrip(".")
         return text if text else "0"
     return str(value)
+
+
+def fmt_step(value):
+    """Un pas de probabilite, arrondi AU-DESSUS a la precision ecrite.
+
+    Arrondir au plus proche (ou tronquer, ce que fait `fmt`) fait manquer le plafond au dernier niveau :
+    2000 crans x une erreur de 1e-5, et la capacite finit a 39 % au lieu de 41 %. On arrondit donc vers
+    le haut — le plafond est de toute facon reapplique par le moteur, donc depasser d'un cheveu ne
+    donne jamais plus que le plafond, alors que manquer d'un cheveu coute des dizaines de niveaux.
+    """
+    text = "%.8f" % (math.ceil(value * 1e8) / 1e8)
+    return text.rstrip("0").rstrip(".") or "0"
 
 
 def soul(name, title, abilities, notes):
@@ -538,12 +587,14 @@ def soul(name, title, abilities, notes):
     lines.append("      price-ratio: 1.12")
     lines.append("      price-cap: 2500000")
     lines.append("    ability-price:")
-    lines.append("      # Prix par defaut d'un niveau de capacite, surchargeable capacite par capacite.")
+    lines.append("      # Repli pour une capacite ecrite a la main SANS `price:` — chaque ligne generee")
+    lines.append("      # porte deja son propre `price` + `price-ratio` + `price-cap`, donc ce bloc ne sert")
+    lines.append("      # qu'a l'admin qui ajoute une capacite sans reflechir a sa courbe.")
     lines.append("      # Ce bloc est FRERE de `abilities:` et non dedans : un bloc YAML a la fois table")
     lines.append("      # et sequence est invalide, et SnakeYAML jette a la lecture du config.yml du jar.")
-    lines.append("      base: 250")
-    lines.append("      step: 90")
-    lines.append("      cap: 250000")
+    lines.append("      base: 2000")
+    lines.append("      step: 400")
+    lines.append("      cap: %d" % PRICE_CAP)
     lines.append("    abilities:")
     for entry in abilities:
         lines.append(flow(entry, name))

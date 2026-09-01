@@ -751,9 +751,11 @@ def render_block(generators, shop, categories, extras, hours):
                 sum(len([o for o in shelf["offers"] if not o["hand"]]) for shelf in shelves),
                 sum(len([o for o in shelf["offers"] if o["hand"]]) for shelf in shelves)),
             "",
-            "> Un rayon qui dépasse %d offres ne disparaît pas : il se **page** — les offres se partagent %d "
-            "rangées de neuf cases, les flèches sont posées sous la ligne d'onglets. %d rayons au plus tiennent "
-            "dans cette ligne ; au-delà, le surplus n'est pas cliquable et le log du serveur le dit." % (
+            "> Un rayon qui dépasse %d offres ne disparaît pas : il se **page** — les offres se partagent au "
+            "plus %d rangées de neuf cases, et le panneau se coupe à la hauteur qu'elles occupent : les "
+            "articles prennent la quasi-totalité de la fenêtre, la dernière rangée ne porte que le retour et "
+            "les deux flèches. La grille des rayons, elle, tient sur une seule rangée : %d rayons au plus y "
+            "sont cliquables, au-delà le surplus ne l'est pas et le log du serveur le dit." % (
                 per_page, layout["offer-rows"] or 4, layout["max-tabs"] or 9)]
     joiner, mid, maxed = hours["rates"]
     join, cap = hours["join"], hours["cap"]
@@ -764,9 +766,13 @@ def render_block(generators, shop, categories, extras, hours):
                 cap, money(mid) + "/h"),
             "- Un tycoon maxé (%d × palier %d) : **%s**." % (
                 cap, max(int(t) for t in by_tier), money(maxed) + "/h"),
-            "- Maxer **l'âme de pioche** (ses quarante-neuf paliers et ses vingt-quatre capacités) coûte "
-            "%s, soit **%s h** du tycoon de milieu de partie (bande admise : %.0f–%.0f h, contrôlée par ce "
-            "script). `docs/MULTI-OUTIL.md` reprend la même division pour les quatre âmes." % (
+            "- Maxer **le multi-outil entier** (ses quatre âmes, leurs paliers et leurs 88 capacités) "
+            "coûte %s, soit **%s h** du tycoon de milieu de partie (bande admise : %.0f–%.0f h, contrôlée "
+            "par ce script). C'est l'objectif de fin de jeu, pas une étape." % (
+                money(hours["tool"]), group(hours["tool_hours"]), TOOL_BAND[0], TOOL_BAND[1]),
+            "- Maxer **une seule âme** (la pioche : ses quarante-neuf paliers et ses vingt-quatre "
+            "capacités) coûte %s, soit **%s h** au même revenu (bande admise : %.0f–%.0f h). "
+            "`docs/MULTI-OUTIL.md` reprend la même division pour les quatre âmes." % (
                 money(hours["pickaxe"]), group(hours["pickaxe_hours"]), SOUL_BAND[0], SOUL_BAND[1]),
             "",
             tail_line(shop)]
@@ -799,7 +805,16 @@ def splice(text, block, path):
 # --------------------------------------------------------------------------- controles
 
 
-SOUL_BAND = (300.0, 900.0)
+# La cible tenue par ce controle est le MULTI-OUTIL ENTIER — ses quatre ames, paliers et capacites
+# compris — parce que c'est l'objectif que le joueur se donne : « maxer sa multi-tool », pas « maxer sa
+# pioche ». Plusieurs centaines d'heures au tycoon de milieu de partie, avec de la marge des deux cotes :
+# en dessous de 400 h l'objectif se boucle en une saison courte et le serveur n'a plus de fond, au-dessus
+# de 1200 h plus personne ne l'atteint et la moitie du contenu ne sert a rien.
+TOOL_BAND = (400.0, 1200.0)
+# Une seule ame reste un objectif intermediaire lisible : de quoi occuper une longue saison sans etre le
+# jeu entier. C'est mecaniquement le quart de la bande ci-dessus, mais controle a part, parce qu'un
+# desequilibre entre ames (une pioche a 40 h et une canne a 400 h) ne se verrait pas dans le total.
+SOUL_BAND = (80.0, 400.0)
 ANCHOR_TIER = 10
 
 
@@ -973,7 +988,7 @@ def check_all(generators, shop, categories, extras, hours, settings):
     check("l'aire d'offres derive bien de la hauteur du coffre",
           layout["rows"] == 6 and layout["offer-rows"] == layout["rows"] - 2
           and layout["offers-per-page"] == layout["offer-rows"] * 9,
-          f"lu {layout} — premiere rangee aux onglets, derniere au solde ; un `Gui` Bukkit de plus de six "
+          f"lu {layout} — la derniere rangee est la navigation ; un `Gui` Bukkit de plus de six "
           "rangees n'existe pas, et une page plus grande que l'aire disponible se dessinerait a moitie")
     for material in routed:
         check(f"matiere routee {material} : nom valide", bool(re.fullmatch(r"[A-Z][A-Z0-9_]*", material))
@@ -1070,13 +1085,17 @@ def check_all(generators, shop, categories, extras, hours, settings):
     _joiner, mid, maxed = hours["rates"]
     check("l'ancre de revenu est lisible (palier %d present)" % ANCHOR_TIER, mid > 0.0,
           "le palier %d n'est pas dans la table `generators:`" % ANCHOR_TIER)
-    check("maxer une âme demande une saison de tycoon (%.0f–%.0f h)" % SOUL_BAND,
+    check("maxer le multi-outil entier demande plusieurs centaines d'heures (%.0f–%.0f h)" % TOOL_BAND,
+          TOOL_BAND[0] <= hours["tool_hours"] <= TOOL_BAND[1],
+          "%.0f h a %s/h : les poignees sont `PRICE_BASE` et `PRICE_SPAN` dans "
+          "scripts/gen-tools-config.py" % (hours["tool_hours"], money(mid)))
+    check("une seule âme reste un objectif intermediaire (%.0f–%.0f h)" % SOUL_BAND,
           SOUL_BAND[0] <= hours["pickaxe_hours"] <= SOUL_BAND[1],
-          "%.0f h a %s/h : la poignee est `GRIND` dans scripts/gen-tools-config.py" % (
+          "%.0f h a %s/h : la poignee est `PRICE_BASE` dans scripts/gen-tools-config.py" % (
               hours["pickaxe_hours"], money(mid)))
-    check("le meme calcul reste jouable au tycoon maxe", hours["maxed_hours"] >= 40.0,
-          "%.1f h : l'economie n'a plus de dent si une âme se rembourse en quelques soirees"
-          % hours["maxed_hours"])
+    check("le meme calcul reste jouable au tycoon maxe", hours["maxed_tool_hours"] >= 40.0,
+          "%.1f h : l'economie n'a plus de dent si le multi-outil se boucle en quelques soirees"
+          % hours["maxed_tool_hours"])
 
     # ---- l'extrait à coller, tel que le document le donne
     doc = read_text(ECONOMIE_DOC)
@@ -1150,9 +1169,14 @@ def compute_hours(generators, shop, override=None, settings=None):
     rates = anchor_rates(shop, generators, settings)
     joiner, mid, maxed = rates
     pick = totals.get("pickaxe", 0.0)
+    grand = sum(totals.values())
     used = override or [mid]
     return {
         "totals": totals,
+        # Le multi-outil entier : c'est l'objectif que le joueur se fixe, donc la duree qui compte.
+        "tool": grand,
+        "tool_hours": (grand / used[0]) if used and used[0] > 0 else 0.0,
+        "maxed_tool_hours": (grand / maxed) if maxed > 0 else 0.0,
         # Les deux chiffres que le bloc genere doit savoir enoncer sans les recopier: combien de generateurs
         # un arrivant recoit, et le plafond qui borne un tycoon. Une ancre qui inventerait un reglage lu
         # ailleurs est exactement la derive que ce script existe pour attraper.

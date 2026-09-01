@@ -120,12 +120,13 @@ donc acheter puis se faire racheter laisse 30 % de perte — `/sell` reste le me
 
 > « matières listées » (`shop.categories[].materials`) ne vend rien : c'est la liste des matières que le rayon **réclame**. Une ligne de `generators:` dont le `spawnItem` y figure atterrit ici toute seule ; les autres n'y sont que pour la prochaine ligne qu'un admin ajoutera. Les offres payables, ce sont les 28 lignes venues du générateur et les 144 lignes écrites à la main dans `shop.extras`.
 
-> Un rayon qui dépasse 36 offres ne disparaît pas : il se **page** — les offres se partagent 4 rangées de neuf cases, les flèches sont posées sous la ligne d'onglets. 9 rayons au plus tiennent dans cette ligne ; au-delà, le surplus n'est pas cliquable et le log du serveur le dit.
+> Un rayon qui dépasse 36 offres ne disparaît pas : il se **page** — les offres se partagent au plus 4 rangées de neuf cases, et le panneau se coupe à la hauteur qu'elles occupent : les articles prennent la quasi-totalité de la fenêtre, la dernière rangée ne porte que le retour et les deux flèches. La grille des rayons, elle, tient sur une seule rangée : 9 rayons au plus y sont cliquables, au-delà le surplus ne l'est pas et le log du serveur le dit.
 
 - Un arrivant (3 générateurs du palier 1, cf. `on-join.generator-amount`) : **5 400 $/h** — le salaire d'une journée de jeu, pas un pactole.
 - Un tycoon de milieu de partie (20 × palier 10, plafond `limits.per-player`) : **1.44 M$/h**.
 - Un tycoon maxé (20 × palier 28) : **7.92 M$/h**.
-- Maxer **l'âme de pioche** (ses quarante-neuf paliers et ses vingt-quatre capacités) coûte 826.92 M$, soit **574 h** du tycoon de milieu de partie (bande admise : 300–900 h, contrôlée par ce script). `docs/MULTI-OUTIL.md` reprend la même division pour les quatre âmes.
+- Maxer **le multi-outil entier** (ses quatre âmes, leurs paliers et leurs 88 capacités) coûte 838.50 M$, soit **582 h** du tycoon de milieu de partie (bande admise : 400–1200 h, contrôlée par ce script). C'est l'objectif de fin de jeu, pas une étape.
+- Maxer **une seule âme** (la pioche : ses quarante-neuf paliers et ses vingt-quatre capacités) coûte 227.59 M$, soit **158 h** au même revenu (bande admise : 80–400 h). `docs/MULTI-OUTIL.md` reprend la même division pour les quatre âmes.
 
 Le prix d'achat n'est pas une ligne libre : c'est `sellPrice × buy-multiplier`, soit +75 % sur le prix `/sell`. Un aller-retour achat puis reprise laisse donc 30 % de perte : le comptoir encaisse, il ne distribue pas.
 <!-- bareme-comptoir:fin -->

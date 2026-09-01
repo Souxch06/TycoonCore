@@ -1,7 +1,6 @@
 package xyz.arcadiadevs.valoriatycoon.guis;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -66,28 +65,29 @@ import xyz.arcadiadevs.valoriatycoon.models.GeneratorsData;
  */
 public final class ShopGui {
 
-    private static final int ROWS = 6;
-    private static final int SLOTS = ROWS * 9;
     /**
-     * Neuf onglets : la première ligne entière leur est laissée, les réglages étant descendus en dernière
-     * ligne. Un `Inventory` de coffre ne dépasse pas six rangées — ajouter une rangée d'onglets aurait donc
-     * coûté une rangée d'offres, pas gagné de place.
+     * La hauteur <em>maximale</em> d'un coffre, pas la hauteur de chaque ecran : depuis que les panneaux se
+     * dimensionnent sur ce qu'ils affichent, seul l'ecran des offres plein (quatre rangees d'articles plus la
+     * barre de navigation) atteint six rangees. La grille des rayons en fait une, le panneau de quantite
+     * aussi : un panneau vide de moitie se lit comme une interface cassee.
+     */
+    private static final int ROWS = 6;
+    /**
+     * Neuf onglets : la grille des rayons tient sur une rangee de neuf icones, sans bordure ni remplissage.
+     * Un `Inventory` de coffre ne dépasse pas six rangées, donc au-delà de neuf rayons le surplus n'aurait
+     * pas de case cliquable.
      */
     private static final int MAX_TABS = 9;
-    private static final int SLOT_TAB_FIRST = 0;
+    /** Les rangees d'articles d'une page d'offres : la hauteur du coffre moins la barre de navigation. */
     private static final int OFFER_ROWS = ROWS - 2;
-    /** Les 36 cases entre les deux rangées fixes : plafond d'offres affichables par catégorie. */
+    /** Les 36 cases d'articles : plafond d'offres affichables par page de catégorie. */
     private static final int OFFERS_PER_PAGE = OFFER_ROWS * 9;
-    private static final int FIRST_OFFER_SLOT = 9;
-    private static final int SETTINGS_ROW = ROWS - 1;
-    private static final int SLOT_INFO = SETTINGS_ROW * 9;
-    private static final int SLOT_MODE = SETTINGS_ROW * 9 + 1;
-    private static final int SLOT_AMOUNT = SETTINGS_ROW * 9 + 2;
-    private static final int SLOT_PAGE_LABEL = SETTINGS_ROW * 9 + 3;
-    private static final int SLOT_PAGE_BACK = SETTINGS_ROW * 9 + 4;
-    private static final int SLOT_PAGE_NEXT = SETTINGS_ROW * 9 + 5;
-    private static final int SLOT_RELOAD = SETTINGS_ROW * 9 + 7;
-    private static final int SLOT_CLOSE = SETTINGS_ROW * 9 + 8;
+    /** Les offres commencent en haut a gauche : aucune rangee de titre ne leur prend la place. */
+    private static final int FIRST_OFFER_SLOT = 0;
+    /** La barre de navigation, en bas : retour, et les deux fleches quand le rayon se page. */
+    private static final int NAV_BACK = 0;
+    private static final int NAV_PAGE_BACK = 3;
+    private static final int NAV_PAGE_NEXT = 5;
     private static final String PERMISSION_USE = "valoriatycoon.shop.use";
     private static final String PERMISSION_ADMIN = "valoriatycoon.shop.admin";
 
@@ -108,7 +108,20 @@ public final class ShopGui {
     // ------------------------------------------------------------------ vue par joueur
 
     private final Player player;
-    private final Gui gui;
+    /**
+     * Une surface par hauteur de coffre, montee a la demande. Un `Gui` de GuiLib enregistre son auditeur a la
+     * construction : le garder en cache, c'est n'en enregistrer qu'un par hauteur reellement affichee, la ou
+     * reconstruire a chaque changement d'ecran laisserait un auditeur orphelin par clic.
+     */
+    private final Map<Integer, Gui> surfaces = new HashMap<Integer, Gui>();
+    private final String title;
+    /** La hauteur de l'ecran en cours de rendu : les boutons de navigation vivent sur sa derniere rangee. */
+    private int surfaceRows = ROWS;
+    /** L'inventaire reellement montre au joueur — il change de taille avec l'ecran. */
+    private Inventory active;
+    /** La surface en cours de rendu : c'est elle qui recoit les {@code GuiItem} poses par {@link #place}. */
+    private Gui activeGui;
+    private final ValoriaTycoon plugin;
     private int shelf;
     private int page;
     private int amountIndex;
@@ -127,14 +140,43 @@ public final class ShopGui {
 
     private ShopGui(Player player, ValoriaTycoon plugin) {
         this.player = player;
-        String title = plugin == null ? "&a&lComptoir"
-                : readString(plugin.getConfig(), "shop.title", "&a&lComptoir de Valoria");
-        this.gui = new Gui(AuctionHouse.color(title), ROWS, (Plugin) plugin);
-        // Volontairement UNE seule page, redessinee a chaque changement d'ecran et a chaque clic. Deux
-        // raisons, toutes deux mesurees dans GuiLib : `Gui#setItem` leve une IllegalArgumentException des
-        // qu'un item d'un type autre que ITEM est pose ailleurs que sur la page 0, et `addPage()` recopie
-        // les non-ITEM de la page 0 tels qu'ils existent a la seconde ou on l'appelle — donc rien du tout
-        // si on l'appelle avant le premier rendu. Un ecran n'a pas besoin d'etre une page.
+        this.plugin = plugin;
+        this.title = AuctionHouse.color(plugin == null ? "&a&lComptoir"
+                : readString(plugin.getConfig(), "shop.title", "&a&lComptoir de Valoria"));
+        // Volontairement UNE seule page par surface, redessinee a chaque changement d'ecran et a chaque
+        // clic. Deux raisons, toutes deux mesurees dans GuiLib : `Gui#setItem` leve une
+        // IllegalArgumentException des qu'un item d'un type autre que ITEM est pose ailleurs que sur la page
+        // 0, et `addPage()` recopie les non-ITEM de la page 0 tels qu'ils existent a la seconde ou on
+        // l'appelle — donc rien du tout si on l'appelle avant le premier rendu. Un ecran n'a pas besoin
+        // d'etre une page ; il a besoin d'etre a sa taille.
+    }
+
+    /**
+     * La surface de {@code rows} rangees, montee une seule fois. Un panneau se dimensionne sur ce qu'il
+     * montre : la grille des rayons ne fait qu'une rangee, le panneau de quantite deux, un rayon plein cinq.
+     * Le coffre de six rangees a demi vide etait de la place perdue autour des icones, rien de plus.
+     */
+    private Inventory surface(int rows) {
+        int height = Math.max(1, Math.min(ROWS, rows));
+        this.surfaceRows = height;
+        Gui found = this.surfaces.get(Integer.valueOf(height));
+        if (found == null) {
+            found = new Gui(this.title, height, (Plugin) this.plugin);
+            this.surfaces.put(Integer.valueOf(height), found);
+        }
+        this.activeGui = found;
+        this.active = found.getInventory();
+        // Un ecran plus court que le precedent laisserait sinon les cases du precedent : on repart du vide,
+        // les rendus ne posant que ce qu'ils montrent.
+        for (int slot = 0; slot < height * 9; ++slot) {
+            place(this.active, slot, null, null);
+        }
+        return this.active;
+    }
+
+    /** La premiere case de la rangee de navigation de l'ecran courant. */
+    private int navRow() {
+        return (this.surfaceRows - 1) * 9;
     }
 
     // ------------------------------------------------------------------ entree
@@ -181,7 +223,13 @@ public final class ShopGui {
         view.quantityOffer = null;
         focus(view, material);
         view.render();
-        player.openInventory(view.gui.getInventory());
+        if (view.active == null) {
+            // Catalogue vide : `render()` n'a rien monte, et ouvrir un inventaire inexistant serait une
+            // NullPointerException dans le log a la place d'un message lisible.
+            player.sendMessage(AuctionHouse.color("&cLe comptoir n'a rien a vendre pour le moment."));
+            return;
+        }
+        player.openInventory(view.active);
     }
 
     /** Pose la vue sur le rayon et la page où cette matière se vend. Ne touche à rien si elle n'y est pas. */
@@ -431,38 +479,26 @@ public final class ShopGui {
     }
 
     /**
-     * Ecran 1 : la grille des rayons, rien d'autre. Chaque case est un rayon cliquable (icone + titre + la
-     * description que le fichier lui donne) ; un clic ouvre ses offres. La ligne de reglages reste visible
-     * (solde, legendes, rechargement, fermeture).
+     * Ecran 1 : les rayons, et rien d'autre. Une rangee, une icone par rayon, centree ; le titre du coffre
+     * dit deja que c'est le comptoir, la vitre grise ne disait rien, le lingot d'or et le solde repetaient un
+     * texte que `/bal` donne mieux. Un panneau de sept icones n'a pas besoin de cinquante-quatre cases.
      */
     private void renderCategories() {
-        Inventory view = this.gui.getInventory();
-        ItemStack pane = branded(new ItemStack(Material.GRAY_STAINED_GLASS_PANE), "&r", null);
-        for (int slot = 0; slot < SLOTS; ++slot) {
-            place(view, slot, pane, null);
-        }
-        place(view, SLOT_TAB_FIRST, branded(new ItemStack(Material.GOLD_BLOCK),
-                "&2&lComptoir de Valoria",
-                Arrays.asList("&7Choisis un rayon : &f" + SHELVES.size() + "&7 rayons, " + offerCount()
-                        + "&7 matieres.", "&8Clic gauche : ouvrir le rayon")), null);
         int shown = Math.min(SHELVES.size(), MAX_TABS);
+        Inventory view = surface(1 + (Math.max(1, shown) - 1) / 9);
         int start = categoryStart(shown);
         for (int index = 0; index < shown; ++index) {
             Shelf shelf = SHELVES.get(index);
-            ItemStack tile = branded(new ItemStack(shelf.icon),
-                    "&a▶ &f" + shelf.title, hint(shelf, false));
+            ItemStack tile = branded(new ItemStack(shelf.icon), "&a&l" + shelf.title, hint(shelf, false));
             place(view, start + index, tile, null);
         }
-        place(view, SLOT_INFO, soldeButton(), null);
-        place(view, SLOT_MODE, legendButton(), null);
-        place(view, SLOT_RELOAD, reloadButton(), null);
-        place(view, SLOT_CLOSE, closeButton(), null);
     }
 
     /**
-     * Ecran 2 : les offres du rayon courant. La case (0,0) est un bouton « retour » vers la grille des
-     * rayons ; la ligne de reglages (solde, legendes, pages, rechargement, fermeture) reste en bas, et les
-     * offres remplissent les cases restantes, avec pagination. Chaque offre porte son prix d'achat (vert) et
+     * Ecran 2 : les offres du rayon, du premier slot jusqu'a l'avant-derniere rangee — les articles occupent
+     * la quasi-totalite du panneau, et le panneau se coupe a la hauteur qu'ils demandent (un rayon de douze
+     * matieres ne montre pas quatre rangees vides). La derniere rangee ne porte que la navigation : retour
+     * aux rayons, et les deux fleches quand le rayon se page. Chaque offre porte son prix d'achat (vert) et
      * de reprise (rouge), et repond au clic gauche (acheter), droit (vendre un stack), shift+droit (tout).
      */
     private void renderBlocks() {
@@ -470,77 +506,53 @@ public final class ShopGui {
         List<Offer> all = SHELVES.get(this.shelf).offers;
         int pages = 1 + Math.max(0, all.size() - 1) / OFFERS_PER_PAGE;
         this.page = Math.max(0, Math.min(this.page, pages - 1));
-        Inventory view = this.gui.getInventory();
-        ItemStack pane = branded(new ItemStack(Material.GRAY_STAINED_GLASS_PANE), "&r", null);
-        for (int slot = 0; slot < SLOTS; ++slot) {
-            place(view, slot, pane, null);
-        }
-        place(view, SLOT_TAB_FIRST, branded(new ItemStack(Material.ARROW), "&e&l‹ Rayons",
-                Collections.singletonList("&7Clic : revenir au choix du rayon")), null);
-        place(view, SLOT_TAB_FIRST + 1, branded(new ItemStack(SHELVES.get(this.shelf).icon),
-                "&f&l" + SHELVES.get(this.shelf).title,
-                Arrays.asList("&7" + all.size() + " matiere(s), rayon « " + SHELVES.get(this.shelf).title
-                        + " »", "&8Clic gauche : acheter · &cClic droit : vendre")), null);
-
-        place(view, SLOT_INFO, soldeButton(), null);
-        place(view, SLOT_MODE, legendButton(), null);
-        place(view, SLOT_PAGE_LABEL, pageLabelButton(all.size(), pages), null);
-        if (pages > 1) {
-            place(view, SLOT_PAGE_BACK, pageNavButton(true), null);
-            place(view, SLOT_PAGE_NEXT, pageNavButton(false), null);
-        }
-        place(view, SLOT_RELOAD, reloadButton(), null);
-        place(view, SLOT_CLOSE, closeButton(), null);
-
         int first = this.page * OFFERS_PER_PAGE;
-        int shown = Math.min(all.size(), first + OFFERS_PER_PAGE);
-        for (int index = first; index < shown; ++index) {
-            place(view, FIRST_OFFER_SLOT + (index - first), blockItem(all.get(index)), null);
+        int shown = Math.min(all.size(), first + OFFERS_PER_PAGE) - first;
+        int offerRows = Math.max(1, Math.min(OFFER_ROWS, 1 + (Math.max(1, shown) - 1) / 9));
+        Inventory view = surface(offerRows + 1);
+        for (int index = 0; index < shown; ++index) {
+            place(view, FIRST_OFFER_SLOT + index, blockItem(all.get(first + index)), null);
+        }
+        place(view, navRow() + NAV_BACK, branded(new ItemStack(Material.ARROW), "&e&l‹ Rayons",
+                Collections.singletonList("&7Clic : revenir au choix du rayon")), null);
+        if (pages > 1) {
+            place(view, navRow() + NAV_PAGE_BACK, pageNavButton(true), null);
+            place(view, navRow() + NAV_PAGE_NEXT, pageNavButton(false), null);
         }
     }
 
     /**
-     * Ecran 3 : le panneau de quantite, ouvert par un clic gauche sur un bloc. Une case par lot de la
-     * config (`shop.amounts`), chacune en vert (achat) avec son prix total ; un clic achete ce lot et
-     * revient aux offres. Un bouton « retour » ramene au rayon.
+     * Ecran 3 : le panneau de quantite, ouvert par un clic gauche sur un bloc. Une case par lot de la config
+     * (`shop.amounts`), chacune montrant la matiere en pile de sa taille avec son prix total ; un clic achete
+     * ce lot et revient aux offres. Deux rangees suffisent : les lots, puis le retour — le prix a l'unite, la
+     * place libre et le contenu du sac sont deja dans l'info-bulle de chaque lot.
      */
     private void renderQuantity() {
-        Inventory view = this.gui.getInventory();
-        ItemStack pane = branded(new ItemStack(Material.GRAY_STAINED_GLASS_PANE), "&r", null);
-        for (int slot = 0; slot < SLOTS; ++slot) {
-            place(view, slot, pane, null);
-        }
         Offer offer = resolveOffer(this.quantityOffer == null ? null : this.quantityOffer.material);
         if (offer == null) {
             this.screen = Screen.CATEGORIES;
             this.render();
             return;
         }
-        place(view, SLOT_TAB_FIRST, branded(new ItemStack(Material.ARROW), "&e&l‹ Retour",
-                Collections.singletonList("&7Clic : revenir au rayon")), null);
-        List<String> head = new ArrayList<String>();
-        head.add("&aAchat : &f" + AuctionHouse.money(offer.buy) + "&7 l'unite");
-        head.add("&7Dans ton sac : &f" + count(this.player, offer.material));
-        ItemStack headItem = branded(new ItemStack(offer.material), "&a" + offer.name, head);
-        headItem.setAmount(1);
-        place(view, SLOT_TAB_FIRST + 1, headItem, null);
-
+        int lots = Math.max(1, Math.min(9, amounts.length));
+        Inventory view = surface(2);
         int room = roomFor(this.player, offer.material);
-        int start = FIRST_OFFER_SLOT;
-        for (int index = 0; index < amounts.length; ++index) {
+        int start = (9 - lots) / 2;
+        for (int index = 0; index < lots; ++index) {
             final int qty = amounts[index];
             List<String> lines = new ArrayList<String>();
-            lines.add("&aPrix : &f" + AuctionHouse.money(offer.buy * qty));
-            lines.add("&7Place libre : &f" + room + "&7 · plafond &f" + maxPerTransaction);
-            lines.add("&8Clic gauche : acheter ×" + qty);
-            ItemStack button = branded(new ItemStack(offer.material), "&a×&f" + qty, lines);
+            lines.add("&aPrix : &f" + AuctionHouse.money(offer.buy * qty) + "&7 ("
+                    + AuctionHouse.money(offer.buy) + "&7 l'unite)");
+            lines.add("&7Dans ton sac : &f" + count(this.player, offer.material)
+                    + "&7 · place libre &f" + room);
+            lines.add("&8Clic : acheter ×" + qty + "&8 · plafond &f" + maxPerTransaction);
+            ItemStack button = branded(new ItemStack(offer.material),
+                    "&a×&f" + qty + " &7" + offer.name, lines);
             button.setAmount(Math.min(64, Math.max(1, qty)));
-            place(view, start + index, button, null);
+            place(view, FIRST_OFFER_SLOT + start + index, button, null);
         }
-        place(view, SLOT_INFO, soldeButton(), null);
-        place(view, SLOT_MODE, legendButton(), null);
-        place(view, SLOT_RELOAD, reloadButton(), null);
-        place(view, SLOT_CLOSE, closeButton(), null);
+        place(view, navRow() + NAV_BACK, branded(new ItemStack(Material.ARROW), "&e&l‹ Retour",
+                Collections.singletonList("&7Clic : revenir au rayon")), null);
     }
 
     /** La case d'un bloc dans le rayon : nom en vert (achat), prix d'achat et de reprise colores. */
@@ -572,13 +584,13 @@ public final class ShopGui {
      * aussi l'action de gauche.
      */
     private void place(Inventory view, int slot, ItemStack item, Runnable action) {
-        this.gui.setItem(slot, new GuiItem(GuiItemType.ITEM, item, action));
+        this.activeGui.setItem(slot, new GuiItem(GuiItemType.ITEM, item, action));
         view.setItem(slot, item);
     }
 
-    /** La premiere case de la grille d'offres pour un nombre donne de rayons alignes au centre. */
+    /** La premiere case de la rangee de rayons, pour un nombre donne d'onglets centres. */
     private static int categoryStart(int shown) {
-        return FIRST_OFFER_SLOT + (9 - shown) / 2 + (9 - shown) % 2;
+        return (9 - Math.min(9, shown)) / 2;
     }
 
     /** La taille d'une pile complète pour cette matiere (stack simple ou de bloc). */
@@ -591,33 +603,6 @@ public final class ShopGui {
     private Offer resolveOffer(Material material) {
         Offer resolved = material == null ? null : offerOf(material);
         return resolved == null ? this.quantityOffer : resolved;
-    }
-
-    private ItemStack soldeButton() {
-        return branded(new ItemStack(Material.GOLD_NUGGET), "&6&lSolde", soldeLines(this.player));
-    }
-
-    private ItemStack legendButton() {
-        return branded(new ItemStack(Material.BOOK), "&6&lActions",
-                Arrays.asList("&a&lClic gauche &7: acheter (panneau de quantite)",
-                        "&c&lClic droit &7: vendre un stack",
-                        "&c&lShift + droit &7: vendre tout ce bloc"));
-    }
-
-    private ItemStack reloadButton() {
-        return branded(new ItemStack(Material.COMPARATOR), "&e&lRecharger les prix",
-                Arrays.asList("&7Relit &fgenerators:&7 et &fshop:&7 du &fconfig.yml",
-                        "&8Reserve a &f" + PERMISSION_ADMIN));
-    }
-
-    private ItemStack closeButton() {
-        return branded(new ItemStack(Material.BARRIER), "&c&lFermer",
-                Collections.singletonList("&7Clic : fermer le comptoir"));
-    }
-
-    private ItemStack pageLabelButton(int total, int pages) {
-        return branded(new ItemStack(Material.PAPER), "&f&lPage " + (this.page + 1) + "&7/&f" + pages,
-                Collections.singletonList("&7" + total + " matieres dans ce rayon"));
     }
 
     private ItemStack pageNavButton(boolean back) {
@@ -639,21 +624,21 @@ public final class ShopGui {
         else {
             onQuantityClick(player, slot);
         }
+        reveal(player);
+    }
+
+    /**
+     * Remet devant le joueur la surface reellement rendue. Les ecrans n'ont plus la meme hauteur : passer des
+     * rayons (une rangee) a un rayon plein (cinq plus la navigation) change d'inventaire, et un client a qui
+     * on redessine un inventaire qu'il n'a pas ouvert ne voit rien bouger.
+     */
+    private void reveal(Player player) {
+        if (this.active != null && player.getOpenInventory().getTopInventory() != this.active) {
+            player.openInventory(this.active);
+        }
     }
 
     private void onCategoriesClick(Player player, int slot) {
-        if (slot == SLOT_CLOSE) {
-            player.closeInventory();
-            return;
-        }
-        if (slot == SLOT_RELOAD) {
-            reloadThrough(player);
-            return;
-        }
-        if (slot == SLOT_INFO || slot == SLOT_MODE) {
-            this.render();
-            return;
-        }
         int shown = Math.min(SHELVES.size(), MAX_TABS);
         int start = categoryStart(shown);
         int index = slot - start;
@@ -667,33 +652,27 @@ public final class ShopGui {
     }
 
     private void onBlocksClick(Player player, int slot, boolean right, boolean shift) {
-        if (slot == SLOT_TAB_FIRST) {
+        int nav = this.navRow();
+        if (slot == nav + NAV_BACK) {
             this.screen = Screen.CATEGORIES;
             this.quantityOffer = null;
             this.render();
             return;
         }
-        if (slot == SLOT_PAGE_BACK) {
+        int pages = 1 + Math.max(0, SHELVES.get(this.shelf).offers.size() - 1) / OFFERS_PER_PAGE;
+        if (pages > 1 && slot == nav + NAV_PAGE_BACK) {
             this.page = Math.max(0, this.page - 1);
             this.render();
             return;
         }
-        if (slot == SLOT_PAGE_NEXT) {
-            int pages = 1 + Math.max(0, SHELVES.get(this.shelf).offers.size() - 1) / OFFERS_PER_PAGE;
+        if (pages > 1 && slot == nav + NAV_PAGE_NEXT) {
             this.page = Math.min(pages - 1, this.page + 1);
             this.render();
             return;
         }
-        if (slot == SLOT_RELOAD) {
-            reloadThrough(player);
-            return;
-        }
-        if (slot == SLOT_CLOSE) {
-            player.closeInventory();
-            return;
-        }
-        if (slot == SLOT_INFO || slot == SLOT_MODE || slot == SLOT_AMOUNT || slot == SLOT_PAGE_LABEL) {
-            this.render();
+        if (slot >= nav) {
+            // La rangee de navigation ne vend rien : un clic a cote d'une fleche ne doit surtout pas etre lu
+            // comme un clic sur l'offre qui occupait cette case sur un ecran plus haut.
             return;
         }
         List<Offer> all = SHELVES.get(this.shelf).offers;
@@ -713,24 +692,16 @@ public final class ShopGui {
     }
 
     private void onQuantityClick(Player player, int slot) {
-        if (slot == SLOT_TAB_FIRST) {
+        int nav = this.navRow();
+        if (slot == nav + NAV_BACK) {
             this.screen = Screen.BLOCKS;
             this.render();
             return;
         }
-        if (slot == SLOT_RELOAD) {
-            reloadThrough(player);
+        if (slot >= nav) {
             return;
         }
-        if (slot == SLOT_CLOSE) {
-            player.closeInventory();
-            return;
-        }
-        if (slot == SLOT_INFO || slot == SLOT_MODE) {
-            this.render();
-            return;
-        }
-        int index = slot - FIRST_OFFER_SLOT;
+        int index = slot - FIRST_OFFER_SLOT - categoryStart(Math.max(1, Math.min(9, amounts.length)));
         if (index >= 0 && index < amounts.length && this.quantityOffer != null) {
             Offer offer = resolveOffer(this.quantityOffer.material);
             if (offer == null) {
@@ -744,14 +715,6 @@ public final class ShopGui {
             this.screen = Screen.BLOCKS;
             this.render();
         }
-    }
-
-    private void reloadThrough(Player player) {
-        if (!player.hasPermission(PERMISSION_ADMIN)) {
-            player.sendMessage(AuctionHouse.color("&cReserve (&f" + PERMISSION_ADMIN + "&c)."));
-            return;
-        }
-        player.sendMessage(reload(ValoriaTycoon.getInstance()));
     }
 
     // ------------------------------------------------------------------ auditeur partage
@@ -804,24 +767,16 @@ public final class ShopGui {
 
         private ShopGui viewOf(Inventory top) {
             for (ShopGui candidate : VIEWS.values()) {
-                if (candidate.gui.getInventory() == top) {
-                    return candidate;
+                // Chaque hauteur d'ecran a sa propre surface : le clic est rattache a la vue qui possede
+                // l'inventaire ouvert, quelle que soit la taille du panneau affiche a cet instant.
+                for (Gui surface : candidate.surfaces.values()) {
+                    if (surface.getInventory() == top) {
+                        return candidate;
+                    }
                 }
             }
             return null;
         }
-    }
-
-    private static List<String> soldeLines(Player player) {
-        Economy economy = economy();
-        if (economy == null) {
-            return Arrays.asList("&7Solde : &céconomie indisponible",
-                    "&7Marge du comptoir : &f+" + percent(buyMultiplier - 1.0D));
-        }
-        OfflinePlayer offline = Bukkit.getOfflinePlayer(player.getUniqueId());
-        return Arrays.asList("&7Solde : &a" + AuctionHouse.money(economy.getBalance(offline)),
-                "&7Marge : &f+" + percent(buyMultiplier - 1.0D) + "&7 sur le prix générateur",
-                "&8Le prix de référence reste le &fsellPrice&8 du générateur");
     }
 
     // ------------------------------------------------------------------ catalogue

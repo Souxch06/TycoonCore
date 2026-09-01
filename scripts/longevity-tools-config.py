@@ -71,6 +71,7 @@ def read_souls(config_path):
                     "n": int(number("max-level") or 1),
                     "price": number("price"),
                     "step": number("price-step"),
+                    "ratio": number("price-ratio"),
                     "cap": number("price-cap"),
                     "unlock": int(number("unlock") or 1),
                     "free": "free: true" in body,
@@ -92,14 +93,31 @@ def tier_price(soul, tier):
     return min(price, cap) if cap > 0 else price
 
 
+# Meme plafond dur que `ToolsConfig.Ability.PRICE_CEILING` : un tableau qui annoncerait un prix que le
+# moteur refuse n'est pas un tableau, c'est un mensonge.
+PRICE_CEILING = 100_000_000.0
+
+
 def level_price(soul, ability, level):
+    """Le prix du niveau `level`, avec la formule REELLE de `ToolsConfig.Ability.priceAt`.
+
+    Geometrique des que `price-ratio` est ecrit (le cas de toutes les capacites generees), arithmetique
+    sinon. L'exposant n'est pas tronque : le moteur ne le tronque plus non plus, et c'etait la raison pour
+    laquelle une capacite a 2000 crans coutait le meme prix du niveau 61 au niveau 2000.
+    """
     base = ability["price"] if ability["price"] is not None else soul["ap"]["base"]
     step = ability["step"] if ability["step"] is not None else soul["ap"]["step"]
+    ratio = ability.get("ratio") or 0.0
     cap = ability["cap"] or soul["ap"].get("cap") or 0.0
     if ability["free"] and level <= 1:
         return 0.0
-    price = base + step * (level - 1)
-    return min(price, cap) if cap > 0 else price
+    if ratio > 1.0:
+        price = base * ratio ** (level - 1)
+    else:
+        price = base + step * (level - 1)
+    if cap > 0:
+        price = min(price, cap)
+    return min(price, PRICE_CEILING)
 
 
 def ability_total(soul, ability):
