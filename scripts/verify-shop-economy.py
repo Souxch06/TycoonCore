@@ -751,9 +751,11 @@ def render_block(generators, shop, categories, extras, hours):
                 sum(len([o for o in shelf["offers"] if not o["hand"]]) for shelf in shelves),
                 sum(len([o for o in shelf["offers"] if o["hand"]]) for shelf in shelves)),
             "",
-            "> Un rayon qui dépasse %d offres ne disparaît pas : il se **page** — les offres se partagent %d "
-            "rangées de neuf cases, les flèches sont posées sous la ligne d'onglets. %d rayons au plus tiennent "
-            "dans cette ligne ; au-delà, le surplus n'est pas cliquable et le log du serveur le dit." % (
+            "> Un rayon qui dépasse %d offres ne disparaît pas : il se **page** — les offres se partagent au "
+            "plus %d rangées de neuf cases, et le panneau se coupe à la hauteur qu'elles occupent : les "
+            "articles prennent la quasi-totalité de la fenêtre, la dernière rangée ne porte que le retour et "
+            "les deux flèches. La grille des rayons, elle, tient sur une seule rangée : %d rayons au plus y "
+            "sont cliquables, au-delà le surplus ne l'est pas et le log du serveur le dit." % (
                 per_page, layout["offer-rows"] or 4, layout["max-tabs"] or 9)]
     joiner, mid, maxed = hours["rates"]
     join, cap = hours["join"], hours["cap"]
@@ -973,7 +975,7 @@ def check_all(generators, shop, categories, extras, hours, settings):
     check("l'aire d'offres derive bien de la hauteur du coffre",
           layout["rows"] == 6 and layout["offer-rows"] == layout["rows"] - 2
           and layout["offers-per-page"] == layout["offer-rows"] * 9,
-          f"lu {layout} — premiere rangee aux onglets, derniere au solde ; un `Gui` Bukkit de plus de six "
+          f"lu {layout} — la derniere rangee est la navigation ; un `Gui` Bukkit de plus de six "
           "rangees n'existe pas, et une page plus grande que l'aire disponible se dessinerait a moitie")
     for material in routed:
         check(f"matiere routee {material} : nom valide", bool(re.fullmatch(r"[A-Z][A-Z0-9_]*", material))

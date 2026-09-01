@@ -120,7 +120,7 @@ donc acheter puis se faire racheter laisse 30 % de perte — `/sell` reste le me
 
 > « matières listées » (`shop.categories[].materials`) ne vend rien : c'est la liste des matières que le rayon **réclame**. Une ligne de `generators:` dont le `spawnItem` y figure atterrit ici toute seule ; les autres n'y sont que pour la prochaine ligne qu'un admin ajoutera. Les offres payables, ce sont les 28 lignes venues du générateur et les 144 lignes écrites à la main dans `shop.extras`.
 
-> Un rayon qui dépasse 36 offres ne disparaît pas : il se **page** — les offres se partagent 4 rangées de neuf cases, les flèches sont posées sous la ligne d'onglets. 9 rayons au plus tiennent dans cette ligne ; au-delà, le surplus n'est pas cliquable et le log du serveur le dit.
+> Un rayon qui dépasse 36 offres ne disparaît pas : il se **page** — les offres se partagent au plus 4 rangées de neuf cases, et le panneau se coupe à la hauteur qu'elles occupent : les articles prennent la quasi-totalité de la fenêtre, la dernière rangée ne porte que le retour et les deux flèches. La grille des rayons, elle, tient sur une seule rangée : 9 rayons au plus y sont cliquables, au-delà le surplus ne l'est pas et le log du serveur le dit.
 
 - Un arrivant (3 générateurs du palier 1, cf. `on-join.generator-amount`) : **5 400 $/h** — le salaire d'une journée de jeu, pas un pactole.
 - Un tycoon de milieu de partie (20 × palier 10, plafond `limits.per-player`) : **1.44 M$/h**.
