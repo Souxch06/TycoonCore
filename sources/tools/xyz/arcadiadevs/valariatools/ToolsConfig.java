@@ -60,6 +60,16 @@ public final class ToolsConfig {
     /** Une capacité : son noyau, son nom de wiki, son verrou de palier, son niveau max, ses valeurs. */
     public static final class Ability {
 
+        /**
+         * Le prix qu'un seul niveau ne peut pas dépasser, quoi qu'écrive le fichier.
+         *
+         * <p>Cent millions : au-dessus, le montant ne veut plus rien dire pour un joueur (il ne le verra
+         * jamais s'afficher entier dans une tooltip) et un `double` accumulé sur 2000 niveaux commence à
+         * perdre ses unités. C'est un garde-fou de dernier recours, pas le réglage : la vraie courbe se
+         * règle par <code>price</code>, <code>price-ratio</code> et <code>price-cap</code>.</p>
+         */
+        public static final double PRICE_CEILING = 100_000_000.0D;
+
         private final String id;
         private final String type;
         private final String name;
@@ -245,21 +255,34 @@ public final class ToolsConfig {
 
         /**
          * Ce que coûte le passage au niveau {@code level}. En géométrique si <code>price-ratio</code>
-         * est posé, en arithmétique sinon — et l'exposant est tronqué à 60 crans, parce qu'un ratio à
-         * puissance 2000 ne donne plus un prix mais l'infini.
+         * est posé, en arithmétique sinon.
+         *
+         * <p>L'exposant n'est plus tronqué. Il l'était à 60 crans par peur de l'infini, mais cette
+         * troncature <em>était</em> le bug qu'elle prétendait éviter : une capacité à 2000 niveaux voyait
+         * son prix figé dès le niveau 61, donc les 1939 derniers niveaux coûtaient tous le même prix — la
+         * fin d'une capacité revenait moins cher, en temps de jeu, que son milieu. La courbe est désormais
+         * calculée sur toute la plage, et c'est le <b>prix</b> qui est borné, pas le niveau : par
+         * <code>price-cap</code> quand il est écrit, et de toute façon par {@link #PRICE_CEILING}, qui
+         * garde le produit fini même sur un ratio délirant posé à la main.</p>
          */
         public double priceAt(int level) {
             int at = Math.max(0, level - 1);
             double price;
             if (this.priceRatio > 1.0D) {
-                price = this.priceBase * Math.pow(this.priceRatio, Math.min(60, at));
+                price = this.priceBase * Math.pow(this.priceRatio, at);
             } else {
                 price = this.priceBase + this.priceStep * at;
+            }
+            if (!Double.isFinite(price)) {
+                // `Math.pow` deborde avant que le `min` ne soit lu : un prix infini doit retomber sur le
+                // plafond, jamais sur zero — un niveau gratuit en fin de courbe serait pire qu'un niveau cher.
+                price = PRICE_CEILING;
             }
             if (Double.isFinite(this.priceCap) && this.priceCap > 0.0D) {
                 price = Math.min(price, this.priceCap);
             }
-            return Double.isFinite(price) && price > 0.0D ? price : 0.0D;
+            price = Math.min(price, PRICE_CEILING);
+            return price > 0.0D ? price : 0.0D;
         }
 
         /**

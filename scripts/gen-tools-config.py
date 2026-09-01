@@ -472,23 +472,57 @@ def flow(entry, soul):
         items = TREASURE_ITEMS.get(ability_id)
         if items:
             parts.append("items: [" + ", ".join(items) + "]")
-    # Un niveau 1 sur 5 coute moins cher qu'un niveau 1 sur 2000 : le prix suit le plafond du wiki.
-    parts.append("price: %d" % price_for(max_level))
-    if max_level >= 500:
-        parts.append("price-step: %d" % (90 if max_level >= 1500 else 70))
+    # Le prix d'un niveau est GEOMETRIQUE : `price × price-ratio^(niveau-1)`, borne par `price-cap`.
+    base, ratio, cap = price_curve(max_level)
+    parts.append("price: %d" % base)
+    if ratio > 1.0:
+        parts.append("price-ratio: %s" % ("%.6f" % ratio).rstrip("0").rstrip("."))
+    parts.append("price-cap: %d" % cap)
     return "      - {" + ", ".join(parts) + "}"
 
 
-def price_for(max_level):
-    if max_level <= 1:
-        return 5000
-    if max_level <= 10:
-        return 2000
-    if max_level <= 100:
-        return 1200
-    if max_level <= 500:
-        return 600
-    return 250
+# --------------------------------------------------------------------------- courbe de prix
+# Le prix du niveau 1 de la capacite, par plage de `max-level`. Une capacite courte est CHERE au niveau 1 :
+# elle n'a que trois ou cinq crans pour valoir sa place, et un « Tranchant 5 » a 250 $ le cran etait la
+# capacite la plus forte du jeu offerte au prix d'une pile de pierre. Une capacite a 2000 crans part bas :
+# c'est la somme de ses deux mille niveaux qui fait la depense, pas son premier.
+PRICE_BASE = {1: 150000, 3: 60000, 5: 40000, 8: 24000, 10: 20000, 20: 10000, 50: 5000,
+              100: 3000, 200: 1500, 300: 1000, 500: 700, 1000: 400, 2000: 250}
+
+# Combien de fois le DERNIER niveau coute le premier. C'est ce facteur, et non le prix de depart, qui
+# fait qu'une capacite se termine plus cher qu'elle ne commence : x8 sur trois crans (la marche est
+# brutale, c'est voulu), x200 sur deux mille (chaque cran est a peine plus cher que le precedent, mais
+# le dernier vaut deux cents fois le premier). Le ratio par niveau s'en deduit : span^(1/(n-1)).
+# Le span est borne par le moteur : `ToolsConfig.ratio()` refuse un `price-ratio` au-dessus de 2, donc un
+# span de x8 sur trois crans (ratio 2,83) serait ecrit dans le fichier et ignore a la lecture. Les plages
+# courtes montent donc par leur PRIX DE DEPART plutot que par leur pente, ce qui revient au meme pour le
+# joueur et garde le fichier et le moteur d'accord.
+PRICE_SPAN = {1: 1, 3: 3.5, 5: 13, 8: 24, 10: 30, 20: 40, 50: 60,
+              100: 80, 200: 100, 300: 120, 500: 140, 1000: 160, 2000: 200}
+
+# Ce que `ToolsConfig.ratio()` accepte au maximum. Depasser = un fichier que le moteur relit autrement.
+MAX_RATIO = 2.0
+
+# Plafond dur d'un niveau, quelle que soit la courbe. Aligne sur `ToolsConfig.Ability.PRICE_CEILING` :
+# le fichier ne doit pas pouvoir ecrire un prix que le moteur refuserait ensuite en silence.
+PRICE_CAP = 100000000
+
+
+def price_curve(max_level):
+    """(prix du niveau 1, ratio par niveau, plafond) pour une capacite de `max_level` crans."""
+    bucket = next((k for k in sorted(PRICE_BASE) if max_level <= k), 2000)
+    base = PRICE_BASE[bucket]
+    span = PRICE_SPAN[bucket]
+    if max_level <= 1 or span <= 1:
+        return base, 1.0, PRICE_CAP
+    # `span` fois plus cher au dernier cran qu'au premier : le ratio est la racine (n-1)-ieme du span.
+    ratio = span ** (1.0 / (max_level - 1))
+    if ratio > MAX_RATIO:
+        raise SystemExit(
+            "ERREUR: max-level %d demande un price-ratio de %.3f, or `ToolsConfig.ratio()` plafonne a "
+            "%.1f : le fichier ecrirait une courbe que le moteur ne relirait pas. Baisse PRICE_SPAN[%d] "
+            "ou monte PRICE_BASE[%d]." % (max_level, ratio, MAX_RATIO, max_level, max_level))
+    return base, ratio, PRICE_CAP
 
 
 def fmt(value):
@@ -538,12 +572,14 @@ def soul(name, title, abilities, notes):
     lines.append("      price-ratio: 1.12")
     lines.append("      price-cap: 2500000")
     lines.append("    ability-price:")
-    lines.append("      # Prix par defaut d'un niveau de capacite, surchargeable capacite par capacite.")
+    lines.append("      # Repli pour une capacite ecrite a la main SANS `price:` — chaque ligne generee")
+    lines.append("      # porte deja son propre `price` + `price-ratio` + `price-cap`, donc ce bloc ne sert")
+    lines.append("      # qu'a l'admin qui ajoute une capacite sans reflechir a sa courbe.")
     lines.append("      # Ce bloc est FRERE de `abilities:` et non dedans : un bloc YAML a la fois table")
     lines.append("      # et sequence est invalide, et SnakeYAML jette a la lecture du config.yml du jar.")
-    lines.append("      base: 250")
-    lines.append("      step: 90")
-    lines.append("      cap: 250000")
+    lines.append("      base: 2000")
+    lines.append("      step: 400")
+    lines.append("      cap: %d" % PRICE_CAP)
     lines.append("    abilities:")
     for entry in abilities:
         lines.append(flow(entry, name))
